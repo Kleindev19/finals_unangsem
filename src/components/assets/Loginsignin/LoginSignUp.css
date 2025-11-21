@@ -1,0 +1,166 @@
+/* 1. Wrapper at Background */
+.login-wrapper {
+    display: flex;
+    justify-content: center; /* I-center ang container horizontally */
+    align-items: center; /* I-center ang container vertically */
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
+    /* Ang actual background image ay nasa inline style sa JSX */
+}
+
+/* 2. Main Content Container */
+.container {
+    position: relative; 
+    display:flex; 
+    justify-content: center; 
+    align-items: center;
+    width: 100%;
+    max-width: 1200px; 
+    height: 50vh;
+}
+
+/* 3. Logo Area Positioning */
+.logo-area {
+    /* Absolute position para lumutang ang logo sa background at nasa kaliwa ng form */
+    position: absolute;
+    top: 50%;
+    left: 5%; 
+    transform: translateY(-50%); 
+    z-index: 10;
+}
+
+.logo-image {
+    width: 350px; 
+    height: auto;
+}
+
+/* 4. Login Form Card Styling */
+.login-card {
+    /* Ang kulay ng form card (parang light beige) */
+    background-color: rgba(240, 240, 230, 0.9); 
+    padding: 2.5rem 3rem;
+    border-radius: 20px; 
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px; /* sa kapal ng form card to */
+    margin-left: auto; /* ilalagay to sa kanan haha (kung nasa flex container) */
+    z-index: 20;
+}
+
+/* 5. Form Elements */
+h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+p {
+    color: #666;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; 
+    font-size: 1rem;
+}
+
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.forgot-password a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: #38761d; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-bottom: 1rem;
+}
+
+.login-btn:hover {
+    background-color: #275d13;
+}
+
+/* 6. Separator */
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #777;
+    font-size: 0.9rem;
+    margin: 1rem 0;
+}
+
+.separator::before,
+.separator::after {
+    content: '';
+    flex-grow: 1;
+    height: 1px;
+    background: #ccc;
+    margin: 0 10px;
+}
+
+/* 7. Google Button */
+.google-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0.8rem;
+    background-color: white;
+    color: #444;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-bottom: 1.5rem;
+}
+
+.google-btn:hover {
+    background-color: #f0f0f0;
+}
+
+/* 8. Sign Up Area */
+.signup-area {
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.signup-area p {
+    display: inline;
+    margin: 0;
+    color: #555;
+}
+
+.signup-area a {
+    color: #007bff; 
+    text-decoration: none;
+    font-weight: bold;
+}
