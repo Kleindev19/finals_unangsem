@@ -3,27 +3,48 @@ import './LoginSignUp.css';
 import MyBackgroundImage from './cdmBack.png'; 
 import Cdm from './cdmm.png';
 
-// 1. Tiyakin na Tumatanggap ng 'onLogin' Prop
-const LoginSignUp = ({ onLogin }) => { // <--- IBINALIK ANG { onLogin }
+// 1. FIREBASE IMPORTS: I-import ang auth service at ang sign-in function.
+import { auth } from '../../../firebaseConfig'; 
+import { signInWithEmailAndPassword } from 'firebase/auth'; 
 
-    // State para sa inputs (Best Practice)
+// 2. Tiyakin na Tumatanggap ng 'onLogin' Prop
+const LoginSignUp = ({ onLogin }) => {
+
+    // State para sa inputs
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    // New State: Para sa error messages (papalit sa alert())
+    const [error, setError] = useState('');
 
-    const handleLogin = (e) => {
+    // Gawing 'async' ang function dahil gagamit tayo ng await para sa Firebase
+    const handleLogin = async (e) => { 
         e.preventDefault(); 
+        setError(''); // I-clear ang previous errors
 
-        // Optional: Maglagay ng basic check
+        // Basic validation check
         if (!email || !password) {
-            alert('Paki-fill up ang lahat ng fields.');
+            setError('Paki-fill up ang lahat ng Email at Password fields.');
             return;
         }
 
-        // 2. TAWAGIN ANG onLogin() FUNCTION DITO!
-        // Ito ang nagpapalit ng state sa App.js at nagpapakita ng Dashboard.
-        console.log('Login successful, calling onLogin()');
-        onLogin(); // <--- FINAL STEP
+        try {
+            // 3. FIREBASE LOGIN: Subukan i-log in ang user gamit ang credentials
+            await signInWithEmailAndPassword(auth, email, password);
 
+            // KUNG SUCCESSFUL: Tawagin ang onLogin()
+            console.log('Firebase Login successful, calling onLogin()');
+            onLogin(); 
+
+        } catch (firebaseError) {
+            // KUNG MAY ERROR: I-handle ang Firebase error codes at magpakita ng user-friendly message
+            console.error('Login Failed:', firebaseError.message);
+            
+            if (firebaseError.code === 'auth/invalid-credential' || firebaseError.code === 'auth/user-not-found' || firebaseError.code === 'auth/wrong-password') {
+                setError('Maling Email o Password. Pakitiyak ang iyong credentials.');
+            } else {
+                setError('Login failed: ' + firebaseError.message);
+            }
+        }
     };
 
     return (
@@ -36,8 +57,6 @@ const LoginSignUp = ({ onLogin }) => { // <--- IBINALIK ANG { onLogin }
            padding: '2rem',
        }}
    >
-       {/* Inalis ang background-container div na walang laman */}
-
        {/* Main Content */}
        <div className="container">
            {/* Logo Area */}
@@ -66,8 +85,8 @@ const LoginSignUp = ({ onLogin }) => { // <--- IBINALIK ANG { onLogin }
                            name="email"
                            placeholder="Enter your email"
                            required
-                           value={email} // I-link sa state
-                           onChange={(e) => setEmail(e.target.value)} // Update state
+                           value={email} 
+                           onChange={(e) => setEmail(e.target.value)} 
                        />
                    </div>
 
@@ -80,13 +99,26 @@ const LoginSignUp = ({ onLogin }) => { // <--- IBINALIK ANG { onLogin }
                            name="password"
                            placeholder="Enter your password"
                            required
-                           value={password} // I-link sa state
-                           onChange={(e) => setPassword(e.target.value)} // Update state
+                           value={password} 
+                           onChange={(e) => setPassword(e.target.value)} 
                        />
                    </div>
-
-                   {/* ... (rest of form elements: options, separator, Google button) ... */}
                    
+                   {/* 4. ERROR DISPLAY: Dito ipapakita ang error message kung meron */}
+                   {error && (
+                        <div style={{ 
+                            color: '#FF0000', 
+                            textAlign: 'center', 
+                            marginBottom: '1rem', 
+                            fontWeight: 'bold',
+                            padding: '0.5rem',
+                            border: '1px solid #FFCCCC',
+                            borderRadius: '5px'
+                        }}>
+                            {error}
+                        </div>
+                    )}
+
                    <div className="options-row">
                        <div className="remember-me">
                            <input type="checkbox" id="remember" name="remember" />
