@@ -1,40 +1,56 @@
 // src/App.js
 
 import React, { useState } from 'react';
-import Dashboard from './components/assets//Dashboard/Dashboard.jsx'; 
-import LoginSignUp from './components/assets/Loginsignin/LoginSignUp.jsx'; 
-import './App.css'; 
+import Dashboard from './components/assets/Dashboard/Dashboard.jsx'; 
+import LoginSignUp from './components/assets/Loginsignin/LoginSignUp.jsx';
+// --- UPDATED IMPORT: Using the ReportsLayout component for the shared layout ---
+import ReportsLayout from './components/assets/Reports/ReportsLayout.jsx'; 
+// -----------------------------
+import './App.css';
 
 const App = () => {
-    // State: Sa simula, hindi naka-login (false)
-    const [isLoggedIn, setIsLoggedIn] = useState(false); 
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    // State to track the current view
+    const [currentPage, setCurrentPage] = useState('dashboard'); 
 
-    // Function: Ito ang ipapasa sa LoginSignUp
     const handleLoginSuccess = () => {
-        // Palitan ang state sa TRUE para mag-render ang Dashboard
-        setIsLoggedIn(true); 
+        setIsLoggedIn(true);
+        setCurrentPage('dashboard');
     };
 
-    // --- NEW: Function to handle application-level logout ---
     const handleLogout = () => {
-        setIsLoggedIn(false); 
+        setIsLoggedIn(false);
+        setCurrentPage('dashboard');
     };
-    // ----------------------------------------------------
+
+    // Function to switch the main content view
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    const renderMainContent = () => {
+        switch (currentPage) {
+            case 'reports':
+                // Renders the Layout which contains the Sidebar and the Reports content
+                return <ReportsLayout onLogout={handleLogout} onPageChange={handlePageChange} />;
+            case 'dashboard':
+            default:
+                // Renders Dashboard (which now uses the extracted Sidebar)
+                return <Dashboard onLogout={handleLogout} onPageChange={handlePageChange} />;
+        }
+    };
+
 
     if (isLoggedIn) {
-        // KUNG TRUE: Ipakita ang Dashboard UI
         return (
              <div className="dashboard-container">
-                 {/* PASS the handleLogout function to Dashboard */}
-                 <Dashboard onLogout={handleLogout} /> 
+                 {renderMainContent()}
              </div>
         );
     } else {
-        // KUNG FALSE: Ipakita ang Login Form
         return (
             <div className="login-page-container">
-                {/* Ipinapasa ang function bilang prop na 'onLogin' */}
-                <LoginSignUp onLogin={handleLoginSuccess} /> 
+                <LoginSignUp onLogin={handleLoginSuccess} />
             </div>
         );
     }
