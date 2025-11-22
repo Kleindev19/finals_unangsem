@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
+// --- NEW FIREBASE IMPORTS ---
+// Import auth and signOut to handle the Firebase session end.
+// NOTE: Adjust the path (e.g., ../../../apiService) if your folder structure is different.
+import { auth } from '../../../apiService'; 
+import { signOut } from 'firebase/auth'; 
+// ----------------------------
+
 // --- INLINE SVG ICONS (Dependency-Free) ---
 const SearchIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
 const BellIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.32 20a1.94 1.94 0 0 0 3.36 0"/></svg>);
@@ -56,8 +63,8 @@ const YEAR_LEVEL_OPTIONS = ['Select Year Level', '1st Year', '2nd Year', '3rd Ye
 const SECTION_OPTIONS = ['Select Section', 'All Sections', 'Section A', 'Section B', 'Section C'];
 
 
-// --- Sidebar Component (Pure Inline Styles) ---
-const Sidebar = ({ active, isVisible, toggleSidebar, isDesktopMode }) => {
+// --- Sidebar Component (FIXED: Accepts handleLogout prop) ---
+const Sidebar = ({ active, isVisible, toggleSidebar, isDesktopMode, handleLogout }) => {
     
     // Base style for the sidebar
     const sidebarStyle = {
@@ -100,6 +107,19 @@ const Sidebar = ({ active, isVisible, toggleSidebar, isDesktopMode }) => {
         marginBottom: '0.5rem',
         cursor: 'pointer',
     });
+
+    // --- NEW: Firebase Logout Handler ---
+    const handleFirebaseLogout = async (e) => {
+        e.preventDefault();
+        try {
+            await signOut(auth); // Sign out from Firebase
+            handleLogout();      // Call App.js to set isLoggedIn to false
+        } catch (error) {
+            console.error("Error signing out: ", error);
+            // In a real app, you would show an error notification here.
+        }
+    };
+    // ------------------------------------
 
     return (
         <div style={finalStyle}>
@@ -147,7 +167,11 @@ const Sidebar = ({ active, isVisible, toggleSidebar, isDesktopMode }) => {
             </nav>
             
             <div style={{ paddingTop: '1rem', borderTop: '1px solid #065F46' }}>
-                <a href="#" style={{ display: 'flex', alignItems: 'center', padding: '0.75rem', borderRadius: '0.75rem', transition: 'background-color 0.2s', color: '#D1FAE5', background: 'none' }}
+                <a 
+                    href="#" 
+                    // --- THE FIX IS HERE: Add onClick handler to perform Firebase signOut ---
+                    onClick={handleFirebaseLogout} 
+                    style={{ display: 'flex', alignItems: 'center', padding: '0.75rem', borderRadius: '0.75rem', transition: 'background-color 0.2s', color: '#D1FAE5', background: 'none' }}
                     onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#065F46'}
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
@@ -159,8 +183,9 @@ const Sidebar = ({ active, isVisible, toggleSidebar, isDesktopMode }) => {
     );
 };
 
-// --- StatCard Component (Pure Inline Styles) ---
+// --- StatCard Component (No change) ---
 const StatCard = ({ data }) => {
+// ... existing StatCard code ...
     const Icon = data.changeIcon;
     const CardIcon = data.icon;
     return (
@@ -183,8 +208,9 @@ const StatCard = ({ data }) => {
     );
 };
 
-// --- ClassCard Component (Pure Inline Styles) ---
+// --- ClassCard Component (No change) ---
 const ClassCard = ({ data }) => {
+// ... existing ClassCard code ...
     const Icon = data.icon;
     return (
         <div style={{ padding: '1.25rem', backgroundColor: 'white', borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', border: '1px solid #E5E7EB', transition: 'all 0.3s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
@@ -222,8 +248,8 @@ const ClassCard = ({ data }) => {
 };
 
 
-// --- MAIN APP COMPONENT ---
-const App = () => {
+// --- MAIN APP COMPONENT (FIXED: Accepts onLogout prop) ---
+const App = ({ onLogout }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [institute, setInstitute] = useState(INSTITUTE_OPTIONS[0]);
     const [yearLevel, setYearLevel] = useState(YEAR_LEVEL_OPTIONS[0]);
@@ -231,7 +257,7 @@ const App = () => {
     const [isSidebarVisible, setIsSidebarVisible] = useState(false); 
     const [isDesktopMode, setIsDesktopMode] = useState(window.innerWidth >= 768);
 
-    // Function to check screen size (using 768px breakpoint)
+    // Function to check screen size
     const checkScreenSize = () => {
         setIsDesktopMode(window.innerWidth >= 768);
     };
@@ -263,66 +289,67 @@ const App = () => {
             {/* Sidebar Container */}
             <div style={{ 
                 float: isDesktopMode ? 'left' : 'none', 
-                width: isDesktopMode ? '280px' : '0', // Only allocate width if desktop
+                width: isDesktopMode ? '280px' : '0', 
                 height: isDesktopMode ? '100vh' : '0', 
-                overflow: 'hidden' // Hide the width space completely in mobile
+                overflow: 'hidden' 
             }}>
-                {/* Desktop Sidebar (Always rendered but hidden via CSS for mobile) */}
-                {isDesktopMode && <Sidebar active="dashboard" isVisible={true} toggleSidebar={()=>{}} isDesktopMode={true} />}
+                {/* Desktop Sidebar (Pass the onLogout prop as handleLogout) */}
+                {isDesktopMode && <Sidebar active="dashboard" isVisible={true} toggleSidebar={()=>{}} isDesktopMode={true} handleLogout={onLogout} />}
             </div>
 
-            {/* Mobile Slide-out Sidebar (Fixed Position) */}
+            {/* Mobile Slide-out Sidebar (Fixed Position) (Pass the onLogout prop as handleLogout) */}
             {!isDesktopMode && (
-                <Sidebar active="dashboard" isVisible={isSidebarVisible} toggleSidebar={toggleSidebar} isDesktopMode={false} />
+                <Sidebar active="dashboard" isVisible={isSidebarVisible} toggleSidebar={toggleSidebar} isDesktopMode={false} handleLogout={onLogout} />
             )}
-
 
             {/* Main Content Area Container */}
             <div style={{ 
-                marginLeft: isDesktopMode ? '280px' : '0', // Offset the main content by sidebar width
+                marginLeft: isDesktopMode ? '280px' : '0', 
                 padding: isDesktopMode ? '2rem' : '1rem', 
                 minHeight: '100vh', 
-                position: 'relative', // Context for sticky headers
-                zIndex: isSidebarVisible && !isDesktopMode ? 30 : 10 // Ensure it's below the backdrop if mobile sidebar is open
+                position: 'relative', 
+                zIndex: isSidebarVisible && !isDesktopMode ? 30 : 10 
             }}>
                 
-                {/* Top Bar (Mobile and Desktop Search/Icons) */}
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    padding: isDesktopMode ? '1rem' : '0.75rem', 
-                    backgroundColor: 'white', 
-                    borderRadius: '0.75rem', 
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', 
-                    marginBottom: '1.5rem', 
-                    gap: '1rem'
-                }}>
-                    
-                    {/* Mobile Menu Button */}
-                    {!isDesktopMode && (
-                        <button onClick={toggleSidebar} style={{ padding: '0.25rem', color: '#4B5563', background: 'none', border: 'none', cursor: 'pointer' }}>
-                            <Menu style={{ width: '1.5rem', height: '1.5rem' }} />
-                        </button>
-                    )}
+                {/* Top Bar (No change) */}
+                {/* ... existing Top Bar JSX ... */}
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: isDesktopMode ? '1rem' : '0.75rem', 
+                        backgroundColor: 'white', 
+                        borderRadius: '0.75rem', 
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', 
+                        marginBottom: '1.5rem', 
+                        gap: '1rem'
+                    }}>
+                        
+                        {/* Mobile Menu Button */}
+                        {!isDesktopMode && (
+                            <button onClick={toggleSidebar} style={{ padding: '0.25rem', color: '#4B5563', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                <Menu style={{ width: '1.5rem', height: '1.5rem' }} />
+                            </button>
+                        )}
 
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%', maxWidth: isDesktopMode ? '40rem' : '100%' }}>
-                        <Search style={{ position: 'absolute', left: '1rem', width: '1rem', height: '1rem', color: '#9CA3AF' }} />
-                        <input 
-                            type="text" 
-                            placeholder="Search students, sections, or reports..." 
-                            style={{ paddingLeft: '2.5rem', paddingRight: '1rem', padding: '0.5rem', border: '1px solid #E5E7EB', borderRadius: '0.75rem', width: '100%', fontSize: '0.875rem' }} 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%', maxWidth: isDesktopMode ? '40rem' : '100%' }}>
+                            <Search style={{ position: 'absolute', left: '1rem', width: '1rem', height: '1rem', color: '#9CA3AF' }} />
+                            <input 
+                                type="text" 
+                                placeholder="Search students, sections, or reports..." 
+                                style={{ paddingLeft: '2.5rem', paddingRight: '1rem', padding: '0.5rem', border: '1px solid #E5E7EB', borderRadius: '0.75rem', width: '100%', fontSize: '0.875rem' }} 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', minWidth: isDesktopMode ? 'auto' : '3.5rem' }}>
+                            <Bell style={{ width: '1.5rem', height: '1.5rem', color: '#6B7280', cursor: 'pointer' }} />
+                            <User style={{ width: '1.5rem', height: '1.5rem', color: '#6B7280', cursor: 'pointer' }} />
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '1rem', minWidth: isDesktopMode ? 'auto' : '3.5rem' }}>
-                        <Bell style={{ width: '1.5rem', height: '1.5rem', color: '#6B7280', cursor: 'pointer' }} />
-                        <User style={{ width: '1.5rem', height: '1.5rem', color: '#6B7280', cursor: 'pointer' }} />
-                    </div>
-                </div>
 
-                {/* Filter/Dropdown Section */}
+
+                {/* Filter/Dropdown Section (No change) */}
                 <div style={{ display: 'flex', flexDirection: isDesktopMode ? 'row' : 'column', gap: '1rem', backgroundColor: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginBottom: '2rem' }}>
                     <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '500', color: '#6B7280', marginBottom: '0.5rem' }}>Institute</label>
@@ -365,7 +392,7 @@ const App = () => {
                     </div>
                 </div>
 
-                {/* Conditional Content: My Classes and Statistics */}
+                {/* Conditional Content: My Classes and Statistics (No change) */}
                 {isDashboardReady ? (
                     <>
                         {/* Statistics Section (Grid) */}

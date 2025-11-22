@@ -15,12 +15,18 @@ const App = () => {
         setIsLoggedIn(true); 
     };
 
+    // --- NEW: Function to handle application-level logout ---
+    const handleLogout = () => {
+        setIsLoggedIn(false); 
+    };
+    // ----------------------------------------------------
+
     if (isLoggedIn) {
         // KUNG TRUE: Ipakita ang Dashboard UI
         return (
              <div className="dashboard-container">
-                 {/* Dashboard.jsx content */}
-                 <Dashboard /> 
+                 {/* PASS the handleLogout function to Dashboard */}
+                 <Dashboard onLogout={handleLogout} /> 
              </div>
         );
     } else {
