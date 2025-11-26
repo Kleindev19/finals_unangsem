@@ -12,7 +12,7 @@ const Filter = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
 );
 const Download = (props) => (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 );
 const Save = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -40,13 +40,10 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
     // Standard sidebar setup
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_COLLAPSED_WIDTH);
 
-    // --- NEW: Handle Click on Header Pills ---
-    const handleHeaderClick = (columnName) => {
-        alert(`You clicked the ${columnName} column!`);
-        // You can add logic here to:
-        // 1. Sort the table
-        // 2. Open a modal for detailed view
-        // 3. Navigate to a specific page
+    // --- UPDATED: Navigate to MultiPageGS ---
+    const handleHeaderClick = (title, type) => {
+        // We pass the 'viewType' (Activity or Attendance) and the 'title' (e.g. Activity 1)
+        onPageChange('multipage-gradesheet', { viewType: type, title: title });
     };
 
     return (
@@ -111,7 +108,7 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
                                 <th>
                                     <button 
                                         className="gs-pill gs-pill-green gs-pill-clickable"
-                                        onClick={() => handleHeaderClick('Attendance')}
+                                        onClick={() => handleHeaderClick('Attendance', 'Attendance')}
                                     >
                                         Attendance
                                     </button>
@@ -119,7 +116,7 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
                                 <th>
                                     <button 
                                         className="gs-pill gs-pill-green gs-pill-clickable"
-                                        onClick={() => handleHeaderClick('Assignment 1')}
+                                        onClick={() => handleHeaderClick('Assignment', 'Activity')}
                                     >
                                         Assignment
                                     </button>
@@ -127,7 +124,7 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
                                 <th>
                                     <button 
                                         className="gs-pill gs-pill-green gs-pill-clickable"
-                                        onClick={() => handleHeaderClick('Quizzes 1')}
+                                        onClick={() => handleHeaderClick('Quizzes', 'Activity')}
                                     >
                                         Quizzes
                                     </button>
@@ -135,7 +132,7 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
                                 <th>
                                     <button 
                                         className="gs-pill gs-pill-green gs-pill-clickable"
-                                        onClick={() => handleHeaderClick('Activity 1')}
+                                        onClick={() => handleHeaderClick('Activity', 'Activity')}
                                     >
                                         Activity
                                     </button>
@@ -147,7 +144,7 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
                                 <th>
                                     <button 
                                         className="gs-pill gs-pill-green gs-pill-clickable"
-                                        onClick={() => handleHeaderClick('Recitation')}
+                                        onClick={() => handleHeaderClick('Recitation', 'Activity')}
                                     >
                                         Recitation
                                     </button>
@@ -155,7 +152,7 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
                                 <th>
                                     <button 
                                         className="gs-pill gs-pill-green gs-pill-clickable"
-                                        onClick={() => handleHeaderClick('Assignment 2')}
+                                        onClick={() => handleHeaderClick('Assignment 2', 'Activity')}
                                     >
                                         Assignment
                                     </button>
@@ -163,7 +160,7 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
                                 <th>
                                     <button 
                                         className="gs-pill gs-pill-green gs-pill-clickable"
-                                        onClick={() => handleHeaderClick('Quizzes 2')}
+                                        onClick={() => handleHeaderClick('Quizzes 2', 'Activity')}
                                     >
                                         Quizzes
                                     </button>
@@ -171,7 +168,7 @@ const Gradesheet = ({ onLogout, onPageChange }) => {
                                 <th>
                                     <button 
                                         className="gs-pill gs-pill-green gs-pill-clickable"
-                                        onClick={() => handleHeaderClick('Activity 2')}
+                                        onClick={() => handleHeaderClick('Activity 2', 'Activity')}
                                     >
                                         Activity
                                     </button>
