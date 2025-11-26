@@ -1,114 +1,121 @@
 // src/components/assets/Dashboard/Sidebar.jsx
 
-import React, { useState, useEffect, useRef } from 'react'; 
-// NOTE: Adjust the path if your apiService is not three levels up
+import React, { useState, useEffect } from 'react'; 
 import { auth } from '../../../apiService'; 
 import { signOut } from 'firebase/auth';
 
-// --- CONSTANTS FOR SIDEBAR LOGIC ---
-export const SIDEBAR_DEFAULT_WIDTH = 80; 
-export const SIDEBAR_EXPANDED_WIDTH = 250; 
-export const PRIMARY_GREEN = '#38761d'; 
-export const HOVER_BG_GREEN = '#4a952d'; 
-export const ACTIVE_BG_GREEN = '#275d13'; 
-export const DEFAULT_TEXT_COLOR = 'white';
-// ------------------------------------------
+// --- CONSTANTS ---
+export const SIDEBAR_COLLAPSED_WIDTH = 80; 
+export const SIDEBAR_EXPANDED_WIDTH = 280; // Slightly wider to accommodate the design
+export const SIDEBAR_DEFAULT_WIDTH = SIDEBAR_EXPANDED_WIDTH; 
 
-// --- INLINE SVG ICONS (Required by Sidebar) ---
-const LayoutDashboardIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>);
-export const BarChart3Icon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17v-4"/><path d="M8 17v-1"/></svg>);
-const UserIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>);
-const ArrowRight = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>);
+// --- COLORS ---
+export const PRIMARY_GREEN = '#2e6b18'; // Adjusted to match the deeper green in photo
+export const ACTIVE_ITEM_BG = 'rgba(255, 255, 255, 0.25)'; // Lighter, glassy look
+export const HOVER_ITEM_BG = 'rgba(0, 0, 0, 0.1)';
+
+// --- INLINE ICONS ---
+// Graduation Cap (for Top Logo)
+const GraduationCapLogo = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M12 2L1 7l11 5 9-4.09V17h2V7L12 2zm1 12.09V19a4 4 0 0 1-8 0v-4.91l4 1.81 4-1.81z"/>
+    </svg>
+);
+
+const MenuIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="18" y2="18"/></svg>);
+const LayoutDashboardIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>);
+// Using a "Reading Person" icon for Reports to match the 'student' look in the reference image better, or keeping standard
+const ReportsIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5a5.5 5.5 0 0 0-5.5 5.5v11.25a.75.75 0 0 0 1.5 0V8a4 4 0 0 1 4-4 4 4 0 0 1 4 4v11.25a.75.75 0 0 0 1.5 0V8a5.5 5.5 0 0 0-5.5-5.5Z"/><path d="M5 21a1 1 0 0 1-1-1v-6.07a7.96 7.96 0 0 1 2 .87V21H5ZM18 14.8c.63-.37 1.3-.66 2-.87V20a1 1 0 0 1-1 1h-1v-6.2Z"/></svg>);
+const UserIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>);
+const LogOutIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>);
 
 const navItems = [
     { name: 'Dashboard', icon: LayoutDashboardIcon, page: 'dashboard' },
-    { name: 'Reports', icon: BarChart3Icon, page: 'reports' }, 
+    { name: 'Reports', icon: ReportsIcon, page: 'reports' },
     { name: 'Profile', icon: UserIcon, page: 'profile' },
 ];
 
-
 export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) => { 
-    // Simplified state: Removed isLockedExpanded
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true); // Default to true to match photo
     
-    // We keep timeoutRef for useEffect cleanup, but it's not used for collapse.
-    const timeoutRef = useRef(null); 
-    
-    const currentWidth = isExpanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_DEFAULT_WIDTH;
-
     useEffect(() => {
         if (onWidthChange) {
-            onWidthChange(currentWidth);
+            onWidthChange(isExpanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH);
         }
-        return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        };
-    }, [currentWidth, onWidthChange]);
+    }, [isExpanded, onWidthChange]);
 
-    // **handleNavigation is REMOVED to simplify logic**
-    
-    const handleFirebaseLogout = async (e) => {
+    const handleLogout = (e) => {
         e.preventDefault();
-        try {
-            await signOut(auth);
-            onLogout();
-        } catch (error) {
-            console.error('Error logging out:', error);
-        }
+        signOut(auth).then(onLogout);
     };
+
+    const toggleSidebar = () => setIsExpanded(!isExpanded);
     
-    // --- Helper Component for Navigation Link ---
-    // Now takes onPageChange and setIsExpanded directly
-    const NavLink = ({ item, isExpanded, currentPage, onPageChange, setIsExpanded }) => {
+    // --- Helper for Nav Link ---
+    const NavLink = ({ item, isAction = false, onClick }) => {
+        const isActive = item.page === currentPage && !isAction;
         const Icon = item.icon;
-        const isActive = item.page === currentPage;
-        
-        const baseStyle = {
-            display: 'flex', 
-            alignItems: 'center', 
-            padding: '0.75rem', 
-            borderRadius: '0.5rem', 
-            margin: '0.5rem 0',
-            transition: 'all 0.3s ease', 
-            color: DEFAULT_TEXT_COLOR, 
-            background: isActive ? ACTIVE_BG_GREEN : 'transparent', 
-            cursor: 'pointer',
-            overflow: 'hidden', 
-            whiteSpace: 'nowrap',
-            flexShrink: 0
-        };
-        
-        const handleMouseEnter = (e) => {
-            if (!isActive) e.currentTarget.style.backgroundColor = HOVER_BG_GREEN;
-        };
-        
-        const handleMouseLeave = (e) => {
-            if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
-        };
-
-        const handleClick = () => {
-             // 1. 🔥 FORCE EXPANSION: This must happen first, every time.
-             setIsExpanded(true); 
-
-             // 2. NAVIGATE: Now change the page.
-             onPageChange(item.page); 
-        }
 
         return (
-            <a
-                href="#"
-                onClick={handleClick} 
-                style={baseStyle}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
+            <div 
+                onClick={onClick ? onClick : () => onPageChange(item.page)}
+                style={{
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    // EXPANDED: Left align, COLLAPSED: Center
+                    justifyContent: isExpanded ? 'flex-start' : 'center',
+                    padding: isExpanded ? '0.9rem 1.5rem' : '0.9rem 0.5rem', 
+                    cursor: 'pointer',
+                    marginBottom: '0.8rem',
+                    transition: 'all 0.2s ease',
+                    width: isExpanded ? '90%' : '100%',
+                    marginLeft: isExpanded ? '5%' : '0',
+                    boxSizing: 'border-box',
+                    borderRadius: isExpanded ? '15px' : '0', // Rounded corners for active state
+                    
+                    // --- ACTIVE STATE STYLING (Matches the glassy green button in photo) ---
+                    backgroundColor: isActive ? ACTIVE_ITEM_BG : 'transparent',
+                    boxShadow: isActive ? '0 4px 6px rgba(0,0,0,0.2)' : 'none',
+                    border: isActive ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                }}
+                onMouseEnter={(e) => {
+                    if(!isActive) e.currentTarget.style.backgroundColor = isActive ? ACTIVE_ITEM_BG : HOVER_ITEM_BG;
+                }}
+                onMouseLeave={(e) => {
+                    if(!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+                }}
             >
-                <Icon style={{ width: '1.5rem', height: '1.5rem', color: 'white' }} />
-                {isExpanded && ( 
-                    <span style={{ marginLeft: '1rem', fontSize: '1rem', fontWeight: '500', transition: 'opacity 0.3s ease, transform 0.3s ease' }}>
+                {/* Icon */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginRight: isExpanded ? '1rem' : '0'
+                }}>
+                    <Icon style={{ 
+                        width: '1.4rem', 
+                        height: '1.4rem', 
+                        color: 'white',
+                        // Add a slight drop shadow to icons
+                        filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.3))'
+                    }} />
+                </div>
+
+                {/* Text Label */}
+                {isExpanded && (
+                    <span style={{ 
+                        color: 'white',
+                        fontSize: '1rem',
+                        fontWeight: '500',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: '0.5px',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                    }}>
                         {item.name}
                     </span>
                 )}
-            </a>
+            </div>
         );
     };
 
@@ -116,74 +123,114 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
         <div 
             style={{
                 position: 'fixed',
-                top: 0,
-                left: 0,
-                height: '100vh',
-                zIndex: 50,
-                width: currentWidth, 
+                top: 0, left: 0, height: '100vh', zIndex: 50,
+                width: isExpanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH,
                 backgroundColor: PRIMARY_GREEN,
-                padding: '1.5rem 1rem',
-                boxShadow: '4px 0 10px rgba(0, 0, 0, 0.1)',
-                transition: 'width 0.4s ease-in-out', 
-                overflowX: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                boxSizing: 'border-box'
+                // Add a subtle gradient to match the depth in the photo
+                backgroundImage: 'linear-gradient(180deg, #38761d 0%, #275214 100%)',
+                display: 'flex', flexDirection: 'column',
+                transition: 'width 0.3s ease',
+                overflow: 'hidden',
+                boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
             }}
-            // REMOVED onMouseEnter and onMouseLeave here
         >
+            {/* 1. HEADER SECTION (Matches "Progress Tracker" Box) */}
+            <div style={{
+                padding: '2rem 1.5rem 1rem 1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: isExpanded ? 'flex-start' : 'center',
+                gap: '1rem',
+                borderBottom: isExpanded ? '1px solid rgba(255,255,255,0.1)' : 'none',
+            }}>
+                {/* White Logo Box */}
+                <div style={{ 
+                    width: '3rem', 
+                    height: '3rem', 
+                    backgroundColor: 'white', 
+                    borderRadius: '10px', // Soft rounded corners
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+                    flexShrink: 0
+                }}>
+                    <GraduationCapLogo style={{ width: '1.8rem', height: '1.8rem', color: '#1a1a1a' }} />
+                </div>
+
+                {/* Text (Only Visible When Expanded) */}
+                {isExpanded && (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ 
+                            color: 'white', 
+                            fontWeight: '800', 
+                            fontSize: '1.1rem',
+                            lineHeight: '1.2',
+                            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                        }}>
+                            Progress Tracker
+                        </span>
+                        <span style={{ 
+                            color: 'rgba(255,255,255,0.7)', 
+                            fontSize: '0.75rem',
+                            fontWeight: '400' 
+                        }}>
+                            Professor Portal
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            {/* 2. HAMBURGER MENU (Located below header) */}
             <div 
                 style={{ 
-                    marginBottom: '2rem', 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center',
-                    cursor: 'pointer' 
+                    padding: '1rem 1.5rem',
+                    display: 'flex',
+                    justifyContent: isExpanded ? 'flex-start' : 'center',
                 }}
-                // Added click handler to toggle sidebar when clicking the logo/header
-                onClick={() => setIsExpanded(!isExpanded)} 
             >
-                <span style={{ color: 'white', fontSize: isExpanded ? '1.5rem' : '1.2rem', fontWeight: 'bold', transition: 'font-size 0.3s ease' }}>
-                    {isExpanded ? 'CDM Tracker' : 'CD'}
-                </span>
-            </div>
-
-            <nav style={{ flexGrow: 1 }}>
-                {navItems.map((item) => (
-                    <NavLink 
-                        key={item.page} 
-                        item={item} 
-                        isExpanded={isExpanded} 
-                        currentPage={currentPage} 
-                        onPageChange={onPageChange} // Pass directly
-                        setIsExpanded={setIsExpanded} // Pass setter
-                    />
-                ))}
-            </nav>
-
-            <div style={{ paddingTop: '1rem', borderTop: '1px solid ' + HOVER_BG_GREEN }}>
-                <a
-                    href="#"
-                    onClick={handleFirebaseLogout}
+                <div 
+                    onClick={toggleSidebar}
                     style={{ 
-                        display: 'flex', 
-                        // ... (rest of styles)
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = HOVER_BG_GREEN;
-                        e.currentTarget.style.transform = 'scale(1.02)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.transform = 'scale(1)';
+                        cursor: 'pointer', 
+                        color: 'white',
+                        opacity: 0.9,
+                        display: 'flex', alignItems: 'center'
                     }}
                 >
-                    <ArrowRight style={{ width: '1.25rem', height: '1.25rem', transform: 'rotate(180deg)' }} />
-                    {isExpanded && (
-                         <span style={{ marginLeft: '1rem', fontSize: '1rem', fontWeight: '500' }}>Logout</span>
-                    )}
-                </a>
+                    <MenuIcon style={{ width: '1.8rem', height: '1.8rem' }} />
+                </div>
             </div>
+
+            {/* 3. NAVIGATION ITEMS */}
+            <nav style={{ 
+                flexGrow: 1, 
+                width: '100%', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                paddingTop: '1rem' 
+            }}>
+                {navItems.map(item => <NavLink key={item.page} item={item} />)}
+                
+                {/* Logout Button */}
+                <NavLink 
+                    item={{ name: 'Logout', icon: LogOutIcon }} 
+                    isAction={true} 
+                    onClick={handleLogout} 
+                />
+            </nav>
+
+            {/* 4. FOOTER DIVIDER (Visual detail from photo) */}
+            <div style={{
+                height: '4px',
+                width: '100%',
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                marginTop: 'auto',
+                marginBottom: '2rem'
+            }}></div>
         </div>
     );
 };
+
+export { ReportsIcon };

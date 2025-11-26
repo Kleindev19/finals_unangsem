@@ -1,0 +1,285 @@
+/* src/components/assets/Dashboard/ViewStuds.css */
+
+/* --- LAYOUT --- */
+.view-studs-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #FDFDF5; /* Cream/Beige background from image */
+    font-family: 'Inter', sans-serif;
+}
+
+.view-studs-main {
+    flex-grow: 1;
+    padding: 1.5rem 2rem;
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- HEADER --- */
+.vs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.vs-search-container {
+    position: relative;
+    width: 400px;
+}
+
+.vs-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA3AF;
+    width: 18px;
+    height: 18px;
+}
+
+.vs-search-input {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    outline: none;
+    background-color: white;
+}
+
+.vs-header-actions {
+    display: flex;
+    gap: 1.5rem;
+    color: #6B7280;
+}
+
+.vs-icon {
+    cursor: pointer;
+}
+
+/* --- FILTER CARD (Top) --- */
+.vs-filter-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 2rem;
+    align-items: flex-end;
+}
+
+.vs-filter-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.vs-filter-group label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.vs-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.vs-select-wrapper select {
+    width: 100%;
+    appearance: none;
+    padding: 0.6rem 1rem;
+    background-color: #E8E8E8; /* Light gray bg for inputs */
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #1F2937;
+    cursor: pointer;
+}
+
+.vs-select-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #4B5563;
+}
+
+/* --- MAIN CONTENT CARD --- */
+.vs-content-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border: 1px solid #E5E7EB;
+}
+
+.vs-card-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #1F2937;
+    margin: 0 0 0.2rem 0;
+}
+
+.vs-subtitle {
+    font-size: 1.1rem;
+    color: #3B82F6; /* Blue link color */
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* --- GREEN SHARE BANNER --- */
+.vs-share-banner {
+    background-color: #6EE7B7; /* Bright Green */
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.vs-share-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1F2937;
+    margin-bottom: 0.25rem;
+}
+
+.vs-share-banner p {
+    font-size: 0.9rem;
+    color: #374151;
+    margin: 0 0 1rem 0;
+}
+
+.vs-link-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.vs-link-row input {
+    flex-grow: 1;
+    padding: 0.5rem;
+    border: 1px solid white;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background-color: white;
+    color: #4B5563;
+    outline: none;
+}
+
+.vs-copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.vs-link-note {
+    font-size: 0.75rem !important;
+    font-weight: 500;
+    margin-bottom: 0 !important;
+}
+
+/* --- ACTION BAR & BUTTONS --- */
+.vs-accordion-header {
+    background-color: #E5E7EB;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.vs-buttons-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.vs-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: white;
+}
+
+.vs-btn-add {
+    background-color: #4ADE80; /* Lighter Green */
+    color: #064E3B; /* Dark green text */
+}
+
+.vs-btn-export {
+    background-color: #4ADE80;
+    color: #064E3B;
+}
+
+/* --- TABLE STYLING --- */
+.vs-table-container {
+    overflow-x: auto;
+}
+
+.vs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.vs-table th {
+    text-align: left;
+    padding: 0.8rem;
+    background-color: #F9FAFB;
+    color: #6B7280;
+    font-weight: 600;
+    border-bottom: 1px solid #E5E7EB;
+    white-space: nowrap;
+}
+
+.vs-table td {
+    padding: 0.8rem;
+    border-bottom: 1px solid #E5E7EB;
+    color: #374151;
+    vertical-align: middle;
+}
+
+/* Limit width of Course column */
+.vs-col-course {
+    max-width: 200px;
+    line-height: 1.3;
+}
+
+.vs-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6B7280;
+    padding: 4px;
+}
+
+.vs-icon-btn:hover {
+    color: #1F2937;
+}

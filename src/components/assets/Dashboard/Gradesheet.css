@@ -1,0 +1,318 @@
+/* src/components/assets/Dashboard/Gradesheet.css */
+
+.gradesheet-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #FDFDF5; /* Cream background */
+    font-family: 'Inter', sans-serif;
+}
+
+.gradesheet-main {
+    flex-grow: 1;
+    padding: 1.5rem 2rem;
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- HEADER --- */
+.gs-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.gs-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.gs-back-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6B7280;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.gs-back-btn:hover {
+    background-color: #E5E7EB;
+    color: #1F2937;
+}
+
+.gs-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1F2937;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.gs-subtitle {
+    font-size: 0.9rem;
+    color: #6B7280;
+    margin: 0;
+}
+
+.gs-header-right {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.gs-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.gs-btn-white {
+    background-color: white;
+    border-color: #E5E7EB;
+    color: #374151;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.gs-btn-primary {
+    background-color: #2563EB; /* Blue save button */
+    color: white;
+}
+
+/* --- TOOLBAR --- */
+.gs-toolbar {
+    background-color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px 8px 0 0; /* Rounded top only */
+    border: 1px solid #E5E7EB;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gs-tools-left {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.gs-tool-btn {
+    background-color: #F3F4F6;
+    border: none;
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+}
+
+.gs-icon-only-btn {
+    background: none;
+    border: none;
+    color: #6B7280;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.gs-search-wrapper {
+    position: relative;
+    width: 250px;
+}
+
+.gs-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA3AF;
+}
+
+.gs-search-input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.2rem;
+    background-color: #F3F4F6;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+/* --- TABLE --- */
+.gs-table-wrapper {
+    overflow-x: auto;
+    background-color: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    margin-bottom: 2rem;
+}
+
+.gs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.gs-table th {
+    padding: 0.8rem;
+    background-color: #F9FAFB;
+    border-bottom: 1px solid #E5E7EB;
+    border-right: 1px solid #F3F4F6;
+    text-align: center;
+    color: #374151;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Styles for the "Fixed" info columns */
+.gs-table th.fixed-col, .gs-table td.fixed-col {
+    background-color: #F9FAFB; /* Slightly distinctive bg */
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+}
+/* Adjust sticky positioning if needed for multiple columns, simple CSS here assumes mostly desktop */
+
+.gs-table td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #E5E7EB;
+    border-right: 1px solid #F3F4F6;
+    text-align: center;
+    background-color: white;
+}
+
+.gs-table td.fixed-col {
+    background-color: #Fdfdfd; /* Match row bg */
+    border-right: 2px solid #E5E7EB; /* Divider */
+}
+
+/* Green Pills in Header */
+.gs-pill {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-block;
+    
+    /* Ensure font inherits properly if switched to button */
+    font-family: inherit;
+    line-height: normal;
+}
+
+.gs-pill-green {
+    background-color: #4ADE80; /* Bright Green */
+    color: #064E3B; /* Dark Green Text */
+    box-shadow: 0 2px 4px rgba(74, 222, 128, 0.3);
+}
+
+/* --- NEW: Interactive Clickable Pill Styles --- */
+.gs-pill-clickable {
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    /* Prevent text selection when clicking rapidly */
+    user-select: none; 
+}
+
+.gs-pill-clickable:hover {
+    background-color: #38a36b; /* Slightly darker/richer green on hover */
+    color: white; /* Make text white on hover for contrast */
+    transform: translateY(-2px); /* Lift effect */
+    box-shadow: 0 4px 8px rgba(74, 222, 128, 0.5); /* Stronger shadow */
+}
+
+.gs-pill-clickable:active {
+    transform: translateY(0); /* Press down effect */
+    box-shadow: 0 1px 2px rgba(74, 222, 128, 0.3);
+}
+
+
+/* Input Fields in Grid */
+.gs-input {
+    width: 100%;
+    max-width: 50px;
+    text-align: center;
+    border: 1px solid #E5E7EB;
+    padding: 0.4rem;
+    border-radius: 4px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.gs-input:focus {
+    border-color: #3B82F6;
+    outline: none;
+    background-color: #EFF6FF;
+}
+
+/* Badges */
+.gs-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #E5E7EB;
+    background-color: white;
+}
+.badge-reg { color: #374151; }
+.badge-irreg { color: #374151; }
+
+.font-bold { font-weight: 700; color: #1F2937; }
+.gs-id-cell { color: #6B7280; font-family: monospace; }
+
+/* --- FOOTER CARD --- */
+.gs-footer-card {
+    background-color: white;
+    width: fit-content;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-top: auto; /* Push to bottom if space allows */
+}
+
+.gs-footer-label {
+    display: block;
+    font-size: 0.85rem;
+    color: #6B7280;
+    margin-bottom: 0.2rem;
+}
+
+.gs-footer-count {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1F2937;
+    line-height: 1;
+}
+
+.gs-footer-icon-box {
+    background-color: #D1FAE5; /* Light mint/teal */
+    color: #10B981;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
