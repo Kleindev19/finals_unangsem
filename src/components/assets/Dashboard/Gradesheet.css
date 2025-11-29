@@ -23,6 +23,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    flex-wrap: wrap; /* Prevent header overlap */
+    gap: 1rem;
 }
 
 .gs-header-left {
@@ -92,7 +94,7 @@
     color: white;
 }
 
-/* --- TOOLBAR --- */
+/* --- TOOLBAR (UPDATED) --- */
 .gs-toolbar {
     background-color: white;
     padding: 0.75rem 1rem;
@@ -102,12 +104,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap; /* Allows wrapping on small screens */
+    gap: 1rem; /* Adds space between the buttons and search bar */
 }
 
 .gs-tools-left {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    flex-wrap: wrap; /* Allows buttons to wrap if very narrow */
 }
 
 .gs-tool-btn {
@@ -122,6 +127,7 @@
     align-items: center;
     gap: 0.3rem;
     cursor: pointer;
+    white-space: nowrap; /* Prevents text breaking inside buttons */
 }
 
 .gs-icon-only-btn {
@@ -135,6 +141,7 @@
 .gs-search-wrapper {
     position: relative;
     width: 250px;
+    min-width: 200px; /* Prevents it from getting too small */
 }
 
 .gs-search-icon {
@@ -153,6 +160,7 @@
     border-radius: 20px;
     font-size: 0.85rem;
     outline: none;
+    box-sizing: border-box; /* Ensures padding doesn't expand width */
 }
 
 /* --- TABLE --- */
