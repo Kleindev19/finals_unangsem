@@ -3,19 +3,19 @@
 import React, { useState, useEffect } from 'react'; 
 import { auth } from '../../../apiService'; 
 import { signOut } from 'firebase/auth';
+import { LogoutModal } from './ModalComponents'; // --- IMPORT NEW MODAL ---
 
 // --- CONSTANTS ---
 export const SIDEBAR_COLLAPSED_WIDTH = 80; 
-export const SIDEBAR_EXPANDED_WIDTH = 280; // Slightly wider to accommodate the design
+export const SIDEBAR_EXPANDED_WIDTH = 280; 
 export const SIDEBAR_DEFAULT_WIDTH = SIDEBAR_EXPANDED_WIDTH; 
 
 // --- COLORS ---
-export const PRIMARY_GREEN = '#2e6b18'; // Adjusted to match the deeper green in photo
-export const ACTIVE_ITEM_BG = 'rgba(255, 255, 255, 0.25)'; // Lighter, glassy look
+export const PRIMARY_GREEN = '#2e6b18'; 
+export const ACTIVE_ITEM_BG = 'rgba(255, 255, 255, 0.25)'; 
 export const HOVER_ITEM_BG = 'rgba(0, 0, 0, 0.1)';
 
 // --- INLINE ICONS ---
-// Graduation Cap (for Top Logo)
 const GraduationCapLogo = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
         <path d="M12 2L1 7l11 5 9-4.09V17h2V7L12 2zm1 12.09V19a4 4 0 0 1-8 0v-4.91l4 1.81 4-1.81z"/>
@@ -24,7 +24,6 @@ const GraduationCapLogo = (props) => (
 
 const MenuIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="18" y2="18"/></svg>);
 const LayoutDashboardIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>);
-// Using a "Reading Person" icon for Reports to match the 'student' look in the reference image better, or keeping standard
 const ReportsIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5a5.5 5.5 0 0 0-5.5 5.5v11.25a.75.75 0 0 0 1.5 0V8a4 4 0 0 1 4-4 4 4 0 0 1 4 4v11.25a.75.75 0 0 0 1.5 0V8a5.5 5.5 0 0 0-5.5-5.5Z"/><path d="M5 21a1 1 0 0 1-1-1v-6.07a7.96 7.96 0 0 1 2 .87V21H5ZM18 14.8c.63-.37 1.3-.66 2-.87V20a1 1 0 0 1-1 1h-1v-6.2Z"/></svg>);
 const UserIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>);
 const LogOutIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>);
@@ -36,22 +35,34 @@ const navItems = [
 ];
 
 export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) => { 
-    const [isExpanded, setIsExpanded] = useState(true); // Default to true to match photo
-    
+    const [isExpanded, setIsExpanded] = useState(true); 
+    // --- STATE FOR LOGOUT MODAL ---
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
     useEffect(() => {
         if (onWidthChange) {
             onWidthChange(isExpanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH);
         }
     }, [isExpanded, onWidthChange]);
 
-    const handleLogout = (e) => {
+    // 1. Trigger the Modal Opening
+    const handleLogoutClick = (e) => {
         e.preventDefault();
-        signOut(auth).then(onLogout);
+        setIsLogoutModalOpen(true);
+    };
+
+    // 2. Perform Actual Logout (Called by Modal "Yes" button)
+    const confirmLogout = () => {
+        signOut(auth)
+            .then(() => {
+                setIsLogoutModalOpen(false); // Close modal
+                onLogout(); // Redirect to login
+            })
+            .catch((error) => console.error("Logout Error:", error));
     };
 
     const toggleSidebar = () => setIsExpanded(!isExpanded);
     
-    // --- Helper for Nav Link ---
     const NavLink = ({ item, isAction = false, onClick }) => {
         const isActive = item.page === currentPage && !isAction;
         const Icon = item.icon;
@@ -62,7 +73,6 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 style={{
                     display: 'flex', 
                     alignItems: 'center', 
-                    // EXPANDED: Left align, COLLAPSED: Center
                     justifyContent: isExpanded ? 'flex-start' : 'center',
                     padding: isExpanded ? '0.9rem 1.5rem' : '0.9rem 0.5rem', 
                     cursor: 'pointer',
@@ -71,9 +81,7 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                     width: isExpanded ? '90%' : '100%',
                     marginLeft: isExpanded ? '5%' : '0',
                     boxSizing: 'border-box',
-                    borderRadius: isExpanded ? '15px' : '0', // Rounded corners for active state
-                    
-                    // --- ACTIVE STATE STYLING (Matches the glassy green button in photo) ---
+                    borderRadius: isExpanded ? '15px' : '0', 
                     backgroundColor: isActive ? ACTIVE_ITEM_BG : 'transparent',
                     boxShadow: isActive ? '0 4px 6px rgba(0,0,0,0.2)' : 'none',
                     border: isActive ? '1px solid rgba(255,255,255,0.1)' : 'none',
@@ -85,7 +93,6 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                     if(!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                 }}
             >
-                {/* Icon */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -97,12 +104,10 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                         width: '1.4rem', 
                         height: '1.4rem', 
                         color: 'white',
-                        // Add a slight drop shadow to icons
                         filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.3))'
                     }} />
                 </div>
 
-                {/* Text Label */}
                 {isExpanded && (
                     <span style={{ 
                         color: 'white',
@@ -126,7 +131,6 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 top: 0, left: 0, height: '100vh', zIndex: 50,
                 width: isExpanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH,
                 backgroundColor: PRIMARY_GREEN,
-                // Add a subtle gradient to match the depth in the photo
                 backgroundImage: 'linear-gradient(180deg, #38761d 0%, #275214 100%)',
                 display: 'flex', flexDirection: 'column',
                 transition: 'width 0.3s ease',
@@ -134,7 +138,6 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
             }}
         >
-            {/* 1. HEADER SECTION (Matches "Progress Tracker" Box) */}
             <div style={{
                 padding: '2rem 1.5rem 1rem 1.5rem',
                 display: 'flex',
@@ -143,12 +146,11 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 gap: '1rem',
                 borderBottom: isExpanded ? '1px solid rgba(255,255,255,0.1)' : 'none',
             }}>
-                {/* White Logo Box */}
                 <div style={{ 
                     width: '3rem', 
                     height: '3rem', 
                     backgroundColor: 'white', 
-                    borderRadius: '10px', // Soft rounded corners
+                    borderRadius: '10px', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
@@ -158,7 +160,6 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                     <GraduationCapLogo style={{ width: '1.8rem', height: '1.8rem', color: '#1a1a1a' }} />
                 </div>
 
-                {/* Text (Only Visible When Expanded) */}
                 {isExpanded && (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ 
@@ -181,7 +182,6 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 )}
             </div>
 
-            {/* 2. HAMBURGER MENU (Located below header) */}
             <div 
                 style={{ 
                     padding: '1rem 1.5rem',
@@ -202,7 +202,6 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 </div>
             </div>
 
-            {/* 3. NAVIGATION ITEMS */}
             <nav style={{ 
                 flexGrow: 1, 
                 width: '100%', 
@@ -213,15 +212,14 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
             }}>
                 {navItems.map(item => <NavLink key={item.page} item={item} />)}
                 
-                {/* Logout Button */}
                 <NavLink 
                     item={{ name: 'Logout', icon: LogOutIcon }} 
                     isAction={true} 
-                    onClick={handleLogout} 
+                    // Changed: Now clicks open the modal
+                    onClick={handleLogoutClick} 
                 />
             </nav>
 
-            {/* 4. FOOTER DIVIDER (Visual detail from photo) */}
             <div style={{
                 height: '4px',
                 width: '100%',
@@ -229,6 +227,14 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 marginTop: 'auto',
                 marginBottom: '2rem'
             }}></div>
+
+            {/* --- RENDER THE MODAL HERE --- */}
+            <LogoutModal 
+                isOpen={isLogoutModalOpen} 
+                onClose={() => setIsLogoutModalOpen(false)} 
+                onConfirm={confirmLogout} 
+            />
+
         </div>
     );
 };

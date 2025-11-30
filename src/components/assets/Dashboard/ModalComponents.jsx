@@ -1,6 +1,7 @@
 // src/components/assets/Dashboard/ModalComponents.jsx
 
 import React from 'react';
+import ReactDOM from 'react-dom'; // <--- IMPORTANT IMPORT FOR THE FIX
 import './ModalComponents.css';
 
 // --- ICONS ---
@@ -20,10 +21,19 @@ const CalendarIcon = () => (
     </svg>
 );
 
-// --- 1. ADD COLUMN MODAL (For Main Gradesheet) ---
+const AlertTriangle = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 1rem auto' }}>
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+);
+
+// --- 1. ADD COLUMN MODAL ---
 export const AddColumnModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
-    return (
+    // We use Portal here too just in case you use this modal inside a constrained container later
+    return ReactDOM.createPortal(
         <div className="modal-overlay">
             <div className="modal-card">
                 <button className="modal-close" onClick={onClose}><XIcon /></button>
@@ -63,14 +73,15 @@ export const AddColumnModal = ({ isOpen, onClose }) => {
                     Add Column
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
-// --- 2. ADD STUDENT MODAL (Add Row) ---
+// --- 2. ADD STUDENT MODAL ---
 export const AddStudentModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
-    return (
+    return ReactDOM.createPortal(
         <div className="modal-overlay">
             <div className="modal-card">
                 <button className="modal-close" onClick={onClose}><XIcon /></button>
@@ -99,24 +110,20 @@ export const AddStudentModal = ({ isOpen, onClose }) => {
                     Add Row
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
-// --- 3. DYNAMIC ACTIVITY/ASSIGNMENT/QUIZ MODAL ---
-// UPDATED: Now accepts a 'title' prop to change the header text
+// --- 3. DYNAMIC ACTIVITY MODAL ---
 export const ActivityModal = ({ isOpen, onClose, title }) => {
     if (!isOpen) return null;
-
-    // Default to "Activity" if no title is passed, otherwise use the passed title (e.g., "Assignment")
     const displayTitle = title || "Activity";
 
-    return (
+    return ReactDOM.createPortal(
         <div className="modal-overlay">
             <div className="modal-card">
                 <button className="modal-close" onClick={onClose}><XIcon /></button>
-                
-                {/* DYNAMIC TITLE HERE */}
                 <h2 className="modal-title">{displayTitle}</h2>
                 
                 <div className="modal-form-group">
@@ -132,11 +139,43 @@ export const ActivityModal = ({ isOpen, onClose, title }) => {
                     <input type="text" placeholder="Enter Number of Items" className="modal-input" />
                 </div>
 
-                {/* DYNAMIC BUTTON TEXT */}
                 <button className="modal-action-btn" onClick={() => { alert(`${displayTitle} Column Added!`); onClose(); }}>
                     Add {displayTitle}
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
+    );
+};
+
+// --- 4. LOGOUT CONFIRMATION MODAL (FIXED) ---
+export const LogoutModal = ({ isOpen, onClose, onConfirm }) => {
+    if (!isOpen) return null;
+
+    // We use ReactDOM.createPortal to "teleport" this HTML to the document.body
+    // ensuring it sits on top of EVERYTHING, regardless of the Sidebar's overflow:hidden.
+    return ReactDOM.createPortal(
+        <div className="modal-overlay">
+            <div className="modal-card" style={{ width: '350px', textAlign: 'center' }}>
+                <button className="modal-close" onClick={onClose}><XIcon /></button>
+                
+                <AlertTriangle />
+                
+                <h2 className="modal-title" style={{ marginBottom: '0.5rem' }}>Log Out?</h2>
+                <p style={{ color: '#666', marginBottom: '2rem' }}>
+                    Are you sure you want to exit the application?
+                </p>
+                
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="modal-btn-secondary" onClick={onClose}>
+                        Cancel
+                    </button>
+                    <button className="modal-btn-danger" onClick={onConfirm}>
+                        Yes, Log Out
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body // <--- This is the target destination
     );
 };
