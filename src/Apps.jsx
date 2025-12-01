@@ -1,3 +1,5 @@
+// src/Apps.jsx
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 // --- ICONS ---
@@ -38,24 +40,29 @@ const _decryptSecureToken = () => {
     }
 };
 
-// --- TYPEWRITER COMPONENT (Memoized) ---
+// --- TYPEWRITER COMPONENT (FIXED) ---
+// We removed the dependency on previous state ((prev) => ...) to fix the skipping bug.
 const TypewriterEffect = React.memo(({ text, onComplete }) => {
     const [displayedText, setDisplayedText] = useState('');
-    const indexRef = useRef(0);
 
     useEffect(() => {
+        // 1. Reset state immediately
         setDisplayedText('');
-        indexRef.current = 0;
+        
+        // 2. Use local variables to build the string (This fixes "Hllo" bug)
+        let currentString = '';
+        let currentIndex = 0;
 
         const intervalId = setInterval(() => {
-            if (indexRef.current < text.length) {
-                setDisplayedText((prev) => prev + text.charAt(indexRef.current));
-                indexRef.current += 1;
+            if (currentIndex < text.length) {
+                currentString += text.charAt(currentIndex);
+                setDisplayedText(currentString); // Set exact string, don't append blindly
+                currentIndex++;
             } else {
                 clearInterval(intervalId);
                 if (onComplete) onComplete();
             }
-        }, 10); // Speed: 10ms per character
+        }, 20); // Slightly adjusted speed (20ms) for better reliability than 10ms
 
         return () => clearInterval(intervalId);
     }, [text, onComplete]);
@@ -103,7 +110,6 @@ You are 'Cidi', the official AI assistant for Colegio de Montalban (CDM).
 const CdmChatbot = () => {
     const [isChatOpen, setIsChatOpen] = useState(false);
     
-    // FIXED: "Hello" is now sober (corrected spelling)
     const [messages, setMessages] = useState([
         { role: 'bot', text: "Hello! I am Cidi, your virtual assistant for Colegio de Montalban. Musta? How can I help you with the portal today?" }
     ]);

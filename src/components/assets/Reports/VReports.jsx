@@ -116,8 +116,11 @@ const VReports = ({ onLogout, onPageChange }) => {
                                         <div className="vr-actions">
                                             <button className="vr-btn-contact">Contact</button>
                                             
-                                            {/* --- FIX IS HERE: Redirects to 'view-rd' (Analytics Page) --- */}
-                                            <button className="vr-btn-view" onClick={() => onPageChange('view-rd')}>
+                                            {/* --- UPDATED: Pass Student Object --- */}
+                                            <button 
+                                                className="vr-btn-view" 
+                                                onClick={() => onPageChange('view-rd', { student: student })}
+                                            >
                                                 View Details
                                             </button>
 

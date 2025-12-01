@@ -134,8 +134,17 @@ function App() {
                 return <ReportsLayout onLogout={handleLogout} onPageChange={handlePageChange} />;
             case 'v-reports': 
                 return <VReports onLogout={handleLogout} onPageChange={handlePageChange} />;
+            
+            // --- UPDATED: Pass the specific student data to ViewRD ---
             case 'view-rd': 
-                return <ViewRD onLogout={handleLogout} onPageChange={handlePageChange} />;
+                return (
+                    <ViewRD 
+                        onLogout={handleLogout} 
+                        onPageChange={handlePageChange} 
+                        studentData={pageParams.student} 
+                    />
+                );
+
             case 'profile':
                 return <ProfileLayout onLogout={handleLogout} onPageChange={handlePageChange} profileData={profileData} />; 
             case 'dashboard':

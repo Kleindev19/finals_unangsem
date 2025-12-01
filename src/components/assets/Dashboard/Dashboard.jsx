@@ -68,12 +68,12 @@ const ClassCard = ({ data, onClick }) => (
     </div>
 );
 
-// --- NEW: ANIMATED GREETING COMPONENT ---
+// --- ANIMATED GREETING COMPONENT (FIXED LOGIC) ---
 const GreetingSection = ({ profileData }) => {
     const [text, setText] = useState('');
-    // Use displayName or fallback
+    
     const userName = profileData?.displayName || profileData?.fullName || 'Professor';
-    const fullText = `Good Day, ${userName}`;
+    const fullText = `Good Day, ${userName}`; 
 
     // Get initials for fallback avatar
     const getInitials = (name) => {
@@ -85,18 +85,22 @@ const GreetingSection = ({ profileData }) => {
     const fallbackAvatar = `https://ui-avatars.com/api/?name=${getInitials(userName)}&background=38761d&color=fff&size=128&bold=true`;
     const avatarSrc = profileData?.photoURL || fallbackAvatar;
 
-    // Typing Effect Logic
+    // Fixed Typing Logic: Uses local variable to avoid skipped characters
     useEffect(() => {
+        setText(''); // Reset immediately
+        
+        let currentString = '';
         let i = 0;
-        setText(''); // Reset on mount
+
         const timer = setInterval(() => {
             if (i < fullText.length) {
-                setText((prev) => prev + fullText.charAt(i));
+                currentString += fullText.charAt(i);
+                setText(currentString);
                 i++;
             } else {
                 clearInterval(timer);
             }
-        }, 50); // Speed: 50ms per character
+        }, 50);
 
         return () => clearInterval(timer);
     }, [fullText]);
@@ -147,7 +151,6 @@ const GreetingSection = ({ profileData }) => {
                 <span className="blinking-cursor" style={{ color: '#38761d', marginLeft: '5px' }}>|</span>
             </h1>
 
-            {/* Simple CSS for blinking cursor injected here */}
             <style>
                 {`
                     @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
@@ -187,7 +190,7 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
                     </div>
                 </div>
 
-                {/* --- NEW GREETING SECTION --- */}
+                {/* --- GREETING SECTION --- */}
                 <GreetingSection profileData={profileData} />
 
                 {/* Filters Section */}
