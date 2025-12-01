@@ -1,6 +1,6 @@
 // src/components/assets/Dashboard/Dashboard.jsx
 
-import React, { useState, useEffect, useRef } from 'react'; // Added useRef
+import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar, SIDEBAR_DEFAULT_WIDTH } from './Sidebar.jsx';
 
 // --- ICONS ---
@@ -30,44 +30,6 @@ const CLASSES_DATA = [
     { title: 'CS 101 - B', subtitle: 'Information Assurance & Security', students: 38, color: '#EAB308' },
     { title: 'CS 101 - C', subtitle: 'Human & Computer Interaction', students: 35, color: '#F97316' },
 ];
-
-// --- COMPONENTS ---
-const MetricCard = ({ data }) => (
-    <div className="metric-card">
-        <div className="metric-header">
-            <div className="metric-icon-box" style={{ backgroundColor: `${data.color}20`, color: data.color }}>
-                <data.icon size={24} />
-            </div>
-            {data.change && (
-                <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#10B981', backgroundColor: '#ECFDF5', padding: '0.2rem 0.5rem', borderRadius: '1rem' }}>
-                    {data.change}
-                </span>
-            )}
-        </div>
-        <div>
-            <h3 style={{ fontSize: '2rem', fontWeight: '700', margin: 0, color: '#1F2937' }}>{data.value}</h3>
-            <p style={{ color: '#6B7280', margin: 0 }}>{data.label}</p>
-        </div>
-    </div>
-);
-
-const ClassCard = ({ data, onClick }) => (
-    <div className="class-card" onClick={onClick} style={{ cursor: 'pointer' }}>
-        <div className="class-icon-header" style={{ backgroundColor: data.color, boxShadow: `0 4px 10px ${data.color}50` }}>
-            <BookOpen size={24} color="white" />
-        </div>
-        <h4 className="class-card-title">{data.title}</h4>
-        <p className="class-card-subtitle">{data.subtitle}</p>
-        <div className="class-card-footer">
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <Users size={16} /> {data.students} Students
-            </span>
-            <span className="view-link" style={{ color: data.color }}>
-                View <ArrowRight size={16} />
-            </span>
-        </div>
-    </div>
-);
 
 // --- ANIMATED GREETING COMPONENT ---
 const GreetingSection = ({ profileData }) => {
@@ -150,6 +112,43 @@ const GreetingSection = ({ profileData }) => {
     );
 };
 
+const ClassCard = ({ data, onClick }) => (
+    <div className="class-card" onClick={onClick} style={{ cursor: 'pointer' }}>
+        <div className="class-icon-header" style={{ backgroundColor: data.color, boxShadow: `0 4px 10px ${data.color}50` }}>
+            <BookOpen size={24} color="white" />
+        </div>
+        <h4 className="class-card-title">{data.title}</h4>
+        <p className="class-card-subtitle">{data.subtitle}</p>
+        <div className="class-card-footer">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <Users size={16} /> {data.students} Students
+            </span>
+            <span className="view-link" style={{ color: data.color }}>
+                View <ArrowRight size={16} />
+            </span>
+        </div>
+    </div>
+);
+
+const MetricCard = ({ data }) => (
+    <div className="metric-card">
+        <div className="metric-header">
+            <div className="metric-icon-box" style={{ backgroundColor: `${data.color}20`, color: data.color }}>
+                <data.icon size={24} />
+            </div>
+            {data.change && (
+                <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#10B981', backgroundColor: '#ECFDF5', padding: '0.2rem 0.5rem', borderRadius: '1rem' }}>
+                    {data.change}
+                </span>
+            )}
+        </div>
+        <div>
+            <h3 style={{ fontSize: '2rem', fontWeight: '700', margin: 0, color: '#1F2937' }}>{data.value}</h3>
+            <p style={{ color: '#6B7280', margin: 0 }}>{data.label}</p>
+        </div>
+    </div>
+);
+
 const Dashboard = ({ onLogout, onPageChange, profileData }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDesktopMode, setIsDesktopMode] = useState(window.innerWidth >= 1024);
@@ -157,6 +156,9 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
     
     // --- VOICE RECOGNITION STATES ---
     const [isVoiceActive, setIsVoiceActive] = useState(false);
+    const [isFading, setIsFading] = useState(false); // Controls the fade-out effect
+    const [voiceText, setVoiceText] = useState(''); // Stores what was heard
+    const [voiceStatus, setVoiceStatus] = useState(''); // Stores "Task Done"
     const recognitionRef = useRef(null);
 
     useEffect(() => {
@@ -172,26 +174,42 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
 
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
-            recognition.continuous = true; // Keep listening until stopped
+            recognition.continuous = true; 
             recognition.lang = 'en-US';
-            recognition.interimResults = false;
+            
+            // KEY CHANGE: Set interimResults to true to see words AS you speak
+            recognition.interimResults = true; 
 
             recognition.onresult = (event) => {
-                const lastResultIndex = event.results.length - 1;
-                const transcript = event.results[lastResultIndex][0].transcript.trim().toLowerCase();
-                console.log("Voice Command Detected:", transcript);
-                
-                // Execute Logic
-                processVoiceCommand(transcript);
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                // Loop through results to separate final from interim
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                        
+                        // Execute Command only on final result
+                        const command = finalTranscript.trim().toLowerCase();
+                        setVoiceText(command); // Update UI
+                        processVoiceCommand(command);
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                // If we are still speaking (interim), show that
+                if (interimTranscript) {
+                    setVoiceText(interimTranscript);
+                }
             };
 
             recognition.onend = () => {
-                // If it stops but state is still active (e.g., silence), restart it
-                // Note: We avoid infinite loops by checking state
-                if (recognitionRef.current && isVoiceActive) {
-                    // recognition.start(); // Uncomment for aggressive "always on" listening
-                    // For now, let's allow it to stop naturally or be toggled manually
+                // If it stops unexpectedly, reset UI unless we are in the middle of a fade
+                if (recognitionRef.current && isVoiceActive && !isFading) {
                     setIsVoiceActive(false); 
+                    setVoiceText('');
+                    setVoiceStatus('');
                 }
             };
 
@@ -199,38 +217,69 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
         }
 
         return () => {
-            // Cleanup on unmount
             if (recognitionRef.current) {
                 recognitionRef.current.stop();
             }
             window.removeEventListener('resize', handleResize);
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isVoiceActive, isFading]); // Added dependencies to ensure state is fresh
 
     // --- COMMAND PROCESSOR ---
     const processVoiceCommand = (command) => {
+        let taskExecuted = false;
+
         // 1. Navigation Commands
         if (command.includes('dashboard') || command.includes('home')) {
             onPageChange('dashboard');
+            taskExecuted = true;
         } else if (command.includes('report') || command.includes('grades') || command.includes('analytics')) {
             onPageChange('reports');
+            taskExecuted = true;
         } else if (command.includes('profile') || command.includes('settings') || command.includes('account')) {
             onPageChange('profile');
+            taskExecuted = true;
         } else if (command.includes('student') || command.includes('view students') || command.includes('list')) {
             onPageChange('view-studs');
+            taskExecuted = true;
         } 
         
         // 2. Scroll Commands
         else if (command.includes('scroll down') || command.includes('go down')) {
             window.scrollBy({ top: 500, behavior: 'smooth' });
+            taskExecuted = true;
         } else if (command.includes('scroll up') || command.includes('go up')) {
             window.scrollBy({ top: -500, behavior: 'smooth' });
+            taskExecuted = true;
         }
         
         // 3. Stop Command
         else if (command.includes('stop') || command.includes('exit') || command.includes('cancel')) {
-            toggleVoiceCommand(); // Turn it off
+            // Immediate stop
+            handleStopSequence("Deactivating...");
+            return;
         }
+
+        // --- SUCCESS SEQUENCE ---
+        if (taskExecuted) {
+            setVoiceStatus('Task Done'); // Show "Task Done"
+            
+            // Start the Fade Out Sequence (1.5 seconds delay)
+            handleStopSequence(null, true);
+        }
+    };
+
+    const handleStopSequence = (msg = null, success = false) => {
+        if (msg) setVoiceText(msg);
+        
+        setIsFading(true); // Start fade animation
+
+        setTimeout(() => {
+            if (recognitionRef.current) recognitionRef.current.stop();
+            setIsVoiceActive(false);
+            setIsFading(false);
+            setVoiceText('');
+            setVoiceStatus('');
+        }, 1500); // 1.5s fade out
     };
 
     // Toggle Voice Mode
@@ -241,12 +290,14 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
         }
 
         if (isVoiceActive) {
-            recognitionRef.current.stop();
-            setIsVoiceActive(false);
+            // Manual Stop
+            handleStopSequence("Stopping...");
         } else {
             try {
                 recognitionRef.current.start();
                 setIsVoiceActive(true);
+                setIsFading(false);
+                setVoiceText('Listening...');
             } catch (error) {
                 console.error("Mic Error:", error);
             }
@@ -267,12 +318,79 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
             
             {/* --- VOICE OVERLAY (Shows when active) --- */}
             {isVoiceActive && (
-                <div className="voice-overlay">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
+                <>
+                    <div 
+                        className="voice-overlay"
+                        style={{
+                            opacity: isFading ? 0 : 1, // Controlled by React State
+                            transition: 'opacity 1.5s ease-out' // Smooth Fade
+                        }}
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    
+                    {/* --- CAPTION & STATUS BOX (Lower Center) --- */}
+                    <div style={{
+                        position: 'fixed',
+                        bottom: '80px', 
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 100000,
+                        textAlign: 'center',
+                        pointerEvents: 'none',
+                        width: '80%',
+                        maxWidth: '500px',
+                        opacity: isFading ? 0 : 1, // Also fade text
+                        transition: 'opacity 1.5s ease-out'
+                    }}>
+                        {/* 1. What was heard */}
+                        <div style={{
+                            color: '#4ade80',
+                            fontSize: '1.5rem',
+                            fontWeight: '600',
+                            textShadow: '0 0 10px #4ade80, 0 0 20px rgba(0,0,0,0.5)',
+                            marginBottom: '0.5rem',
+                            fontFamily: 'monospace',
+                            backgroundColor: 'rgba(0,0,0,0.4)',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '8px',
+                            display: voiceText ? 'inline-block' : 'none'
+                        }}>
+                            {voiceText ? `"${voiceText}"` : ''}
+                        </div>
+
+                        {/* 2. Task Confirmation */}
+                        {voiceStatus && (
+                            <div style={{
+                                display: 'block',
+                                marginTop: '10px'
+                            }}>
+                                <div style={{
+                                    color: '#FFFFFF',
+                                    backgroundColor: '#4ade80',
+                                    padding: '0.5rem 1.5rem',
+                                    borderRadius: '20px',
+                                    fontWeight: '700',
+                                    fontSize: '1rem',
+                                    boxShadow: '0 4px 15px rgba(74, 222, 128, 0.4)',
+                                    display: 'inline-block',
+                                    animation: 'popIn 0.3s ease-out'
+                                }}>
+                                    ✓ {voiceStatus}
+                                </div>
+                            </div>
+                        )}
+                        <style>{`
+                            @keyframes popIn { 
+                                from { transform: scale(0.8); opacity: 0; } 
+                                to { transform: scale(1); opacity: 1; } 
+                            }
+                        `}</style>
+                    </div>
+                </>
             )}
 
             <Sidebar 
@@ -349,7 +467,7 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
                                 justifyContent: 'center',
                                 transition: 'all 0.3s ease'
                             }}
-                            title={isVoiceActive ? "Listening... (Say 'Stop' to end)" : "Activate Voice Command"}
+                            title={isVoiceActive ? "Listening..." : "Activate Voice Command"}
                         >
                             <Mic style={{ width: '1.5rem', height: '1.5rem', color: isVoiceActive ? 'inherit' : '#4B5563' }} />
                         </button>
