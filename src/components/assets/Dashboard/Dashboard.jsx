@@ -68,12 +68,21 @@ const ClassCard = ({ data, onClick }) => (
     </div>
 );
 
-// --- ANIMATED GREETING COMPONENT (FIXED LOGIC) ---
+// --- ANIMATED GREETING COMPONENT (DYNAMIC TIME) ---
 const GreetingSection = ({ profileData }) => {
     const [text, setText] = useState('');
     
     const userName = profileData?.displayName || profileData?.fullName || 'Professor';
-    const fullText = `Good Day, ${userName}`; 
+
+    // --- NEW: Time-based logic ---
+    const getTimeBasedGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Good Morning';
+        if (hour < 18) return 'Good Afternoon';
+        return 'Good Evening';
+    };
+
+    const fullText = `${getTimeBasedGreeting()}, ${userName}`; 
 
     // Get initials for fallback avatar
     const getInitials = (name) => {
@@ -85,7 +94,7 @@ const GreetingSection = ({ profileData }) => {
     const fallbackAvatar = `https://ui-avatars.com/api/?name=${getInitials(userName)}&background=38761d&color=fff&size=128&bold=true`;
     const avatarSrc = profileData?.photoURL || fallbackAvatar;
 
-    // Fixed Typing Logic: Uses local variable to avoid skipped characters
+    // Typing Logic
     useEffect(() => {
         setText(''); // Reset immediately
         
@@ -103,7 +112,7 @@ const GreetingSection = ({ profileData }) => {
         }, 50);
 
         return () => clearInterval(timer);
-    }, [fullText]);
+    }, [fullText]); // Re-run if fullText (time or name) changes
 
     return (
         <div style={{ 
