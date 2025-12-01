@@ -1,7 +1,7 @@
 // src/components/assets/Dashboard/Dashboard.jsx
 
 import React, { useState, useEffect } from 'react';
-import { Sidebar, SIDEBAR_DEFAULT_WIDTH } from './Sidebar.jsx'; // Changed import to match ReportsLayout
+import { Sidebar, SIDEBAR_DEFAULT_WIDTH } from './Sidebar.jsx';
 
 // --- ICONS ---
 const SearchIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
@@ -151,10 +151,12 @@ const GreetingSection = ({ profileData }) => {
 };
 
 const Dashboard = ({ onLogout, onPageChange, profileData }) => {
-    // --- LAYOUT LOGIC (Exactly matching ReportsLayout.jsx) ---
     const [searchTerm, setSearchTerm] = useState('');
     const [isDesktopMode, setIsDesktopMode] = useState(window.innerWidth >= 1024);
     const [sidebarWidth, setSidebarWidth] = useState(isDesktopMode ? SIDEBAR_DEFAULT_WIDTH : 0);
+    
+    // --- NEW: Voice Command State ---
+    const [isVoiceActive, setIsVoiceActive] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
@@ -170,13 +172,35 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
         if (isDesktopMode) setSidebarWidth(newWidth);
     };
 
+    // Toggle Voice Mode
+    const toggleVoiceCommand = () => {
+        setIsVoiceActive(!isVoiceActive);
+        if (!isVoiceActive) {
+            console.log("Voice Command Activated");
+            // Future logic for voice activation goes here
+        } else {
+            console.log("Voice Command Deactivated");
+        }
+    };
+
     return (
         <div style={{ 
             display: 'flex', 
             minHeight: '100vh', 
-            backgroundColor: '#FDFDF5', /* MATCHED: Cream Background */
+            backgroundColor: '#FDFDF5', 
             fontFamily: 'Inter, sans-serif'
         }}>
+            
+            {/* --- VOICE OVERLAY (Shows when active) --- */}
+            {isVoiceActive && (
+                <div className="voice-overlay">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            )}
+
             <Sidebar 
                 onLogout={onLogout} 
                 onPageChange={onPageChange} 
@@ -186,14 +210,13 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
             
             <main style={{ 
                 flexGrow: 1, 
-                // MATCHED PADDING: ReportsLayout uses '1.5rem 2rem' for desktop
                 padding: isDesktopMode ? '1.5rem 2rem' : '1rem',
                 marginLeft: isDesktopMode ? sidebarWidth : 0,
                 transition: 'margin-left 0.3s ease-in-out',
                 width: `calc(100% - ${isDesktopMode ? sidebarWidth : 0}px)`
             }}>
                 
-                {/* --- HEADER (Structure exactly matches ReportsLayout) --- */}
+                {/* --- HEADER --- */}
                 <header style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
@@ -237,14 +260,33 @@ const Dashboard = ({ onLogout, onPageChange, profileData }) => {
 
                     {/* Right Icons */}
                     <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                        <Mic style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} />
+                        
+                        {/* --- NEW: Interactive Mic Button --- */}
+                        <button 
+                            onClick={toggleVoiceCommand}
+                            className={isVoiceActive ? 'mic-btn-active' : ''}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '5px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.3s ease'
+                            }}
+                            title={isVoiceActive ? "Deactivate Voice Command" : "Activate Voice Command"}
+                        >
+                            <Mic style={{ width: '1.5rem', height: '1.5rem', color: isVoiceActive ? 'inherit' : '#4B5563' }} />
+                        </button>
+
                         <Bell style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} />
                         <HelpIcon style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} title="Help & Support" />
                     </div>
                 </header>
                 {/* --- END HEADER --- */}
 
-                {/* --- CONTENT (Keeping your Dashboard content) --- */}
+                {/* --- CONTENT --- */}
                 <GreetingSection profileData={profileData} />
 
                 {/* Filters Section */}
