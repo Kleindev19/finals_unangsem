@@ -12,93 +12,135 @@ Add-Type @"
   }
 "@
 
-# --- HELPER: SYSTEM INSTALL CHECK ---
-# FIXED: Renamed 'Check-And-Install' to 'Install-SystemRequirement' to satisfy PSScriptAnalyzer
-function Install-SystemRequirement ($ProgramName, $CommandName, $PackageId) {
-    if (-not (Get-Command $CommandName -ErrorAction SilentlyContinue)) {
-        Write-Host "$ProgramName command not found in PATH. Checking deeper..." -ForegroundColor DarkGray
-        return $false 
-    }
-    return $true
+# --- HELPER: CHECK IF PORT IS LISTENING ---
+function Test-PortOpen ($Port) {
+    $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+    return ($null -ne $conn)
 }
 
-Write-Host "--- 1. SYSTEM HEALTH CHECK ---" -ForegroundColor Cyan
+Write-Host "==========================================" -ForegroundColor Green
+Write-Host "   CDM PROGRESS TRACKER - AUTO STARTUP    " -ForegroundColor Green
+Write-Host "==========================================" -ForegroundColor Green
 
-# --- CHECK NODE.JS ---
-if (-not (Install-SystemRequirement "Node.js" "node" "OpenJS.NodeJS")) {
-    Write-Host "Node.js is missing. Installing..." -ForegroundColor Red
+# --- 0. PRE-FLIGHT CHECK ---
+if (-not (Test-Path "package.json")) {
+    Write-Host "❌ Error: package.json not found. Please run this script inside the project folder." -ForegroundColor Red
+    Start-Sleep -Seconds 5
+    exit
+}
+
+# --- 1. SYSTEM HEALTH CHECK ---
+Write-Host "`n--- 1. SYSTEM HEALTH CHECK ---" -ForegroundColor Cyan
+
+# Check Node.js
+if (-not (Get-Command "node" -ErrorAction SilentlyContinue)) {
+    Write-Host "Node.js missing. Installing..." -ForegroundColor Yellow
     winget install --id "OpenJS.NodeJS" -e --accept-source-agreements --accept-package-agreements
+    # Refresh Env Vars
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 }
 
-# --- CHECK MONGODB ---
-$MongoInPath = Get-Command "mongod" -ErrorAction SilentlyContinue
+# Check MongoDB
 $MongoService = Get-Service "MongoDB" -ErrorAction SilentlyContinue
-$MongoFolder = Test-Path "C:\Program Files\MongoDB\Server\*\bin\mongod.exe"
-
-if ($MongoInPath -or $MongoService -or $MongoFolder) {
-    Write-Host "MongoDB is installed. Skipping check." -ForegroundColor Green
-} else {
-    Write-Host "MongoDB not detected. Attempting to install..." -ForegroundColor Yellow
+if (-not $MongoService -and -not (Get-Command "mongod" -ErrorAction SilentlyContinue)) {
+    Write-Host "MongoDB not detected. Attempting install..." -ForegroundColor Yellow
     winget install --id "MongoDB.Server" -e --accept-source-agreements --accept-package-agreements
+} else {
+    Write-Host "✔ MongoDB is present." -ForegroundColor Gray
 }
 
-# --- CHECK DEPENDENCIES ---
-if (-not (Test-Path -Path 'node_modules')) {
+# Check Dependencies
+if (-not (Test-Path 'node_modules')) {
     Write-Host "Dependencies missing. Running 'npm install'..." -ForegroundColor Yellow
     npm install
 }
 
-Write-Host "--- 2. SERVER STARTUP ---" -ForegroundColor Cyan
-
-# --- START BACKEND (Port 5000) ---
-$BackendActive = Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue
-if (-not $BackendActive) {
-    Write-Host "Starting Backend Server..." -ForegroundColor Yellow
-    Start-Process powershell -WindowStyle Minimized -ArgumentList "-NoExit", "-Command", "node server.js"
-    Start-Sleep -Seconds 2
+# --- 2. GENERATE BUILD METADATA ---
+Write-Host "`n--- 2. GENERATING VERSION INFO ---" -ForegroundColor Cyan
+if (Test-Path "generate-build-version.js") {
+    node generate-build-version.js
 } else {
-    Write-Host "Backend is already running (Port 5000)." -ForegroundColor Gray
+    Write-Host "⚠ Warning: generate-build-version.js not found." -ForegroundColor Red
 }
 
-# --- START FRONTEND (Port 3000) ---
-$FrontendActive = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
-if (-not $FrontendActive) {
-    Write-Host "Starting React App..." -ForegroundColor Yellow
-    # BROWSER=none stops React from opening a window automatically so we can handle it 'smartly'
-    Start-Process powershell -WindowStyle Minimized -ArgumentList "-NoExit", "-Command", '$env:BROWSER="none"; npm start'
+# --- 3. SERVER STARTUP (BACKEND) ---
+Write-Host "`n--- 3. STARTING BACKEND (Port 5000) ---" -ForegroundColor Cyan
+
+if (-not (Test-PortOpen 5000)) {
+    Write-Host "Launching Backend Server..." -ForegroundColor Yellow
     
-    Write-Host "Waiting for React to initialize..."
+    # Start Backend with a Title so you can find it
+    Start-Process powershell -WindowStyle Minimized -ArgumentList "-NoExit", "-Command", '$host.UI.RawUI.WindowTitle = "CDM Backend Server"; node server.js'
+    
+    Write-Host "Waiting for Backend to listen on port 5000..." -NoNewline
+    $Retries = 0
+    do {
+        Start-Sleep -Seconds 1
+        Write-Host "." -NoNewline
+        $BackendReady = Test-PortOpen 5000
+        $Retries++
+    } until ($BackendReady -or $Retries -gt 30)
+    
+    if ($BackendReady) {
+        Write-Host "`n✔ Backend is online!" -ForegroundColor Green
+    } else {
+        Write-Host "`n❌ Backend failed to start. Check the 'CDM Backend Server' window for errors." -ForegroundColor Red
+        exit
+    }
+} else {
+    Write-Host "Backend is already running." -ForegroundColor Gray
+}
+
+# --- 4. SERVER STARTUP (FRONTEND) ---
+Write-Host "`n--- 4. STARTING FRONTEND (Port 3000) ---" -ForegroundColor Cyan
+
+if (-not (Test-PortOpen 3000)) {
+    Write-Host "Launching React App..." -ForegroundColor Yellow
+    
+    # Start Frontend with Title, BROWSER=none prevents it from popping up prematurely
+    Start-Process powershell -WindowStyle Minimized -ArgumentList "-NoExit", "-Command", '$host.UI.RawUI.WindowTitle = "CDM React Frontend"; $env:BROWSER="none"; npm start'
+    
+    Write-Host "Waiting for React to initialize..." -NoNewline
     $Retries = 0
     do {
         Start-Sleep -Seconds 2
-        $FrontendActive = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
+        Write-Host "." -NoNewline
+        $FrontendReady = Test-PortOpen 3000
         $Retries++
-    } until ($FrontendActive -or $Retries -gt 15)
+    } until ($FrontendReady -or $Retries -gt 60) # React takes longer
+    
+    if ($FrontendReady) {
+         Write-Host "`n✔ Frontend is online!" -ForegroundColor Green
+    }
 } else {
-    Write-Host "React is already running (Port 3000)." -ForegroundColor Gray
+    Write-Host "Frontend is already running." -ForegroundColor Gray
 }
 
-Write-Host "--- 3. SMART BROWSER LAUNCH ---" -ForegroundColor Cyan
+# --- 5. SMART BROWSER LAUNCH ---
+Write-Host "`n--- 5. LAUNCHING BROWSER ---" -ForegroundColor Cyan
 
-# --- FIXED SMART LOGIC (From previous step) ---
-# This ensures we only detect CHROME connected to the React app, preventing false positives from Node/VS Code.
-$ChromeIsConnected = Get-NetTCPConnection -RemotePort 3000 -State Established -ErrorAction SilentlyContinue | Where-Object { 
-    $Proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
-    # Only return true if the process connected to 3000 is actually Chrome
-    return ($Proc.ProcessName -eq "chrome")
+$AppUrl = "http://localhost:3000"
+
+# Check if Chrome is already connected to Port 3000
+$ChromeConnected = Get-NetTCPConnection -RemotePort 3000 -State Established -ErrorAction SilentlyContinue | Where-Object { 
+    try {
+        $Proc = Get-Process -Id $_.OwningProcess -ErrorAction Stop
+        return ($Proc.ProcessName -eq "chrome")
+    } catch {
+        return $false
+    }
 }
 
-if ($ChromeIsConnected) {
-    Write-Host "Chrome tab detected as OPEN. Switching focus..." -ForegroundColor Green
-    # Find the main Chrome window and bring it to the front
+if ($ChromeConnected) {
+    Write-Host "Chrome is already open. Switching focus..." -ForegroundColor Green
     $ChromeProc = Get-Process chrome -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
     if ($ChromeProc) {
         [WindowUtils]::SetForegroundWindow($ChromeProc.MainWindowHandle) | Out-Null
     }
 } else {
-    Write-Host "App is running but no Chrome tab found. Launching new window..." -ForegroundColor Green
-    Start-Process "http://localhost:3000"
+    Write-Host "Opening new browser tab..." -ForegroundColor Green
+    Start-Process $AppUrl
 }
 
-exit 0
+Write-Host "`n✅ SYSTEM READY!" -ForegroundColor Green
+Start-Sleep -Seconds 3

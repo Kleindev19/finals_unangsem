@@ -1,6 +1,6 @@
 // src/components/assets/Dashboard/ViewStuds.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ViewStuds.css';
 import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 
@@ -16,38 +16,34 @@ const DownloadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/s
 const XIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
 const EditIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>);
 const UploadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>);
+const AlertCircle = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>);
 
-// --- MOCK DATA ---
-const STUDENTS_DATA = [
-    { id: '2024001', name: 'Anderson, James', type: 'Regular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09874268050', email: 'A.James1@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024002', name: 'Bennett, Sarah', type: 'Regular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09482312634', email: 'bennett_s23@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024003', name: 'Carter, Michael', type: 'Regular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09855772072', email: 'mi-car67@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024004', name: 'Davis, Emily', type: 'Irregular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09567725197', email: 'dai-em123@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024005', name: 'Evans, Robert', type: 'Irregular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09389607348', email: 'robrob9@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024006', name: 'Foster, Jessica', type: 'Regular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09678396246', email: 'jesssssss@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024007', name: 'Garcia, David', type: 'Regular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09678396248', email: 'GD75935@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024008', name: 'Harris, Amanda', type: 'Regular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09988360862', email: 'Harrriiiss12@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024009', name: 'Jackson, Christopher', type: 'Irregular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09813057460', email: 'Christopher.J@gmail.com', address: 'Rodriguez,Rizal' },
-    { id: '2024010', name: 'Johnson, Lisa', type: 'Irregular', course: 'Bachelor of Science in Information Technology', section: '3D', cell: '09953650990', email: 'LIZZAA@gmail.com', address: 'Rodriguez,Rizal' },
-];
-
-// Initial Attendance Mock Data (Mapped by ID)
-const INITIAL_ATTENDANCE = {
-    '2024001': ['P', 'P', 'A', 'SUSPENDED', 'P', 'P', 'P', 'P'],
-    '2024002': ['P', 'P', 'A', 'SUSPENDED', 'P', 'A', 'A', 'P'],
-    '2024003': ['P', 'P', 'P', 'SUSPENDED', 'P', 'P', 'P', 'P'],
-    '2024004': ['P', 'P', 'P', 'SUSPENDED', 'A', 'L', 'P', 'P'],
-    '2024005': ['P', 'L', 'P', 'SUSPENDED', 'P', 'P', 'L', 'A'],
-    '2024006': ['P', 'P', 'A', 'SUSPENDED', 'L', 'A', 'P', 'P'],
-    '2024007': ['A', 'P', 'P', 'SUSPENDED', 'P', 'P', 'A', 'L'],
-    '2024008': ['A', 'L', 'L', 'SUSPENDED', 'A', 'P', 'P', 'P'],
-    '2024009': ['A', 'P', 'P', 'SUSPENDED', 'P', 'P', 'P', 'A'],
-    '2024010': ['L', 'P', 'A', 'SUSPENDED', 'P', 'P', 'P', 'P'],
-};
-
+// --- CONSTANTS ---
 const ATTENDANCE_DATES = ['Sept 15', 'Sept 16', 'Sept 18', 'Sept 19', 'Sept 22', 'Sept 23', 'Sep 24', 'Sept 25'];
 
-// --- SUB-COMPONENT: ATTENDANCE CELL (Reused Logic) ---
+// --- UTILITY: API CALL ---
+const addStudentToDB = async (studentData) => {
+    const API_URL = 'http://localhost:5000/api/students'; 
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData),
+        });
+        
+        const responseData = await response.json();
+        if (!response.ok) {
+            throw new Error(responseData.message || 'Failed to add student to database.');
+        }
+        return responseData;
+    } catch (error) {
+        console.error('API Error:', error);
+        alert(`Error: ${error.message}. Is your backend server running?`);
+        return null;
+    }
+};
+
+// --- SUB-COMPONENT: ATTENDANCE CELL ---
 const AttendanceCell = ({ status, onChange }) => {
     let className = 'vs-status-pill';
     let content = status;
@@ -57,20 +53,11 @@ const AttendanceCell = ({ status, onChange }) => {
     else if (status === 'L') className += ' vs-l';
     else if (status === 'SUSPENDED' || status === 'HOLIDAY') className = 'vs-tag-full';
 
-    const renderVisual = () => {
-        if (status === 'SUSPENDED' || status === 'HOLIDAY') {
-            return <div className={className}>{status}</div>;
-        }
-        return (
-            <div className={className}>
-                {content} <ChevronDown className="vs-chevron-mini"/>
-            </div>
-        );
-    };
-
     return (
         <td className="vs-cell-relative">
-            {renderVisual()}
+            <div className={className}>
+                {status === 'SUSPENDED' || status === 'HOLIDAY' ? status : <>{content} <ChevronDown className="vs-chevron-mini"/></>}
+            </div>
             <select 
                 className="vs-cell-select"
                 value={status}
@@ -87,14 +74,40 @@ const AttendanceCell = ({ status, onChange }) => {
     );
 };
 
-// --- MODAL ---
-const AddStudentFormModal = ({ isOpen, onClose }) => {
+// --- ADD STUDENT MODAL ---
+const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded }) => { 
+    const [formData, setFormData] = useState({
+        id: '', name: '', type: 'Regular', course: '', 
+        section: '', cell: '', email: '', address: ''
+    });
+
     if (!isOpen) return null;
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        alert('Student Added Successfully!');
-        onClose();
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const PROFESSOR_UID = 'MOCK_PROF_ID_123'; 
+
+        const payload = {
+            ...formData,
+            professorUid: PROFESSOR_UID 
+        };
+
+        const newStudent = await addStudentToDB(payload);
+
+        if (newStudent) {
+            onStudentAdded(newStudent);
+            onClose();
+            setFormData({
+                id: '', name: '', type: 'Regular', course: '', 
+                section: '', cell: '', email: '', address: ''
+            });
+        }
+    };
+
     return (
         <div className="vs-modal-overlay">
             <div className="vs-modal-card">
@@ -102,8 +115,26 @@ const AddStudentFormModal = ({ isOpen, onClose }) => {
                 <h2 className="vs-modal-title">Add Student Information</h2>
                 <form className="vs-modal-form" onSubmit={handleSubmit}>
                     <div className="vs-form-row">
-                        <div className="vs-form-group"><label>Student ID</label><input type="text" placeholder="e.g. 2024001" className="vs-modal-input" required /></div>
-                        <div className="vs-form-group"><label>Full Name</label><input type="text" placeholder="Last Name, First Name" className="vs-modal-input" required /></div>
+                        <div className="vs-form-group"><label>Student ID</label><input type="text" name="id" value={formData.id} onChange={handleChange} className="vs-modal-input" required /></div>
+                        <div className="vs-form-group"><label>Student Name</label><input type="text" name="name" value={formData.name} onChange={handleChange} className="vs-modal-input" required /></div>
+                    </div>
+                    <div className="vs-form-row">
+                        <div className="vs-form-group">
+                            <label>Type of Student</label>
+                            <select name="type" value={formData.type} onChange={handleChange} className="vs-modal-select" required>
+                                <option value="Regular">Regular</option>
+                                <option value="Irregular">Irregular</option>
+                            </select>
+                        </div>
+                        <div className="vs-form-group"><label>Course</label><input type="text" name="course" value={formData.course} onChange={handleChange} className="vs-modal-input" required /></div>
+                    </div>
+                    <div className="vs-form-row">
+                        <div className="vs-form-group"><label>Section & Year</label><input type="text" name="section" value={formData.section} onChange={handleChange} className="vs-modal-input" required /></div>
+                        <div className="vs-form-group"><label>Cellphone #</label><input type="text" name="cell" value={formData.cell} onChange={handleChange} className="vs-modal-input" /></div>
+                    </div>
+                    <div className="vs-form-row">
+                        <div className="vs-form-group"><label>Email</label><input type="email" name="email" value={formData.email} onChange={handleChange} className="vs-modal-input" /></div>
+                        <div className="vs-form-group"><label>Home Address</label><input type="text" name="address" value={formData.address} onChange={handleChange} className="vs-modal-input" /></div>
                     </div>
                     <button type="submit" className="vs-modal-submit-btn">Save Student</button>
                 </form>
@@ -112,25 +143,79 @@ const AddStudentFormModal = ({ isOpen, onClose }) => {
     );
 };
 
-
+// --- MAIN COMPONENT ---
 const ViewStuds = ({ onLogout, onPageChange }) => {
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_COLLAPSED_WIDTH);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     
-    // --- STATE FOR VIEW SWITCHING ---
+    // --- STATE ---
     const [viewOption, setViewOption] = useState('Student Information');
-    
-    // --- STATE FOR ATTENDANCE ---
-    const [attendanceData, setAttendanceData] = useState(INITIAL_ATTENDANCE);
+    const [students, setStudents] = useState([]); 
+    const [isLoading, setIsLoading] = useState(true); 
+    const [error, setError] = useState(null);
+    const [attendanceData, setAttendanceData] = useState({}); 
 
-    // Logic to handle changing attendance status
+    const PROFESSOR_UID = 'MOCK_PROF_ID_123'; 
+    const CURRENT_SECTION_FILTER = '3D'; 
+
+    // --- FETCH DATA ---
+    const fetchStudents = async () => {
+        setIsLoading(true);
+        setError(null);
+        const API_URL = `http://localhost:5000/api/students/${PROFESSOR_UID}/${CURRENT_SECTION_FILTER}`; 
+
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error('Failed to fetch students.');
+            
+            const data = await response.json();
+            setStudents(data);
+        } catch (error) {
+            console.error('Fetch Students Error:', error);
+            setError("Cannot connect to server. Is the backend running?");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    useEffect(() => {
+        // We only need to fetch students once or when manually refreshed.
+        // Changing viewOption shouldn't necessarily re-fetch if we pass data.
+        fetchStudents();
+    }, []); 
+
+    // --- VIEW CHANGE HANDLER (UPDATED) ---
+    const handleViewChange = (e) => {
+        const selected = e.target.value;
+        setViewOption(selected);
+
+        // Define which views should redirect to the Detailed Gradesheet (MultiPageGS)
+        const gradeViews = ['Midterm', 'Finals', 'Assignment', 'Quizzes', 'Activities'];
+
+        if (gradeViews.includes(selected)) {
+            // Determine a nice title for the header based on selection
+            let displayTitle = selected;
+            if (selected === 'Midterm') displayTitle = 'Midterm Grade';
+            if (selected === 'Finals') displayTitle = 'Finals Grade';
+            if (selected === 'Assignment') displayTitle = 'Assignments';
+            
+            // Navigate to MultiPageGS
+            onPageChange('multipage-gradesheet', { 
+                viewType: selected, 
+                title: displayTitle,
+                students: students // Pass currently loaded students to avoid re-fetching
+            });
+        }
+    };
+
+    const handleStudentAdded = (newStudent) => {
+        setStudents(prev => [...prev, newStudent].sort((a, b) => a.name.localeCompare(b.name)));
+    };
+    
     const handleStatusChange = (studentId, dayIndex, newStatus) => {
         const currentRecords = [...(attendanceData[studentId] || [])];
         currentRecords[dayIndex] = newStatus;
-        setAttendanceData(prev => ({
-            ...prev,
-            [studentId]: currentRecords
-        }));
+        setAttendanceData(prev => ({ ...prev, [studentId]: currentRecords }));
     };
 
     const copyToClipboard = () => {
@@ -144,54 +229,23 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
     };
 
     // --- RENDER HELPERS ---
-    
-    // 1. Toolbar Rendering (Changes based on View)
-    const renderToolbarButtons = () => {
-        if (viewOption === 'Student Information') {
-            return (
-                <>
-                    <button className="vs-btn vs-btn-add" onClick={() => setIsAddModalOpen(true)}>
-                        <PlusIcon size={16} /> Add Student
-                    </button>
-                    <button className="vs-btn vs-btn-export">
-                        <DownloadIcon size={16} /> Export Full List
-                    </button>
-                </>
-            );
-        } else if (viewOption === 'Attendance') {
-            return (
-                <>
-                    <button className="vs-btn vs-btn-white" onClick={() => alert("Add Column Logic")}>
-                        <PlusIcon size={16} /> Add Column
-                    </button>
-                    <button className="vs-btn vs-btn-white" onClick={() => alert("Export Excel")}>
-                        <UploadIcon size={16} /> Export Excel
-                    </button>
-                </>
-            );
-        }
-        // Add other cases for Quizzes/Midterm later
-        return null;
-    };
-
-    // 2. Extra Header Button (Attendance Sheet Green Button)
-    const renderRightHeaderButton = () => {
-        if (viewOption === 'Attendance') {
-             // In attendance mode, we show the big green "Attendance Sheet" button on the far right
-             // Or "Export Full List" moves here? 
-             // Based on screenshot 91a581.png, there is a big green "Attendance Sheet" button
-             return (
-                <button className="vs-btn vs-btn-export">
-                    <DownloadIcon size={16} /> Attendance Sheet
-                </button>
-             );
-        }
-        return null;
-    };
-
-    // 3. Table Rendering
     const renderTable = () => {
+        if (isLoading) return <div className="vs-status-message">Loading student data...</div>;
+
+        if (error) {
+            return (
+                <div className="vs-error-container" style={{textAlign: 'center', padding: '2rem', color: '#DC2626'}}>
+                    <AlertCircle size={48} />
+                    <h3>Connection Error</h3>
+                    <p>{error}</p>
+                    <button onClick={fetchStudents} style={{marginTop: '1rem', padding: '0.5rem 1rem', background: '#DC2626', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>Retry Connection</button>
+                </div>
+            );
+        }
+
         if (viewOption === 'Student Information') {
+            if (students.length === 0) return <div className="vs-status-message">No students found for this section. Click "Add Student" to begin.</div>;
+            
             return (
                 <table className="vs-table">
                     <thead>
@@ -208,9 +262,9 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {STUDENTS_DATA.map((student) => (
+                        {students.map((student) => (
                             <tr key={student.id}>
-                                <td>{student.id}</td>
+                                <td className="vs-id-text">{student.id}</td>
                                 <td style={{fontWeight: '600'}}>{student.name}</td>
                                 <td>{student.type}</td>
                                 <td className="vs-col-course">{student.course}</td>
@@ -229,7 +283,9 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                 </table>
             );
         } else if (viewOption === 'Attendance') {
-            return (
+             if (students.length === 0) return <div className="vs-status-message">No students found for attendance tracking.</div>;
+            
+             return (
                 <table className="vs-table">
                     <thead>
                         <tr>
@@ -242,8 +298,8 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {STUDENTS_DATA.map((student) => {
-                            const records = attendanceData[student.id] || [];
+                        {students.map((student) => { 
+                            const records = attendanceData[student.id] || []; 
                             return (
                                 <tr key={student.id}>
                                     <td className="fixed-col vs-id-text">{student.id}</td>
@@ -252,7 +308,7 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                                     {ATTENDANCE_DATES.map((_, idx) => (
                                         <AttendanceCell 
                                             key={idx}
-                                            status={records[idx] || 'A'} // Default to Absent if undefined
+                                            status={records[idx] || 'A'} 
                                             onChange={(newStatus) => handleStatusChange(student.id, idx, newStatus)}
                                         />
                                     ))}
@@ -268,31 +324,21 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
 
     return (
         <div className="view-studs-layout">
-            <Sidebar 
-                onLogout={onLogout} 
-                onPageChange={onPageChange} 
-                currentPage="dashboard"
-                onWidthChange={setSidebarWidth} 
-            />
+            <Sidebar onLogout={onLogout} onPageChange={onPageChange} currentPage="dashboard" onWidthChange={setSidebarWidth} />
 
             <div className="view-studs-main" style={{ marginLeft: sidebarWidth }}>
                 
-                {/* 1. Header (Search + Icons) */}
+                {/* Header */}
                 <header className="vs-header">
                     <div className="vs-search-container">
                         <SearchIcon className="vs-search-icon" />
                         <input type="text" placeholder="Search students" className="vs-search-input" />
                     </div>
                     
-                    {/* Toolbar for Attendance Mode (Top Left in screenshot) */}
                     {viewOption === 'Attendance' && (
                         <div className="vs-top-toolbar">
-                            <button className="vs-btn vs-btn-white-outline">
-                                <PlusIcon size={14}/> Add Column
-                            </button>
-                            <button className="vs-btn vs-btn-white-outline">
-                                <UploadIcon size={14}/> Export Excel
-                            </button>
+                            <button className="vs-btn vs-btn-white-outline"><PlusIcon size={14}/> Add Column</button>
+                            <button className="vs-btn vs-btn-white-outline"><UploadIcon size={14}/> Export Excel</button>
                         </div>
                     )}
 
@@ -302,7 +348,7 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                     </div>
                 </header>
 
-                {/* 2. Floating Filter Bar */}
+                {/* Filter Bar */}
                 <div className="vs-floating-filter-bar">
                     <div className="vs-filter-group">
                         <label>Institute</label>
@@ -327,17 +373,15 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                     </div>
                 </div>
 
-                {/* 3. Main Content Card */}
+                {/* Main Content */}
                 <div className="vs-content-card">
-                    {/* Title Row */}
                     {viewOption === 'Student Information' && (
                         <div className="vs-card-header">
-                            <h1>BSIT -3D</h1>
+                            <h1>BSIT - 3D</h1>
                             <span className="vs-subtitle">Introduction to Programming</span>
                         </div>
                     )}
 
-                    {/* Share Banner (Only for Student Info) */}
                     {viewOption === 'Student Information' && (
                         <div className="vs-share-banner">
                             <div className="vs-share-content">
@@ -355,14 +399,12 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                         </div>
                     )}
 
-                    {/* Dropdown Menu & Contextual Buttons */}
                     <div className="vs-controls-row">
-                        {/* Dropdown */}
                         <div className="vs-dropdown-wrapper">
                              <select 
                                 className="vs-section-dropdown"
                                 value={viewOption}
-                                onChange={(e) => setViewOption(e.target.value)}
+                                onChange={handleViewChange} 
                             >
                                 <option>Student Information</option>
                                 <option>Attendance</option>
@@ -375,15 +417,13 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                             <ChevronDown className="vs-dropdown-arrow" size={18} />
                         </div>
 
-                        {/* Right Side Button (Attendance Sheet or Export) */}
-                        {viewOption === 'Attendance' ? (
+                        {viewOption === 'Attendance' && (
                             <button className="vs-btn vs-btn-export">
                                 <DownloadIcon size={16} /> Attendance Sheet
                             </button>
-                        ) : null}
+                        )}
                     </div>
 
-                    {/* Add Student Button (Info View Only) */}
                     {viewOption === 'Student Information' && (
                          <div className="vs-buttons-row">
                              <button className="vs-btn vs-btn-add" onClick={() => setIsAddModalOpen(true)}>
@@ -395,12 +435,10 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                          </div>
                     )}
 
-                    {/* Dynamic Table */}
                     <div className="vs-table-container">
                         {renderTable()}
                     </div>
 
-                    {/* Legend (Only for Attendance) */}
                     {viewOption === 'Attendance' && (
                         <div className="vs-legend">
                             <div className="vs-legend-item"><span className="vs-p-pill">P</span> Present</div>
@@ -408,11 +446,14 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                             <div className="vs-legend-item"><span className="vs-l-pill">L</span> Absent (Late)</div>
                         </div>
                     )}
-
                 </div>
             </div>
 
-            <AddStudentFormModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+            <AddStudentFormModal 
+                isOpen={isAddModalOpen} 
+                onClose={() => setIsAddModalOpen(false)} 
+                onStudentAdded={handleStudentAdded} 
+            />
         </div>
     );
 };
