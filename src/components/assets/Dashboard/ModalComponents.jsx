@@ -1,7 +1,7 @@
 // src/components/assets/Dashboard/ModalComponents.jsx
 
 import React from 'react';
-import ReactDOM from 'react-dom'; // <--- IMPORTANT IMPORT FOR THE FIX
+import ReactDOM from 'react-dom';
 import './ModalComponents.css';
 
 // --- ICONS ---
@@ -29,10 +29,18 @@ const AlertTriangle = () => (
     </svg>
 );
 
+const GitIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="6" y1="3" x2="6" y2="15"></line>
+        <circle cx="18" cy="6" r="3"></circle>
+        <circle cx="6" cy="18" r="3"></circle>
+        <path d="M18 9a9 9 0 0 1-9 9"></path>
+    </svg>
+);
+
 // --- 1. ADD COLUMN MODAL ---
 export const AddColumnModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
-    // We use Portal here too just in case you use this modal inside a constrained container later
     return ReactDOM.createPortal(
         <div className="modal-overlay">
             <div className="modal-card">
@@ -148,12 +156,10 @@ export const ActivityModal = ({ isOpen, onClose, title }) => {
     );
 };
 
-// --- 4. LOGOUT CONFIRMATION MODAL (FIXED) ---
+// --- 4. LOGOUT CONFIRMATION MODAL ---
 export const LogoutModal = ({ isOpen, onClose, onConfirm }) => {
     if (!isOpen) return null;
 
-    // We use ReactDOM.createPortal to "teleport" this HTML to the document.body
-    // ensuring it sits on top of EVERYTHING, regardless of the Sidebar's overflow:hidden.
     return ReactDOM.createPortal(
         <div className="modal-overlay">
             <div className="modal-card" style={{ width: '350px', textAlign: 'center' }}>
@@ -176,6 +182,64 @@ export const LogoutModal = ({ isOpen, onClose, onConfirm }) => {
                 </div>
             </div>
         </div>,
-        document.body // <--- This is the target destination
+        document.body
+    );
+};
+
+// --- 5. NEW: VERSIONING / UPDATE MODAL ---
+export const VersionModal = ({ isOpen, onClose, version, hash, date }) => {
+    if (!isOpen) return null;
+
+    // Github URL handling
+    const handleGithubClick = () => {
+        window.open('https://github.com/Kleindev19/finals_unangsem/commits/main', '_blank');
+    };
+
+    return ReactDOM.createPortal(
+        <div className="modal-overlay">
+            <div className="modal-card" style={{ width: '400px', textAlign: 'center', padding: '2.5rem' }}>
+                <button className="modal-close" onClick={onClose}><XIcon /></button>
+                
+                <div style={{ 
+                    width: '60px', height: '60px', 
+                    borderRadius: '50%', background: '#DCFCE7', 
+                    color: '#166534', display: 'flex', 
+                    alignItems: 'center', justifyContent: 'center', 
+                    margin: '0 auto 1.5rem auto' 
+                }}>
+                    <GitIcon />
+                </div>
+                
+                <h2 className="modal-title" style={{ marginBottom: '0.5rem' }}>System Update</h2>
+                <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '2rem' }}>
+                    Current Build Information
+                </p>
+
+                <div style={{ 
+                    background: '#F9FAFB', borderRadius: '12px', 
+                    padding: '1.5rem', marginBottom: '2rem', textAlign: 'left' 
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
+                        <span style={{ color: '#6B7280', fontWeight: '600', fontSize: '0.9rem' }}>Version</span>
+                        <span style={{ color: '#1F2937', fontWeight: '700', fontFamily: 'monospace' }}>v{version}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
+                        <span style={{ color: '#6B7280', fontWeight: '600', fontSize: '0.9rem' }}>Build Hash</span>
+                        <span style={{ color: '#1F2937', fontWeight: '700', fontFamily: 'monospace' }}>{hash}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#6B7280', fontWeight: '600', fontSize: '0.9rem' }}>Build Date</span>
+                        <span style={{ color: '#1F2937', fontWeight: '500', fontSize: '0.85rem' }}>{date}</span>
+                    </div>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="modal-action-btn" onClick={handleGithubClick} style={{ marginTop: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <GitIcon /> View Updates on GitHub
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
     );
 };

@@ -17,6 +17,9 @@ import { auth } from './apiService';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'; 
 import CdmChatbot from './Apps.jsx'; 
 
+// --- VERSION IMPORT ---
+import { APP_VERSION, BUILD_HASH, BUILD_DATE } from './meta'; // Import build info
+
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [currentPage, setCurrentPage] = useState('dashboard'); 
@@ -27,6 +30,10 @@ function App() {
     const [isDataReady, setIsDataReady] = useState(false); 
 
     useEffect(() => {
+        // --- LOG BUILD VERSION ON STARTUP ---
+        console.log(`%c Progress Tracker v${APP_VERSION} `, 'background: #38761d; color: white; padding: 4px; border-radius: 4px;');
+        console.log(`Build: ${BUILD_HASH} | Date: ${BUILD_DATE}`);
+
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
                 console.log("Firebase User detected:", firebaseUser.email);
@@ -34,16 +41,13 @@ function App() {
                 
                 // --- SYNC WITH MONGODB BACKEND ---
                 try {
-                    // We send the data to our local server to save/retrieve extended profile info
                     const response = await fetch('http://localhost:5000/api/user-sync', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             uid: firebaseUser.uid,
                             email: firebaseUser.email,
-                            // Use Firebase display name, or fallback to email username
                             displayName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-                            // CRITICAL: Send the photoURL. If null, send an empty string.
                             photoURL: firebaseUser.photoURL || "" 
                         })
                     });
@@ -53,14 +57,10 @@ function App() {
                     }
 
                     const mongoProfile = await response.json();
-                    console.log("Loaded Profile from MongoDB:", mongoProfile);
-                    
-                    // Merge MongoDB data with Firebase data for the UI
                     setProfileData({
                         ...mongoProfile,
                         id: mongoProfile.uid, 
                         displayName: mongoProfile.displayName,
-                        // Prioritize the photo from DB, fallback to Firebase, then null
                         photoURL: mongoProfile.photoURL || firebaseUser.photoURL
                     });
                     
@@ -68,7 +68,6 @@ function App() {
 
                 } catch (error) {
                     console.error("Error fetching profile from MongoDB:", error);
-                    // OFFLINE FALLBACK: If server is down, use basic Firebase data
                     setProfileData({
                         displayName: firebaseUser.displayName || 'Professor',
                         email: firebaseUser.email,
@@ -80,7 +79,6 @@ function App() {
                 }
 
             } else {
-                // User is logged out
                 setIsLoggedIn(false);
                 setProfileData(null);
                 setIsDataReady(false); 
@@ -134,17 +132,8 @@ function App() {
                 return <ReportsLayout onLogout={handleLogout} onPageChange={handlePageChange} />;
             case 'v-reports': 
                 return <VReports onLogout={handleLogout} onPageChange={handlePageChange} />;
-            
-            // --- UPDATED: Pass the specific student data to ViewRD ---
             case 'view-rd': 
-                return (
-                    <ViewRD 
-                        onLogout={handleLogout} 
-                        onPageChange={handlePageChange} 
-                        studentData={pageParams.student} 
-                    />
-                );
-
+                return <ViewRD onLogout={handleLogout} onPageChange={handlePageChange} studentData={pageParams.student} />;
             case 'profile':
                 return <ProfileLayout onLogout={handleLogout} onPageChange={handlePageChange} profileData={profileData} />; 
             case 'dashboard':
@@ -153,7 +142,6 @@ function App() {
         }
     };
 
-    // Only show chatbot if user is logged in and data is ready
     const showChatbot = isLoggedIn && profileData && isDataReady;
 
     if (isLoggedIn) {
