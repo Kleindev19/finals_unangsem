@@ -57,7 +57,7 @@
 
 .vs-icon { cursor: pointer; }
 
-/* Top Toolbar for Attendance (Add Column / Export) */
+/* Top Toolbar for Attendance */
 .vs-top-toolbar {
     display: flex;
     gap: 1rem;
@@ -125,8 +125,7 @@
 
 /* --- MAIN CONTENT CARD --- */
 .vs-content-card {
-    background-color: white; /* Changed to match image beige/yellow tint? Image shows very light beige background for the table area actually, keeping white for cleaner look or match styling */
-    /* If matching image exactly, the table area background is cream #FDFDF5, but card is white. Let's keep card white. */
+    background-color: white; 
     padding: 2.5rem;
     border-radius: 16px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -275,3 +274,25 @@
     margin-top: 1.5rem; box-shadow: 0 4px 6px rgba(56, 118, 29, 0.3); transition: transform 0.1s;
 }
 .vs-modal-submit-btn:hover { background-color: #2e6215; transform: translateY(-1px); }
+
+/* --- NEW: AUTOMATION ANIMATION --- */
+@keyframes slideInHighlight {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+        background-color: #dcfce7; /* Light Green */
+    }
+    30% {
+        opacity: 1;
+        transform: translateY(0);
+        background-color: #86efac; /* Bright Green */
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.vs-row-animate-new {
+    animation: slideInHighlight 1.5s ease-out forwards;
+    border-left: 3px solid #38761d; /* Green accent on the left */
+}

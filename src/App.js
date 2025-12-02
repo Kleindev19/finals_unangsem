@@ -11,11 +11,10 @@ import MultiPageGS from './components/assets/Dashboard/MultiPageGS.jsx';
 import VReports from './components/assets/Reports/VReports.jsx'; 
 import ViewRD from './components/assets/Reports/ViewRD.jsx'; 
 import LoadingAnimation from './components/assets/LoadingAnimation/LoadingAnimation.jsx'; 
+import Tributes from './components/assets/Tributes/Tributes.jsx'; // <--- NEW IMPORT
 import './App.css';
 
-// --- NEW IMPORT ---
 import VoiceControl from './components/assets/Dashboard/VoiceControl.jsx';
-
 import { auth } from './apiService'; 
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'; 
 import CdmChatbot from './Apps.jsx'; 
@@ -30,30 +29,72 @@ function App() {
     const [profileData, setProfileData] = useState(null); 
     const [isDataReady, setIsDataReady] = useState(false); 
 
-    // --- NEW: VOICE STATE (Lifted Up) ---
+    // --- VOICE STATE ---
     const [isVoiceActive, setIsVoiceActive] = useState(false);
 
     useEffect(() => {
-        // ... (Keep existing Version Log & Auth Logic exactly as it is) ...
-        console.log(`%c Progress Tracker v${APP_VERSION} `, 'background: #38761d; color: white;');
+        // Log Version
+        console.log(`%c Progress Tracker v${APP_VERSION} `, 'background: #38761d; color: white; padding: 4px; border-radius: 4px;');
+        console.log(`Build: ${BUILD_HASH} | Date: ${BUILD_DATE}`);
+
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-             // ... (Existing Auth Logic) ...
-             if (firebaseUser) {
-                 setIsLoggedIn(true);
-                 // ... (Keep your sync logic here) ...
-                 setProfileData({ displayName: firebaseUser.displayName, email: firebaseUser.email, uid: firebaseUser.uid }); // Simplified for brevity
-                 setIsDataReady(true);
-             } else {
-                 setIsLoggedIn(false);
-                 setProfileData(null);
-                 setIsDataReady(false);
-             }
-             setIsLoadingAuth(false);
+            if (firebaseUser) {
+                console.log("Firebase User detected:", firebaseUser.email);
+                setIsLoggedIn(true);
+                
+                // --- SYNC WITH MONGODB BACKEND ---
+                try {
+                    const response = await fetch('http://localhost:5000/api/user-sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            uid: firebaseUser.uid,
+                            email: firebaseUser.email,
+                            displayName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                            photoURL: firebaseUser.photoURL || "" 
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to sync user with backend');
+                    }
+
+                    const mongoProfile = await response.json();
+                    setProfileData({
+                        ...mongoProfile,
+                        id: mongoProfile.uid, 
+                        displayName: mongoProfile.displayName,
+                        photoURL: mongoProfile.photoURL || firebaseUser.photoURL
+                    });
+                    
+                    setIsDataReady(true);
+
+                } catch (error) {
+                    console.error("Error fetching profile from MongoDB:", error);
+                    setProfileData({
+                        displayName: firebaseUser.displayName || 'Professor',
+                        email: firebaseUser.email,
+                        id: firebaseUser.uid,
+                        role: 'Offline Mode',
+                        photoURL: firebaseUser.photoURL
+                    });
+                    setIsDataReady(true);
+                }
+
+            } else {
+                setIsLoggedIn(false);
+                setProfileData(null);
+                setIsDataReady(false); 
+            }
+            setIsLoadingAuth(false);
         });
+
         return () => unsubscribe();
     }, []);
 
-    const handleLoginSuccess = () => { console.log("Login flow initiated."); };
+    const handleLoginSuccess = () => {
+        console.log("Login flow initiated.");
+    };
 
     const handleLogout = async () => {
         try {
@@ -61,7 +102,9 @@ function App() {
             setProfileData(null);
             setIsLoggedIn(false);
             setIsVoiceActive(false); // Turn off voice on logout
-        } catch (error) { console.error("Error during logout:", error); }
+        } catch (error) {
+            console.error("Error during logout:", error);
+        }
     };
 
     const handlePageChange = (page, params = {}) => {
@@ -69,7 +112,7 @@ function App() {
         setPageParams(params); 
     };
 
-    // Helper to toggle voice (Passed to Dashboard)
+    // Helper to toggle voice
     const toggleVoice = (status) => {
         setIsVoiceActive(status);
     };
@@ -79,25 +122,43 @@ function App() {
              return <LoadingAnimation isDataReady={isDataReady} />;
         }
 
-        // --- PASS VOICE PROPS TO DASHBOARD ---
+        // Pass voice props to Dashboard
         const dashboardProps = {
             onLogout: handleLogout,
             onPageChange: handlePageChange,
             profileData: profileData,
-            // Pass these down so Dashboard button works
             isVoiceActive: isVoiceActive,
             onToggleVoice: () => toggleVoice(!isVoiceActive) 
         };
 
         switch (currentPage) {
-            case 'gradesheet': return <Gradesheet onLogout={handleLogout} onPageChange={handlePageChange} />;
-            case 'multipage-gradesheet': return <MultiPageGS onLogout={handleLogout} onPageChange={handlePageChange} {...pageParams} />;
-            case 'view-studs': return <ViewStuds onLogout={handleLogout} onPageChange={handlePageChange} />;
-            case 'reports': return <ReportsLayout onLogout={handleLogout} onPageChange={handlePageChange} />;
-            case 'v-reports': return <VReports onLogout={handleLogout} onPageChange={handlePageChange} />;
-            case 'view-rd': return <ViewRD onLogout={handleLogout} onPageChange={handlePageChange} studentData={pageParams.student} />;
-            case 'profile': return <ProfileLayout onLogout={handleLogout} onPageChange={handlePageChange} profileData={profileData} />; 
-            case 'dashboard': default: return <Dashboard {...dashboardProps} />; // Updated
+            case 'gradesheet':
+                return <Gradesheet onLogout={handleLogout} onPageChange={handlePageChange} />;
+            case 'multipage-gradesheet':
+                return (
+                    <MultiPageGS 
+                        onLogout={handleLogout} 
+                        onPageChange={handlePageChange} 
+                        viewType={pageParams.viewType || 'Attendance'} 
+                        title={pageParams.title || 'Attendance'}
+                        term={pageParams.term || ''}
+                    />
+                );
+            case 'view-studs':
+                return <ViewStuds onLogout={handleLogout} onPageChange={handlePageChange} />;
+            case 'reports':
+                return <ReportsLayout onLogout={handleLogout} onPageChange={handlePageChange} />;
+            case 'v-reports': 
+                return <VReports onLogout={handleLogout} onPageChange={handlePageChange} />;
+            case 'view-rd': 
+                return <ViewRD onLogout={handleLogout} onPageChange={handlePageChange} studentData={pageParams.student} />;
+            case 'profile':
+                return <ProfileLayout onLogout={handleLogout} onPageChange={handlePageChange} profileData={profileData} />; 
+            case 'tributes': 
+                return <Tributes onLogout={handleLogout} onPageChange={handlePageChange} />; // <--- NEW ROUTE
+            case 'dashboard':
+            default:
+                return <Dashboard {...dashboardProps} />;
         }
     };
 
@@ -106,8 +167,7 @@ function App() {
     if (isLoggedIn) {
         return (
              <div className="dashboard-container">
-                 {/* --- RENDER VOICE CONTROL GLOBALLY --- */}
-                 {/* It sits here, so it never unmounts when MainContent changes */}
+                 {/* Voice Control Global Overlay */}
                  <VoiceControl 
                     isVoiceActive={isVoiceActive} 
                     onToggle={toggleVoice} 
@@ -115,8 +175,9 @@ function App() {
                  />
 
                  {renderMainContent()}
-                 
-                 {showChatbot && <CdmChatbot />} 
+
+                 {/* Pass onPageChange to Chatbot for Automation */}
+                 {showChatbot && <CdmChatbot onPageChange={handlePageChange} />} 
              </div>
         );
     } else {

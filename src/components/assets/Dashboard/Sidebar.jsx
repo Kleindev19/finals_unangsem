@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { auth } from '../../../apiService'; 
 import { signOut } from 'firebase/auth';
 import { LogoutModal, VersionModal } from './ModalComponents'; 
-// Import the auto-generated meta file (It will exist after you run npm start)
 import { APP_VERSION, BUILD_HASH, BUILD_DATE } from '../../../meta';
 
 // --- CONSTANTS ---
@@ -40,7 +39,7 @@ const navItems = [
 export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) => { 
     const [isExpanded, setIsExpanded] = useState(true); 
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-    const [isVersionModalOpen, setIsVersionModalOpen] = useState(false); // New State
+    const [isVersionModalOpen, setIsVersionModalOpen] = useState(false); 
 
     useEffect(() => {
         if (onWidthChange) {
@@ -182,32 +181,60 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 <NavLink item={{ name: 'Logout', icon: LogOutIcon }} isAction={true} onClick={handleLogoutClick} />
             </nav>
 
-            {/* VERSIONING FOOTER (Clickable) */}
-            <div 
-                onClick={() => setIsVersionModalOpen(true)}
-                style={{
-                    marginTop: 'auto', width: '100%', padding: '1.5rem 1rem',
-                    borderTop: '1px solid rgba(255,255,255,0.1)',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: isExpanded ? 'flex-start' : 'center', justifyContent: 'center',
-                    gap: '0.25rem', boxSizing: 'border-box',
-                    cursor: 'pointer', // Make it look clickable
-                    transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                title="Click to view update history"
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
-                    <GitBranchIcon />
-                    {isExpanded && <span>v{APP_VERSION}</span>}
-                </div>
+            {/* FOOTER SECTION (TRIBUTES & VERSION) */}
+            <div style={{
+                marginTop: 'auto', width: '100%', 
+                borderTop: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex', flexDirection: 'column',
+                padding: '0', 
+            }}>
                 
-                {isExpanded && (
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem', paddingLeft: '1.4rem' }}>
-                        {BUILD_HASH} Build
-                    </span>
-                )}
+                {/* 1. TRIBUTES PAGE LINK */}
+                <div 
+                    onClick={() => onPageChange('tributes')} // Navigate to Page
+                    style={{
+                        padding: '1rem',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        color: 'rgba(255,255,255,0.7)',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        transition: 'background 0.2s',
+                        display: isExpanded ? 'block' : 'none' 
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.1)'; e.currentTarget.style.color = 'white'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                >
+                    Tributes & Credits      
+                </div>
+
+                {/* 2. VERSION INFO */}
+                <div 
+                    onClick={() => setIsVersionModalOpen(true)}
+                    style={{
+                        padding: '1rem',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: isExpanded ? 'flex-start' : 'center', justifyContent: 'center',
+                        gap: '0.25rem',
+                        cursor: 'pointer',
+                        borderTop: '1px solid rgba(255,255,255,0.05)',
+                        transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    title="Click to view update history"
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                        <GitBranchIcon />
+                        {isExpanded && <span>v{APP_VERSION}</span>}
+                    </div>
+                    
+                    {isExpanded && (
+                        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem', paddingLeft: '1.4rem' }}>
+                            {BUILD_HASH} Build
+                        </span>
+                    )}
+                </div>
             </div>
 
             {/* MODALS */}

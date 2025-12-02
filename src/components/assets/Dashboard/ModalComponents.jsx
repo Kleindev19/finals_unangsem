@@ -186,11 +186,10 @@ export const LogoutModal = ({ isOpen, onClose, onConfirm }) => {
     );
 };
 
-// --- 5. NEW: VERSIONING / UPDATE MODAL ---
+// --- 5. VERSIONING / UPDATE MODAL ---
 export const VersionModal = ({ isOpen, onClose, version, hash, date }) => {
     if (!isOpen) return null;
 
-    // Github URL handling
     const handleGithubClick = () => {
         window.open('https://github.com/Kleindev19/finals_unangsem/commits/main', '_blank');
     };
@@ -237,6 +236,55 @@ export const VersionModal = ({ isOpen, onClose, version, hash, date }) => {
                     <button className="modal-action-btn" onClick={handleGithubClick} style={{ marginTop: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                         <GitIcon /> View Updates on GitHub
                     </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+// --- 6. CREDITS / TRIBUTE MODAL (NEW) ---
+export const CreditsModal = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    // REPLACE WITH YOUR TEAM
+    const TEAM_MEMBERS = [
+        { name: "Klein Dev", role: "Lead Developer", emoji: "👨‍💻" },
+        { name: "John Doe", role: "UI/UX Designer", emoji: "🎨" },
+        { name: "Jane Smith", role: "Backend Engineer", emoji: "🚀" },
+        { name: "Alex Ray", role: "Data Analyst", emoji: "📊" },
+    ];
+
+    return ReactDOM.createPortal(
+        <div className="modal-overlay">
+            <div className="modal-card" style={{ width: '450px', textAlign: 'center', padding: '2.5rem' }}>
+                <button className="modal-close" onClick={onClose}><XIcon /></button>
+                
+                <h2 className="modal-title" style={{ marginBottom: '0.5rem', color: '#38761d' }}>The Minds Behind</h2>
+                <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '2rem' }}>
+                    CDM Progress Tracker System
+                </p>
+
+                <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
+                    {TEAM_MEMBERS.map((member, index) => (
+                        <div key={index} style={{ 
+                            display: 'flex', alignItems: 'center', gap: '1rem',
+                            backgroundColor: 'white', padding: '1rem', borderRadius: '12px',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB'
+                        }}>
+                            <div style={{ fontSize: '1.5rem', backgroundColor: '#F3F4F6', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {member.emoji}
+                            </div>
+                            <div style={{ textAlign: 'left' }}>
+                                <div style={{ fontWeight: '700', color: '#1F2937' }}>{member.name}</div>
+                                <div style={{ fontSize: '0.8rem', color: '#38761d', fontWeight: '600' }}>{member.role}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div style={{ fontSize: '0.8rem', color: '#9CA3AF', fontStyle: 'italic' }}>
+                    "Code is like humor. When you have to explain it, it’s bad."
                 </div>
             </div>
         </div>,

@@ -179,31 +179,43 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
     };
     
     useEffect(() => {
-        // We only need to fetch students once or when manually refreshed.
-        // Changing viewOption shouldn't necessarily re-fetch if we pass data.
         fetchStudents();
+
+        // --- NEW: LISTEN FOR CHATBOT AUTOMATION ---
+        const handleBotAdd = (e) => {
+            const newStudent = e.detail;
+            console.log("🤖 Automation: Receiving new student", newStudent.name);
+            
+            // Add with 'isNew' flag for CSS Animation
+            setStudents(prev => [{ ...newStudent, isNew: true }, ...prev]);
+            
+            // Remove the flag after 2 seconds to reset animation state
+            setTimeout(() => {
+                setStudents(prev => prev.map(s => s.id === newStudent.id ? { ...s, isNew: false } : s));
+            }, 2000);
+        };
+
+        window.addEventListener('CDM_STUDENT_ADDED', handleBotAdd);
+        return () => window.removeEventListener('CDM_STUDENT_ADDED', handleBotAdd);
+
     }, []); 
 
-    // --- VIEW CHANGE HANDLER (UPDATED) ---
     const handleViewChange = (e) => {
         const selected = e.target.value;
         setViewOption(selected);
 
-        // Define which views should redirect to the Detailed Gradesheet (MultiPageGS)
         const gradeViews = ['Midterm', 'Finals', 'Assignment', 'Quizzes', 'Activities'];
 
         if (gradeViews.includes(selected)) {
-            // Determine a nice title for the header based on selection
             let displayTitle = selected;
             if (selected === 'Midterm') displayTitle = 'Midterm Grade';
             if (selected === 'Finals') displayTitle = 'Finals Grade';
             if (selected === 'Assignment') displayTitle = 'Assignments';
             
-            // Navigate to MultiPageGS
             onPageChange('multipage-gradesheet', { 
                 viewType: selected, 
                 title: displayTitle,
-                students: students // Pass currently loaded students to avoid re-fetching
+                students: students 
             });
         }
     };
@@ -263,7 +275,7 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                     </thead>
                     <tbody>
                         {students.map((student) => (
-                            <tr key={student.id}>
+                            <tr key={student.id} className={student.isNew ? "vs-row-animate-new" : ""}>
                                 <td className="vs-id-text">{student.id}</td>
                                 <td style={{fontWeight: '600'}}>{student.name}</td>
                                 <td>{student.type}</td>
@@ -301,7 +313,7 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                         {students.map((student) => { 
                             const records = attendanceData[student.id] || []; 
                             return (
-                                <tr key={student.id}>
+                                <tr key={student.id} className={student.isNew ? "vs-row-animate-new" : ""}>
                                     <td className="fixed-col vs-id-text">{student.id}</td>
                                     <td className="fixed-col" style={{fontWeight: '600'}}>{student.name}</td>
                                     <td className="fixed-col">{student.type}</td>
