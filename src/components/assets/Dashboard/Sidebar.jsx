@@ -29,11 +29,13 @@ const ReportsIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/sv
 const UserIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>);
 const LogOutIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>);
 const GitBranchIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity: 0.6}}><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>);
+const CodeIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>);
 
 const navItems = [
     { name: 'Dashboard', icon: LayoutDashboardIcon, page: 'dashboard' },
     { name: 'Reports', icon: ReportsIcon, page: 'reports' },
     { name: 'Profile', icon: UserIcon, page: 'profile' },
+    { name: 'Developers', icon: CodeIcon, page: 'tributes' },
 ];
 
 export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) => { 
@@ -178,10 +180,9 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
             {/* NAV ITEMS */}
             <nav style={{ flexGrow: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '1rem' }}>
                 {navItems.map(item => <NavLink key={item.page} item={item} />)}
-                <NavLink item={{ name: 'Logout', icon: LogOutIcon }} isAction={true} onClick={handleLogoutClick} />
             </nav>
 
-            {/* FOOTER SECTION (TRIBUTES & VERSION) */}
+            {/* FOOTER SECTION (LOGOUT & VERSION) */}
             <div style={{
                 marginTop: 'auto', width: '100%', 
                 borderTop: '1px solid rgba(255,255,255,0.1)',
@@ -189,23 +190,9 @@ export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) 
                 padding: '0', 
             }}>
                 
-                {/* 1. TRIBUTES PAGE LINK */}
-                <div 
-                    onClick={() => onPageChange('tributes')} // Navigate to Page
-                    style={{
-                        padding: '1rem',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        color: 'rgba(255,255,255,0.7)',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        transition: 'background 0.2s',
-                        display: isExpanded ? 'block' : 'none' 
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.1)'; e.currentTarget.style.color = 'white'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-                >
-                    Tributes & Credits      
+                {/* 1. LOGOUT BUTTON */}
+                <div style={{ width: '100%', padding: '0.5rem 0' }}>
+                    <NavLink item={{ name: 'Logout', icon: LogOutIcon }} isAction={true} onClick={handleLogoutClick} />
                 </div>
 
                 {/* 2. VERSION INFO */}

@@ -30,7 +30,8 @@
     justify-content: center;
     gap: 1rem;
     margin-bottom: 0.5rem;
-    color: #DC2626; /* Heart Red */
+    /* CHANGED: Switched from Heart Red (#DC2626) to a tech-appropriate Blue/Indigo (#4F46E5) for the Code Icon */
+    color: #4F46E5; 
 }
 
 .trib-title-box h1 {

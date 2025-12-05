@@ -5,12 +5,12 @@ import './Tributes.css';
 import { Sidebar, SIDEBAR_DEFAULT_WIDTH } from '../Dashboard/Sidebar';
 
 // --- ICONS ---
-const HeartIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-);
-
 const CodeIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+);
+
+const UploadIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
 );
 
 // --- COLOR PALETTE FOR RANDOMIZATION ---
@@ -29,20 +29,21 @@ const COLORS = [
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 
 // --- TEAM DATA ---
-// All roles set to "Developer" and colors are randomized
-const TEAM_MEMBERS = [
-    { name: "Jona Mae Obordo", role: "Developer", color: getRandomColor() },
-    { name: "Josh Lander Ferrera", role: "Developer", color: getRandomColor() },
-    { name: "Marvhenne Klein Ortega", role: "Developer", color: getRandomColor() },
-    { name: "Edward Marcelino", role: "Developer", color: getRandomColor() },
-    { name: "Jazon Williams Chang", role: "Developer", color: getRandomColor() },
-    { name: "Marry Ann Nedia", role: "Developer", color: getRandomColor() },
-    { name: "Shamell", role: "Developer", color: getRandomColor() },
-    { name: "Vhvancca Tablon", role: "Developer", color: getRandomColor() },
+const INITIAL_TEAM_MEMBERS = [
+    { name: "Jona Mae Obordo", role: "DOCUMENTATION", color: getRandomColor() },
+    { name: "Josh Lander Ferrera", role: "FULL STACK DEVELOPER", color: getRandomColor() },
+    { name: "Marvhenne Klein Ortega", role: "FULL STACK DEVELOPER", color: getRandomColor() },
+    { name: "Edward Marcelino", role: "FULL STACK DEVELOPER", color: getRandomColor() },
+    { name: "Jazon Williams Chang", role: "UI/FRONT END DEVELOPER", color: getRandomColor() },
+    { name: "Marry Ann Nedia", role: "LEADER", color: getRandomColor() },
+    { name: "Shamell", role: "DOCUMENTATION", color: getRandomColor() },
+    { name: "Vhvancca Tablon", role: "UI/FRONT END", color: getRandomColor() },
 ];
 
 const Tributes = ({ onLogout, onPageChange }) => {
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
+    const [teamMembers, setTeamMembers] = useState(INITIAL_TEAM_MEMBERS);
+    const [uploadedImages, setUploadedImages] = useState({});
     
     // Resize logic
     useEffect(() => {
@@ -53,6 +54,31 @@ const Tributes = ({ onLogout, onPageChange }) => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // Load saved images from localStorage on mount
+    useEffect(() => {
+        const savedImages = localStorage.getItem('tributeImages');
+        if (savedImages) {
+            setUploadedImages(JSON.parse(savedImages));
+        }
+    }, []);
+
+    // Handle image upload
+    const handleImageUpload = (memberName, event) => {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const newImages = {
+                    ...uploadedImages,
+                    [memberName]: e.target.result
+                };
+                setUploadedImages(newImages);
+                localStorage.setItem('tributeImages', JSON.stringify(newImages));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     return (
         <div className="tributes-layout">
@@ -68,26 +94,74 @@ const Tributes = ({ onLogout, onPageChange }) => {
                 {/* Header Section */}
                 <div className="trib-header">
                     <div className="trib-title-box">
-                        <HeartIcon />
-                        <h1>Tributes & Credits</h1>
+                        <CodeIcon /> 
+                        <h1>Development Team</h1>
                     </div>
-                    <p>Recognizing the brilliant minds behind the Capstonian Project.</p>
+                    <p>Recognizing the brilliant minds behind the System Project.</p>
                 </div>
 
                 {/* Team Grid */}
                 <div className="trib-grid">
-                    {TEAM_MEMBERS.map((member, index) => (
+                    {teamMembers.map((member, index) => (
                         <div key={index} className="trib-card">
                             <div className="trib-avatar-container">
-                                {/* Using randomized color for the avatar background */}
+                                {/* Avatar Image */}
                                 <img 
-                                    src={`https://ui-avatars.com/api/?name=${member.name}&background=${member.color.replace('#','')}&color=fff&size=128&bold=true`} 
+                                    src={uploadedImages[member.name] || `https://ui-avatars.com/api/?name=${member.name}&background=${member.color.replace('#','')}&color=fff&size=128&bold=true`}
                                     alt={member.name} 
                                     className="trib-avatar"
                                 />
+                                
+                                {/* Badge */}
                                 <div className="trib-badge" style={{backgroundColor: member.color}}>
                                     <CodeIcon />
                                 </div>
+
+                                {/* Upload Button Overlay */}
+                                <div 
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '110px',
+                                        height: '110px',
+                                        borderRadius: '50%',
+                                        backgroundColor: 'rgba(0,0,0,0.5)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        opacity: 0,
+                                        transition: 'opacity 0.3s ease',
+                                        cursor: 'pointer',
+                                    }}
+                                    className="upload-overlay"
+                                    onClick={() => document.getElementById(`upload-${index}`).click()}
+                                    onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                                    onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                                >
+                                    <div style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '0.3rem'
+                                    }}>
+                                        <UploadIcon />
+                                        <span style={{
+                                            color: 'white',
+                                            fontSize: '0.7rem',
+                                            fontWeight: '600'
+                                        }}>Upload</span>
+                                    </div>
+                                </div>
+
+                                {/* Hidden File Input */}
+                                <input
+                                    id={`upload-${index}`}
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => handleImageUpload(member.name, e)}
+                                />
                             </div>
                             
                             <h3 className="trib-name">{member.name}</h3>
@@ -96,7 +170,7 @@ const Tributes = ({ onLogout, onPageChange }) => {
                                 className="trib-role" 
                                 style={{
                                     color: member.color, 
-                                    backgroundColor: `${member.color}15`, // 15 = low opacity hex
+                                    backgroundColor: `${member.color}15`,
                                     borderColor: `${member.color}40`
                                 }}
                             >
