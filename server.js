@@ -2,7 +2,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config(); // Load environment variables
+const { decrypt } = require('./security'); // IMPORT SECURITY MODULE
+require('dotenv').config(); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,21 +49,33 @@ const studentSchema = new mongoose.Schema({
 
 const Student = mongoose.model('Student', studentSchema);
 
-// --- SMART DATABASE CONNECTION ---
-// Tries Online first. Falls back to Local.
+// ==========================================
+// 2. SMART & SECURE DATABASE CONNECTION
+// ==========================================
 const connectDB = async () => {
     try {
+        console.log("🔐 Decrypting Cloud Credentials...");
+        
+        // 1. Decrypt the password from .env
+        const onlineURI = decrypt(process.env.MONGO_URI_CLOUD);
+        
+        if (!onlineURI) {
+            throw new Error("Failed to decrypt Cloud URI. Check MASTER_KEY.");
+        }
+
         console.log("☁️  Attempting to connect to MongoDB Atlas (Online)...");
-        // Try Online Connection with a 5-second timeout
-        await mongoose.connect(process.env.MONGO_URI_CLOUD, {
+        
+        // 2. Connect using the decrypted string
+        await mongoose.connect(onlineURI, {
             serverSelectionTimeoutMS: 5000 
         });
         console.log("✅ CONNECTED TO: MongoDB Atlas (Online Mode)");
+        
     } catch (err) {
         console.warn("⚠️  Internet connection failed or Atlas is unreachable.");
         console.warn("🔄 Switching to Local Database...");
         try {
-            // Fallback to Local Connection
+            // Fallback to Local Connection (No encryption needed for localhost)
             await mongoose.connect(process.env.MONGO_URI_LOCAL);
             console.log("✅ CONNECTED TO: Localhost (Offline Mode)");
         } catch (localErr) {
@@ -77,16 +90,19 @@ connectDB();
 
 
 // ==========================================
-// 2. API ROUTES
+// 3. API ROUTES
 // ==========================================
 
-// --- AUTO-SYNC ENDPOINT (NEW) ---
+// --- AUTO-SYNC ENDPOINT (NEW & SECURE) ---
 app.post('/api/sync-now', async (req, res) => {
     console.log("🔄 Auto-Sync Triggered by Frontend...");
     
-    // Create temporary independent connections to move data
+    // 1. Decrypt the Cloud URI again for this specific connection
+    const onlineURI = decrypt(process.env.MONGO_URI_CLOUD);
+    
+    // 2. Open temporary connections
     const localConn = mongoose.createConnection(process.env.MONGO_URI_LOCAL);
-    const cloudConn = mongoose.createConnection(process.env.MONGO_URI_CLOUD);
+    const cloudConn = mongoose.createConnection(onlineURI);
 
     const LocalModel = localConn.model('Student', studentSchema);
     const CloudModel = cloudConn.model('Student', studentSchema);
@@ -95,7 +111,7 @@ app.post('/api/sync-now', async (req, res) => {
         const localData = await LocalModel.find({});
         let count = 0;
 
-        // Push Local -> Cloud
+        // 3. Push Local -> Cloud
         for (const doc of localData) {
             await CloudModel.findOneAndUpdate(
                 { id: doc.id, professorUid: doc.professorUid },
@@ -112,7 +128,7 @@ app.post('/api/sync-now', async (req, res) => {
         console.error("❌ Sync Failed:", error);
         res.status(500).json({ error: "Sync failed" });
     } finally {
-        // Clean up connections
+        // 4. Clean up connections
         await localConn.close();
         await cloudConn.close();
     }
@@ -186,24 +202,15 @@ app.post('/api/students', async (req, res) => {
     } catch (error) {
         console.error("❌ Add Student Error:", error);
         
-        // Handle duplicate key error
         if (error.code === 11000) {
-            return res.status(400).json({ 
-                message: "Student ID already exists in the database" 
-            });
+            return res.status(400).json({ message: "Student ID already exists in the database" });
         }
         
-        // Handle validation errors
         if (error.name === 'ValidationError') {
-            return res.status(400).json({ 
-                message: `Validation Error: ${error.message}` 
-            });
+            return res.status(400).json({ message: `Validation Error: ${error.message}` });
         }
         
-        res.status(500).json({ 
-            message: "Error saving student", 
-            error: error.message 
-        });
+        res.status(500).json({ message: "Error saving student", error: error.message });
     }
 });
 
