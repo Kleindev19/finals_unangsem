@@ -18,7 +18,10 @@ import VoiceControl from './components/assets/Dashboard/VoiceControl.jsx';
 import { auth } from './apiService'; 
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'; 
 import CdmChatbot from './Apps.jsx'; 
-import { APP_VERSION, BUILD_HASH, BUILD_DATE } from './meta'; 
+
+// --- UPDATED IMPORT LOGIC ---
+import meta from './meta.json'; 
+const { APP_VERSION, BUILD_HASH, BUILD_DATE } = meta; 
 
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);

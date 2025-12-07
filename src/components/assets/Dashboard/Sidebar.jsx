@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { auth } from '../../../apiService'; 
 import { signOut } from 'firebase/auth';
 import { LogoutModal, VersionModal } from './ModalComponents'; 
-import { APP_VERSION, BUILD_HASH, BUILD_DATE } from '../../../meta';
+
+// --- UPDATED IMPORT LOGIC ---
+import meta from '../../../meta.json';
+const { APP_VERSION, BUILD_HASH, BUILD_DATE } = meta;
 
 // --- CONSTANTS ---
 export const SIDEBAR_COLLAPSED_WIDTH = 80; 

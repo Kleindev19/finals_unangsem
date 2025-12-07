@@ -69,8 +69,9 @@ Write-Host "`n--- 3. STARTING BACKEND (Port 5000) ---" -ForegroundColor Cyan
 if (-not (Test-PortOpen 5000)) {
     Write-Host "Launching Backend Server..." -ForegroundColor Yellow
     
-    # Start Backend with a Title so you can find it
-    Start-Process powershell -WindowStyle Minimized -ArgumentList "-NoExit", "-Command", '$host.UI.RawUI.WindowTitle = "CDM Backend Server"; node server.js'
+    # FIXED: Replaced " with '' (escaped single quotes) for title
+    $BackendCmd = '$host.UI.RawUI.WindowTitle = ''CDM Backend Server''; node server.js'
+    Start-Process powershell -WindowStyle Minimized -ArgumentList "-NoExit", "-Command", $BackendCmd
     
     Write-Host "Waiting for Backend to listen on port 5000..." -NoNewline
     $Retries = 0
@@ -97,8 +98,9 @@ Write-Host "`n--- 4. STARTING FRONTEND (Port 3000) ---" -ForegroundColor Cyan
 if (-not (Test-PortOpen 3000)) {
     Write-Host "Launching React App..." -ForegroundColor Yellow
     
-    # Start Frontend with Title, BROWSER=none prevents it from popping up prematurely
-    Start-Process powershell -WindowStyle Minimized -ArgumentList "-NoExit", "-Command", '$host.UI.RawUI.WindowTitle = "CDM React Frontend"; $env:BROWSER="none"; npm start'
+    # FIXED: Replaced " with '' (escaped single quotes) for title and browser env
+    $FrontendCmd = '$host.UI.RawUI.WindowTitle = ''CDM React Frontend''; $env:BROWSER=''none''; npm start'
+    Start-Process powershell -WindowStyle Minimized -ArgumentList "-NoExit", "-Command", $FrontendCmd
     
     Write-Host "Waiting for React to initialize..." -NoNewline
     $Retries = 0
@@ -107,7 +109,7 @@ if (-not (Test-PortOpen 3000)) {
         Write-Host "." -NoNewline
         $FrontendReady = Test-PortOpen 3000
         $Retries++
-    } until ($FrontendReady -or $Retries -gt 60) # React takes longer
+    } until ($FrontendReady -or $Retries -gt 60)
     
     if ($FrontendReady) {
          Write-Host "`n[OK] Frontend is online!" -ForegroundColor Green
