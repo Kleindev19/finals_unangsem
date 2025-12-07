@@ -29,21 +29,77 @@ const COLORS = [
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 
 // --- TEAM DATA ---
+// 🔑 CRITICAL FIX: The imageUrls below are SIMULATED public links 
+// based on the image you provided. 
+// YOU MUST REPLACE THESE WITH YOUR ACTUAL PUBLIC HOSTED URLs.
+
 const INITIAL_TEAM_MEMBERS = [
-    { name: "Jona Mae Obordo", role: "DOCUMENTATION", color: getRandomColor() },
-    { name: "Josh Lander Ferrera", role: "FULL STACK DEVELOPER", color: getRandomColor() },
-    { name: "Marvhenne Klein Ortega", role: "FULL STACK DEVELOPER", color: getRandomColor() },
-    { name: "Edward Marcelino", role: "FULL STACK DEVELOPER", color: getRandomColor() },
-    { name: "Jazon Williams Chang", role: "UI/FRONT END DEVELOPER", color: getRandomColor() },
-    { name: "Marry Ann Nedia", role: "LEADER", color: getRandomColor() },
-    { name: "Shamell", role: "DOCUMENTATION", color: getRandomColor() },
-    { name: "Vhvancca Tablon", role: "UI/FRONT END", color: getRandomColor() },
+    { 
+        name: "Jona Mae Obordo", 
+        role: "DOCUMENTATION", 
+        color: getRandomColor(), 
+        // 🚨 REPLACE THIS WITH YOUR REAL URL
+        imageUrl: "https://your-server.com/images/jona-mae-obordo.png" 
+    }, 
+    { 
+        name: "Josh Lander Ferrera", 
+        role: "FULL STACK DEVELOPER", 
+        color: getRandomColor(), 
+        // 🚨 REPLACE THIS WITH YOUR REAL URL
+        imageUrl: "https://your-server.com/images/josh-lander-ferrera.png" 
+    },
+    { 
+        name: "Marvhenne Klein Ortega", 
+        role: "FULL STACK DEVELOPER", 
+        color: getRandomColor(), 
+        // 🚨 REPLACE THIS WITH YOUR REAL URL
+        imageUrl: "https://your-server.com/images/marvhenne-klein-ortega.png" 
+    },
+    { 
+        name: "Edward Marcelino", 
+        role: "FULL STACK DEVELOPER", 
+        color: getRandomColor(), 
+        // 🚨 REPLACE THIS WITH YOUR REAL URL
+        imageUrl: "C:\Users\klein\Downloads\edward.jpg" 
+    },
+    { 
+        name: "Jazon Williams Chang", 
+        role: "UI/FRONT END DEVELOPER", 
+        color: getRandomColor(), 
+        // 🚨 REPLACE THIS WITH YOUR REAL URL
+        imageUrl: "https://your-server.com/images/jazon-williams-chang.png" 
+    },
+    { 
+        name: "Marry Ann Nedia", 
+        role: "LEADER", 
+        color: getRandomColor(), 
+        // Marry Ann Nedia has a letter avatar in the original screenshot, 
+        // so we'll leave it blank to use the UI Avatar fallback, 
+        // but you can add a URL here later:
+        imageUrl: "" 
+    },
+    { 
+        name: "Shamell", 
+        role: "DOCUMENTATION", 
+        color: getRandomColor(), 
+        // Shamell has a photo in the original screenshot.
+        // 🚨 REPLACE THIS WITH YOUR REAL URL
+        imageUrl: "https://your-server.com/images/shamell.png"
+    },
+    { 
+        name: "Vhvancca Tablon", 
+        role: "UI/FRONT END", 
+        color: getRandomColor(), 
+        // Vhvancca Tablon has a photo in the original screenshot.
+        // 🚨 REPLACE THIS WITH YOUR REAL URL
+        imageUrl: "https://your-server.com/images/vhvancca-tablon.png" 
+    },
 ];
 
 const Tributes = ({ onLogout, onPageChange }) => {
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
+    // Use the INITIAL_TEAM_MEMBERS with the online URLs as the primary state
     const [teamMembers, setTeamMembers] = useState(INITIAL_TEAM_MEMBERS);
-    const [uploadedImages, setUploadedImages] = useState({});
     
     // Resize logic
     useEffect(() => {
@@ -55,28 +111,24 @@ const Tributes = ({ onLogout, onPageChange }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Load saved images from localStorage on mount
-    useEffect(() => {
-        const savedImages = localStorage.getItem('tributeImages');
-        if (savedImages) {
-            setUploadedImages(JSON.parse(savedImages));
-        }
-    }, []);
-
     // Handle image upload
     const handleImageUpload = (memberName, event) => {
         const file = event.target.files[0];
         if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const newImages = {
-                    ...uploadedImages,
-                    [memberName]: e.target.result
-                };
-                setUploadedImages(newImages);
-                localStorage.setItem('tributeImages', JSON.stringify(newImages));
-            };
-            reader.readAsDataURL(file);
+            
+            // 🚨 CRITICAL CHANGE: This is where you must call your server-side API
+            // to upload the 'file' and get a persistent public URL back.
+            
+            alert(`Placeholder: Image for ${memberName} selected. You need a server to complete the upload and save the permanent URL.`);
+            
+            // If the upload succeeds, the backend returns the public URL:
+            /*
+            const publicUrl = "URL_FROM_YOUR_SERVER_AFTER_UPLOAD";
+            
+            setTeamMembers(prevMembers => 
+                prevMembers.map(m => m.name === memberName ? { ...m, imageUrl: publicUrl } : m)
+            );
+            */
         }
     };
 
@@ -106,8 +158,9 @@ const Tributes = ({ onLogout, onPageChange }) => {
                         <div key={index} className="trib-card">
                             <div className="trib-avatar-container">
                                 {/* Avatar Image */}
+                                {/* The src now prioritizes member.imageUrl (your online photo) */}
                                 <img 
-                                    src={uploadedImages[member.name] || `https://ui-avatars.com/api/?name=${member.name}&background=${member.color.replace('#','')}&color=fff&size=128&bold=true`}
+                                    src={member.imageUrl || `https://ui-avatars.com/api/?name=${member.name}&background=${member.color.replace('#','')}&color=fff&size=128&bold=true`}
                                     alt={member.name} 
                                     className="trib-avatar"
                                 />
@@ -117,7 +170,7 @@ const Tributes = ({ onLogout, onPageChange }) => {
                                     <CodeIcon />
                                 </div>
 
-                                {/* Upload Button Overlay */}
+                                {/* Upload Button Overlay (Kept for future server-side implementation) */}
                                 <div 
                                     style={{
                                         position: 'absolute',

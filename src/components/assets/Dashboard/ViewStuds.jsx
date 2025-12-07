@@ -1,6 +1,6 @@
 // src/components/assets/Dashboard/ViewStuds.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './ViewStuds.css';
 import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 
@@ -8,8 +8,6 @@ import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 const SearchIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
 const BellIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.36 17a3 3 0 1 0 3.28 0"/></svg>);
 const HelpIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>);
-const LinkIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>);
-const CopyIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>);
 const ChevronDown = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
 const PlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>);
 const DownloadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>);
@@ -18,30 +16,7 @@ const EditIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" 
 const UploadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>);
 const AlertCircle = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>);
 
-// --- CONSTANTS ---
 const ATTENDANCE_DATES = ['Sept 15', 'Sept 16', 'Sept 18', 'Sept 19', 'Sept 22', 'Sept 23', 'Sep 24', 'Sept 25'];
-
-// --- UTILITY: API CALL ---
-const addStudentToDB = async (studentData) => {
-    const API_URL = 'http://localhost:5000/api/students'; 
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(studentData),
-        });
-        
-        const responseData = await response.json();
-        if (!response.ok) {
-            throw new Error(responseData.message || 'Failed to add student to database.');
-        }
-        return responseData;
-    } catch (error) {
-        console.error('API Error:', error);
-        alert(`Error: ${error.message}. Is your backend server running?`);
-        return null;
-    }
-};
 
 // --- SUB-COMPONENT: ATTENDANCE CELL ---
 const AttendanceCell = ({ status, onChange }) => {
@@ -75,11 +50,18 @@ const AttendanceCell = ({ status, onChange }) => {
 };
 
 // --- ADD STUDENT MODAL ---
-const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded }) => { 
+const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, professorUid }) => { 
     const [formData, setFormData] = useState({
         id: '', name: '', type: 'Regular', course: '', 
-        section: '', cell: '', email: '', address: ''
+        section: sectionName || '', cell: '', email: '', address: ''
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setFormData(prev => ({ ...prev, section: sectionName || '' }));
+        }
+    }, [isOpen, sectionName]);
 
     if (!isOpen) return null;
 
@@ -89,22 +71,47 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const PROFESSOR_UID = 'MOCK_PROF_ID_123'; 
+        setIsSubmitting(true);
+        
+        try {
+            // Validate required fields
+            if (!formData.id || !formData.name || !formData.section) {
+                throw new Error('Student ID, Name, and Section are required');
+            }
 
-        const payload = {
-            ...formData,
-            professorUid: PROFESSOR_UID 
-        };
+            // Save to MongoDB
+            const response = await fetch('http://localhost:5000/api/students', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    professorUid: professorUid
+                })
+            });
 
-        const newStudent = await addStudentToDB(payload);
+            const responseData = await response.json();
 
-        if (newStudent) {
-            onStudentAdded(newStudent);
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Failed to add student');
+            }
+
+            console.log('✅ Student saved to database:', responseData.name);
+            alert(`Student ${responseData.name} added successfully!`);
+            
+            // Call parent callback to refresh student list
+            onStudentAdded(responseData);
+            
+            // Close modal and reset form
             onClose();
             setFormData({
                 id: '', name: '', type: 'Regular', course: '', 
-                section: '', cell: '', email: '', address: ''
+                section: sectionName || '', cell: '', email: '', address: ''
             });
+        } catch (error) {
+            console.error('Error adding student:', error);
+            alert(`Error: ${error.message}\n\nPlease check:\n- Student ID is unique\n- All required fields are filled\n- Backend server is running`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -136,7 +143,9 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded }) => {
                         <div className="vs-form-group"><label>Email</label><input type="email" name="email" value={formData.email} onChange={handleChange} className="vs-modal-input" /></div>
                         <div className="vs-form-group"><label>Home Address</label><input type="text" name="address" value={formData.address} onChange={handleChange} className="vs-modal-input" /></div>
                     </div>
-                    <button type="submit" className="vs-modal-submit-btn">Save Student</button>
+                    <button type="submit" className="vs-modal-submit-btn" disabled={isSubmitting}>
+                        {isSubmitting ? 'Saving...' : 'Save Student'}
+                    </button>
                 </form>
             </div>
         </div>
@@ -144,121 +153,37 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded }) => {
 };
 
 // --- MAIN COMPONENT ---
-const ViewStuds = ({ onLogout, onPageChange }) => {
+const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefreshStudents, professorUid }) => {
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_COLLAPSED_WIDTH);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    
-    // --- STATE ---
     const [viewOption, setViewOption] = useState('Student Information');
-    const [students, setStudents] = useState([]); 
-    const [isLoading, setIsLoading] = useState(true); 
-    const [error, setError] = useState(null);
     const [attendanceData, setAttendanceData] = useState({}); 
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-    // NEW STATE for Search Functionality
     const [searchTerm, setSearchTerm] = useState(''); 
 
-    const PROFESSOR_UID = 'MOCK_PROF_ID_123'; 
-    const CURRENT_SECTION_FILTER = '3D'; 
+    // Filter students for THIS section only
+    const sectionStudents = useMemo(() => {
+        return students.filter(student => student.section === sectionData?.name);
+    }, [students, sectionData]);
 
-    // --- FUNCTIONAL EXPORT: CSV (Opens in Excel) ---
-    const exportToExcel = () => {
-        setIsExportMenuOpen(false); // Close dropdown
-        
-        if (students.length === 0) {
-             alert("No student records to export.");
-             return;
-        }
-
-        // Headers matching the Student Information table
-        const headers = ["Student ID", "Student Name", "Type of Student", "Course", "Section & Year", "Cellphone #", "Email", "Home Address"];
-
-        // Map student data to rows
-        const rows = students.map(s => [
-            s.id, s.name, s.type, s.course, s.section, s.cell, s.email, s.address
-        ]);
-
-        // Combine headers and rows, ensuring proper CSV formatting
-        const allData = [headers, ...rows];
-        const csvContent = allData.map(e => e.join(",")).join("\n");
-
-        // Create a Blob and trigger download
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", "Student_List.csv");
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } else {
-            alert("Your browser does not support automatic CSV download.");
-        }
-    };
-
-    // --- FUNCTIONAL EXPORT: PDF (Native Print Dialog) ---
-    const exportToPDF = () => {
-        // Hiding the export menu before printing
-        setIsExportMenuOpen(false);
-        
-        if (students.length === 0) {
-             alert("No student records to print/save as PDF.");
-             return;
-        }
-
-        // The @media print query in the style block handles hiding UI elements
-        window.print();
-    };
-
-
-    // --- FETCH DATA ---
-    const fetchStudents = async () => {
-        setIsLoading(true);
-        setError(null);
-        const API_URL = `http://localhost:5000/api/students/${PROFESSOR_UID}/${CURRENT_SECTION_FILTER}`; 
-
-        try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error('Failed to fetch students.');
-            
-            const data = await response.json();
-            setStudents(data);
-        } catch (error) {
-            console.error('Fetch Students Error:', error);
-            setError("Cannot connect to server. Is the backend running?");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
     useEffect(() => {
-        fetchStudents();
-
-        // --- NEW: LISTEN FOR CHATBOT AUTOMATION ---
         const handleBotAdd = (e) => {
             const newStudent = e.detail;
-            console.log("🤖 Automation: Receiving new student", newStudent.name);
-            
-            // Add with 'isNew' flag for CSS Animation
-            setStudents(prev => [{ ...newStudent, isNew: true }, ...prev]);
-            
-            // Remove the flag after 2 seconds to reset animation state
-            setTimeout(() => {
-                setStudents(prev => prev.map(s => s.id === newStudent.id ? { ...s, isNew: false } : s));
-            }, 2000);
+            if (newStudent.section === sectionData?.name) {
+                // Refresh from database instead of local update
+                if (onRefreshStudents) {
+                    onRefreshStudents();
+                }
+            }
         };
 
         window.addEventListener('CDM_STUDENT_ADDED', handleBotAdd);
         return () => window.removeEventListener('CDM_STUDENT_ADDED', handleBotAdd);
-
-    }, []); 
+    }, [sectionData, onRefreshStudents]); 
 
     const handleViewChange = (e) => {
         const selected = e.target.value;
         setViewOption(selected);
-        // Close export menu and clear search term when view changes
         setIsExportMenuOpen(false);
         setSearchTerm(''); 
 
@@ -273,13 +198,17 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
             onPageChange('multipage-gradesheet', { 
                 viewType: selected, 
                 title: displayTitle,
-                students: students 
+                students: sectionStudents 
             });
         }
     };
 
-    const handleStudentAdded = (newStudent) => {
-        setStudents(prev => [...prev, newStudent].sort((a, b) => a.name.localeCompare(b.name)));
+    const handleStudentAdded = (savedStudent) => {
+        console.log('Student added, refreshing list...');
+        // Refresh the student list from database
+        if (onRefreshStudents) {
+            onRefreshStudents();
+        }
     };
     
     const handleStatusChange = (studentId, dayIndex, newStatus) => {
@@ -288,26 +217,58 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
         setAttendanceData(prev => ({ ...prev, [studentId]: currentRecords }));
     };
 
-    const copyToClipboard = () => {
-        const text = "https://student.progress.tracker.site/?form=student-info";
-        navigator.clipboard.writeText(text);
-        alert("Link copied to clipboard!");
-    };
-
     const handleEditClick = (studentName) => {
         alert(`Edit feature for ${studentName} coming soon!`);
     };
 
-    // --- NEW: Filtered Student List Logic ---
-    const filteredStudents = students.filter(student => {
-        // Only apply filter if in 'Student Information' view
-        if (viewOption !== 'Student Information') return true; 
+    const exportToExcel = () => {
+        setIsExportMenuOpen(false);
+        
+        if (sectionStudents.length === 0) {
+             alert("No student records to export.");
+             return;
+        }
 
+        const headers = ["Student ID", "Student Name", "Type of Student", "Course", "Section & Year", "Cellphone #", "Email", "Home Address"];
+        const rows = sectionStudents.map(s => [
+            s.id, s.name, s.type, s.course, s.section, s.cell, s.email, s.address
+        ]);
+
+        const allData = [headers, ...rows];
+        const csvContent = allData.map(e => e.join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${sectionData?.name || 'Student'}_List.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            alert("Your browser does not support automatic CSV download.");
+        }
+    };
+
+    const exportToPDF = () => {
+        setIsExportMenuOpen(false);
+        
+        if (sectionStudents.length === 0) {
+             alert("No student records to print/save as PDF.");
+             return;
+        }
+
+        window.print();
+    };
+
+    const filteredStudents = sectionStudents.filter(student => {
+        if (viewOption !== 'Student Information') return true; 
         if (searchTerm === '') return true;
 
         const lowerCaseSearch = searchTerm.toLowerCase();
         
-        // Check student properties for a match against name, ID, course, or section
         return (
             student.name.toLowerCase().includes(lowerCaseSearch) ||
             student.id.toLowerCase().includes(lowerCaseSearch) ||
@@ -316,25 +277,10 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
         );
     });
 
-    // --- RENDER HELPERS ---
     const renderTable = () => {
-        if (isLoading) return <div className="vs-status-message">Loading student data...</div>;
-
-        if (error) {
-            return (
-                <div className="vs-error-container" style={{textAlign: 'center', padding: '2rem', color: '#DC2626'}}>
-                    <AlertCircle size={48} />
-                    <h3>Connection Error</h3>
-                    <p>{error}</p>
-                    <button onClick={fetchStudents} style={{marginTop: '1rem', padding: '0.5rem 1rem', background: '#DC2626', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>Retry Connection</button>
-                </div>
-            );
-        }
-
         if (viewOption === 'Student Information') {
-            if (students.length === 0) return <div className="vs-status-message">No students found for this section. Click "Add Student" to begin.</div>;
+            if (sectionStudents.length === 0) return <div className="vs-status-message">No students found for this section. Click "Add Student" to begin.</div>;
             
-            // Display message if no students match the search term
             if (searchTerm !== '' && filteredStudents.length === 0) {
                  return <div className="vs-status-message">No students match your search for "{searchTerm}".</div>;
             }
@@ -376,11 +322,10 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                 </table>
             );
         } else if (viewOption === 'Attendance') {
-             if (students.length === 0) return <div className="vs-status-message">No students found for attendance tracking.</div>;
+             if (sectionStudents.length === 0) return <div className="vs-status-message">No students found for attendance tracking.</div>;
              
              return (
                  <table className="vs-table">
-                     {/* NOTE: Attendance view currently uses the full students list, as search is expected to be cleared/ignored here */}
                     <thead>
                         <tr>
                             <th className="fixed-col">Student ID</th>
@@ -392,7 +337,7 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {students.map((student) => { 
+                        {sectionStudents.map((student) => { 
                             const records = attendanceData[student.id] || []; 
                             return (
                                 <tr key={student.id} className={student.isNew ? "vs-row-animate-new" : ""}>
@@ -421,18 +366,15 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
             <Sidebar onLogout={onLogout} onPageChange={onPageChange} currentPage="dashboard" onWidthChange={setSidebarWidth} />
 
             <div className="view-studs-main" style={{ marginLeft: sidebarWidth }}>
-                
-                {/* Header */}
                 <header className="vs-header">
                     <div className="vs-search-container">
                         <SearchIcon className="vs-search-icon" />
-                        {/* UPDATED: Search Input functionality */}
                         <input 
                             type="text" 
                             placeholder="Search students" 
                             className="vs-search-input"
-                            value={searchTerm} // Controlled component
-                            onChange={(e) => setSearchTerm(e.target.value)} // Update state on change
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     
@@ -449,17 +391,13 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                     </div>
                 </header>
 
-                
-
-                {/* Main Content */}
                 <div className="vs-content-card">
                     {viewOption === 'Student Information' && (
                         <div className="vs-card-header">
-                            <h1>BSIT - 3D</h1>
-                            <span className="vs-subtitle">Introduction to Programming</span>
+                            <h1>{sectionData?.name || 'Section'}</h1>
+                            <span className="vs-subtitle">{sectionData?.subtitle || 'Course Description'}</span>
                         </div>
                     )}
-
 
                     <div className="vs-controls-row">
                         <div className="vs-dropdown-wrapper">
@@ -489,7 +427,6 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                                      <PlusIcon size={16} /> Add Student
                                  </button>
                                  
-                                 {/* EXPORT DROPDOWN IMPLEMENTATION */}
                                  <div className="vs-export-dropdown-wrapper">
                                      <button 
                                          className="vs-btn vs-btn-export" 
@@ -509,7 +446,6 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                                          </div>
                                      )}
                                  </div>
-                                 {/* END EXPORT DROPDOWN */}
                              </div>
                     )}
 
@@ -530,10 +466,11 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
             <AddStudentFormModal 
                 isOpen={isAddModalOpen} 
                 onClose={() => setIsAddModalOpen(false)} 
-                onStudentAdded={handleStudentAdded} 
+                onStudentAdded={handleStudentAdded}
+                sectionName={sectionData?.name}
+                professorUid={professorUid}
             />
             
-            {/* STYLES FOR EXPORT DROPDOWN AND PRINT CLEANUP */}
             <style>{`
                 .vs-export-dropdown-wrapper {
                     position: relative;
@@ -541,7 +478,7 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                 }
                 .vs-export-menu {
                     position: absolute;
-                    top: 100%; /* Position below the button */
+                    top: 100%;
                     right: 0;
                     z-index: 10;
                     background: white;
@@ -570,9 +507,7 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                     color: #1F2937;
                 }
                 
-                /* PRINT STYLES */
                 @media print {
-                    /* Hide non-essential UI elements for a clean PDF output */
                     .vs-header,
                     .vs-floating-filter-bar,
                     .vs-controls-row,
@@ -583,7 +518,6 @@ const ViewStuds = ({ onLogout, onPageChange }) => {
                     .vs-edit-btn {
                         display: none !important;
                     }
-                    /* Ensure main content takes full width */
                     .view-studs-main {
                         margin-left: 0 !important; 
                         width: 100%;

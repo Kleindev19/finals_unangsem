@@ -8,6 +8,9 @@
 # testing
 /coverage
 
+# Exclude auto-generated file that causes conflicts
+src/meta.js
+
 # production
 /build
 

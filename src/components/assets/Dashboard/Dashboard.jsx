@@ -19,76 +19,6 @@ const BookOpen = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" 
 const ArrowRight = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>);
 const Menu = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>);
 
-// --- DATA ---
-const METRICS_DATA = [
-    { label: 'Total Students', value: 283, icon: Users, color: '#3B82F6', change: '+12%' },
-    { label: 'Active Sections', value: 7, icon: BookOpen, color: '#F97316', change: '+8%' },
-];
-
-// --- HARDCODED SAMPLE SECTIONS FOR DEMONSTRATION ---
-const SAMPLE_SECTIONS = [
-    { 
-        id: 1, 
-        name: 'BSIT 3D', 
-        subtitle: 'Introduction to Programming', 
-        students: 42, 
-        color: '#3B82F6',
-        institute: 'Institute of Computer Studies',
-        year: '3rd Year',
-        course: 'BSIT'
-    },
-    { 
-        id: 2, 
-        name: 'BSEd 2A', 
-        subtitle: 'The Child and Adolescent Learners', 
-        students: 35, 
-        color: '#F97316',
-        institute: 'Institute of Teachers Education',
-        year: '2nd Year',
-        course: 'BSEd'
-    },
-    { 
-        id: 3, 
-        name: 'BSBA 4C', 
-        subtitle: 'Strategic Management', 
-        students: 30, 
-        color: '#10B981',
-        institute: 'Institute of Business Entrepreneurship',
-        year: '4th Year',
-        course: 'BSBA'
-    },
-    { 
-        id: 4, 
-        name: 'BSIT 1C', 
-        subtitle: 'Computer Fundamentals', 
-        students: 50, 
-        color: '#6366F1',
-        institute: 'Institute of Computer Studies',
-        year: '1st Year',
-        course: 'BSIT'
-    },
-    { 
-        id: 5, 
-        name: 'BSEd 3B', 
-        subtitle: 'Technology for Teaching', 
-        students: 40, 
-        color: '#EF4444',
-        institute: 'Institute of Teachers Education',
-        year: '3rd Year',
-        course: 'BSEd'
-    },
-    { 
-        id: 6, 
-        name: 'BSIT 3E', 
-        subtitle: 'Web Development', 
-        students: 45, 
-        color: '#06B6D4',
-        institute: 'Institute of Computer Studies',
-        year: '3rd Year',
-        course: 'BSIT'
-    },
-];
-
 const GreetingSection = ({ profileData }) => {
     const [text, setText] = useState('');
     const userName = profileData?.displayName || profileData?.fullName || 'Professor';
@@ -141,9 +71,7 @@ const GreetingSection = ({ profileData }) => {
     );
 };
 
-// UPDATED CLASS CARD
 const ClassCard = ({ data, onClick }) => {
-    // If cover image exists, use it as background. Otherwise use color.
     const headerStyle = data.coverImage 
         ? { 
             backgroundImage: `url(${data.coverImage})`, 
@@ -159,7 +87,6 @@ const ClassCard = ({ data, onClick }) => {
     return (
         <div className="class-card" onClick={onClick} style={{ cursor: 'pointer' }}>
             <div className="class-icon-header" style={headerStyle}>
-                {/* Only show Icon if NO image */}
                 {!data.coverImage && <BookOpen size={24} color="white" />}
             </div>
             <h4 className="class-card-title">{data.name}</h4>
@@ -182,13 +109,11 @@ const MetricCard = ({ data }) => (
     </div>
 );
 
-const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggleVoice /* sections prop removed */ }) => {
-    const sections = SAMPLE_SECTIONS; // <-- Using hardcoded data here to test the feature!
+const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggleVoice, sections = [], students = [] }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDesktopMode, setIsDesktopMode] = useState(window.innerWidth >= 1024);
     const [sidebarWidth, setSidebarWidth] = useState(isDesktopMode ? SIDEBAR_DEFAULT_WIDTH : 0);
     
-    // --- New State for Filters ---
     const [filterInstitute, setFilterInstitute] = useState('');
     const [filterYear, setFilterYear] = useState('');
     const [filterCourse, setFilterCourse] = useState('');
@@ -205,31 +130,34 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
 
     const handleWidthChange = (newWidth) => { if (isDesktopMode) setSidebarWidth(newWidth); };
 
-    // --- Filtering Logic using useMemo ---
+    // Calculate student count for each section
+    const sectionsWithStudentCount = useMemo(() => {
+        return sections.map(section => {
+            const studentCount = students.filter(student => 
+                student.section === section.name
+            ).length;
+            return { ...section, students: studentCount };
+        });
+    }, [sections, students]);
+
+    // Filtering Logic
     const filteredSections = useMemo(() => {
-        // If 'sections' data is not available, return an empty array
-        if (!sections || sections.length === 0) return [];
+        if (!sectionsWithStudentCount || sectionsWithStudentCount.length === 0) return [];
         
-        return sections.filter(section => {
-            // Convert everything to lowercase for case-insensitive matching
-            // Note: The filter logic checks for an exact match against the option text
+        return sectionsWithStudentCount.filter(section => {
             const instituteMatch = !filterInstitute || (section.institute && section.institute.toLowerCase() === filterInstitute.toLowerCase());
             const yearMatch = !filterYear || (section.year && section.year.toLowerCase() === filterYear.toLowerCase());
             const courseMatch = !filterCourse || (section.course && section.course.toLowerCase() === filterCourse.toLowerCase());
             
-            // Search match checks if the term is included in the name OR subtitle
             const searchMatch = !searchTerm || 
                                 (section.name && section.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                                 (section.subtitle && section.subtitle.toLowerCase().includes(searchTerm.toLowerCase()));
 
             return instituteMatch && yearMatch && courseMatch && searchMatch;
         });
-    }, [sections, filterInstitute, filterYear, filterCourse, searchTerm]);
+    }, [sectionsWithStudentCount, filterInstitute, filterYear, filterCourse, searchTerm]);
 
-
-    // --- Handlers for Dropdowns ---
     const handleInstituteChange = (e) => {
-        // Set to empty string if default disabled option is selected
         setFilterInstitute(e.target.value === 'Select Institute' ? '' : e.target.value);
     };
 
@@ -241,6 +169,13 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
         setFilterCourse(e.target.value === 'Select Course' ? '' : e.target.value);
     };
 
+    // Calculate total students across all sections
+    const totalStudents = students.length;
+
+    const METRICS_DATA = [
+        { label: 'Total Students', value: totalStudents, icon: Users, color: '#3B82F6', change: '+12%' },
+        { label: 'Active Sections', value: sections.length, icon: BookOpen, color: '#F97316', change: '+8%' },
+    ];
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#FDFDF5', fontFamily: 'Inter, sans-serif' }}>
@@ -265,42 +200,39 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
 
                 <div className="section-container">
                     <div className="filters-bar">
+                        <select className="select-filter" onChange={handleInstituteChange} value={filterInstitute || 'Select Institute'}>
+                            <option disabled hidden>Select Institute</option>
+                            <option>Institute of Computer Studies</option>
+                            <option>Institute of Teachers Education</option>
+                            <option>Institute of Business Entrepreneurship</option>
+                        </select>
 
-    {/* Institute Dropdown */}
-    <select className="select-filter" onChange={handleInstituteChange} value={filterInstitute || 'Select Institute'}>
-        <option disabled hidden>Select Institute</option>
-        <option>Institute of Computer Studies</option>
-        <option>Institute of Teachers Education</option>
-        <option>Institute of Business Entrepreneurship</option>
-    </select>
+                        <select className="select-filter" onChange={handleYearChange} value={filterYear || 'Select Year'}>
+                            <option disabled hidden>Select Year</option>
+                            <option>1st Year</option>
+                            <option>2nd Year</option>
+                            <option>3rd Year</option>
+                            <option>4th Year</option>
+                        </select>
 
-    {/* Year Dropdown */}
-    <select className="select-filter" onChange={handleYearChange} value={filterYear || 'Select Year'}>
-        <option disabled hidden>Select Year</option>
-        <option>1st Year</option>
-        <option>2nd Year</option>
-        <option>3rd Year</option>
-        <option>4th Year</option>
-    </select>
-
-    {/* Courses Dropdown */}
-    <select className="select-filter" onChange={handleCourseChange} value={filterCourse || 'Select Course'}>
-        <option disabled hidden>Select Course</option>
-        <option>BSIT</option>
-        <option>BSEd</option>
-        <option>BSBA</option>
-    </select>
-
-</div>
+                        <select className="select-filter" onChange={handleCourseChange} value={filterCourse || 'Select Course'}>
+                            <option disabled hidden>Select Course</option>
+                            <option>BSIT</option>
+                            <option>BSEd</option>
+                            <option>BSBA</option>
+                        </select>
+                    </div>
 
                     <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1F2937', marginBottom: '0.5rem' }}>My Classes</h2>
                     <p style={{ color: '#6B7280', marginBottom: '1.5rem' }}>Manage your sections and track student progress</p>
                     <div className="class-card-grid">
                         {filteredSections.map((cls) => (
-                            <ClassCard key={cls.id} data={cls} onClick={() => onPageChange('view-studs')} />
+                            <ClassCard key={cls.id} data={cls} onClick={() => onPageChange('view-studs', { sectionData: cls })} />
                         ))}
                         {filteredSections.length === 0 && (
-                            <p style={{ color: '#6B7280', gridColumn: '1 / -1', textAlign: 'center', padding: '2rem 0' }}>No classes found matching your filter criteria.</p>
+                            <p style={{ color: '#6B7280', gridColumn: '1 / -1', textAlign: 'center', padding: '2rem 0' }}>
+                                {sections.length === 0 ? 'No classes found. Go to Profile to add your first class.' : 'No classes found matching your filter criteria.'}
+                            </p>
                         )}
                     </div>
                 </div>
