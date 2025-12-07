@@ -14,21 +14,10 @@ const Upload = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" wi
 const Search = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
 const ChevronDown = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
 
-// --- MOCK DATA ---
-const STUDENTS = [
-    { id: '2024001', name: 'Anderson, James', type: 'Regular' },
-    { id: '2024002', name: 'Bennett, Sarah', type: 'Regular' },
-    { id: '2024003', name: 'Carter, Michael', type: 'Regular' },
-    { id: '2024004', name: 'Davis, Emily', type: 'Irregular' },
-    { id: '2024005', name: 'Evans, Robert', type: 'Irregular' },
-    { id: '2024006', name: 'Foster, Jessica', type: 'Regular' },
-];
-
 const TOTAL_ITEMS = [10, 15, 20, 20, 25];
 
 // --- SUB-COMPONENT: ATTENDANCE CELL ---
 const AttendanceCell = ({ status, onChange }) => {
-    // ... (Keep existing implementation) ...
     let className = 'mp-status-pill';
     let content = status;
     if (status === 'P') className += ' mp-p';
@@ -51,16 +40,27 @@ const AttendanceCell = ({ status, onChange }) => {
     );
 };
 
-const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm', title = 'Midterm Grade' }) => {
+const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm', title = 'Midterm Grade', students = [], sectionData, onAttendanceUpdate }) => {
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_COLLAPSED_WIDTH);
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+    const [attendanceData, setAttendanceData] = useState({});
     
-    // Sync internal state with props when navigation happens
     const [currentView, setCurrentView] = useState(viewType);
 
     useEffect(() => {
         setCurrentView(viewType);
     }, [viewType]);
+
+    const handleAttendanceChange = (studentId, dateIndex, newStatus) => {
+        const currentRecords = attendanceData[studentId] || [];
+        currentRecords[dateIndex] = newStatus;
+        const updatedData = { ...attendanceData, [studentId]: currentRecords };
+        setAttendanceData(updatedData);
+        
+        if (onAttendanceUpdate) {
+            onAttendanceUpdate(updatedData);
+        }
+    };
 
     // --- RENDERERS ---
 
@@ -75,28 +75,38 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm', title = 'Mi
                 </tr>
             </thead>
             <tbody>
-                {STUDENTS.map((student) => (
-                    <tr key={student.id}>
-                        <td className="fixed-col mp-id">{student.id}</td>
-                        <td className="fixed-col font-bold">{student.name}</td>
-                        <td className="fixed-col bg-gray">{student.type}</td>
-                        <AttendanceCell status="P" onChange={()=>{}} />
-                        <AttendanceCell status="P" onChange={()=>{}} />
-                        <AttendanceCell status="A" onChange={()=>{}} />
-                        <AttendanceCell status="P" onChange={()=>{}} />
-                        <AttendanceCell status="L" onChange={()=>{}} />
+                {students.length === 0 ? (
+                    <tr>
+                        <td colSpan="8" style={{textAlign: 'center', padding: '2rem', color: '#6B7280'}}>
+                            No students found. Please add students from the Student Information page.
+                        </td>
                     </tr>
-                ))}
+                ) : (
+                    students.map((student) => {
+                        const studentAttendance = attendanceData[student.id] || [];
+                        return (
+                            <tr key={student.id}>
+                                <td className="fixed-col mp-id">{student.id}</td>
+                                <td className="fixed-col font-bold">{student.name}</td>
+                                <td className="fixed-col bg-gray">{student.type}</td>
+                                {[0, 1, 2, 3, 4].map((idx) => (
+                                    <AttendanceCell 
+                                        key={idx}
+                                        status={studentAttendance[idx] || 'P'} 
+                                        onChange={(newStatus) => handleAttendanceChange(student.id, idx, newStatus)}
+                                    />
+                                ))}
+                            </tr>
+                        );
+                    })
+                )}
             </tbody>
         </table>
     );
 
-    // --- GENERIC GRADES TABLE (REUSED FOR Midterm, Finals, Assignment, Quiz, Activity) ---
     const renderGradesTable = () => {
-        
-        // Determine the Header Label based on current view
         let headerLabel = 'Assessment';
-        if (currentView === 'Midterm' || currentView === 'Finals') headerLabel = 'Quiz'; // Or 'Assessments'
+        if (currentView === 'Midterm' || currentView === 'Finals') headerLabel = 'Quiz';
         if (currentView === 'Assignment') headerLabel = 'Assignment';
         if (currentView === 'Quizzes') headerLabel = 'Quiz';
         if (currentView === 'Activities') headerLabel = 'Activity';
@@ -108,7 +118,6 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm', title = 'Mi
                         <th rowSpan="2" className="fixed-col">Student ID</th>
                         <th rowSpan="2" className="fixed-col">Student Name</th>
                         <th rowSpan="2" className="fixed-col">Type of Student</th>
-                        {/* Dynamic Green Header */}
                         <th colSpan="5" className="mp-grouped-header header-green">{headerLabel}</th>
                         <th rowSpan="2">Total</th>
                     </tr>
@@ -117,7 +126,6 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm', title = 'Mi
                     </tr>
                 </thead>
                 <tbody>
-                    {/* Total Items Row */}
                     <tr className="mp-total-items-row">
                         <td className="fixed-col"></td>
                         <td className="fixed-col font-bold">Total Items</td>
@@ -128,26 +136,32 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm', title = 'Mi
                         <td className="center-text font-bold">{TOTAL_ITEMS.reduce((a,b)=>a+b, 0)}</td>
                     </tr>
 
-                    {/* Student Rows (Mock Data logic) */}
-                    {STUDENTS.map((student) => {
-                        // Just randomizing mock scores for demo since we don't have DB for specific activities yet
-                        const grades = [10, 15, 20, 20, 25]; 
-                        const totalScore = grades.reduce((acc, curr) => acc + (curr || 0), 0);
+                    {students.length === 0 ? (
+                        <tr>
+                            <td colSpan="9" style={{textAlign: 'center', padding: '2rem', color: '#6B7280'}}>
+                                No students found. Please add students from the Student Information page.
+                            </td>
+                        </tr>
+                    ) : (
+                        students.map((student) => {
+                            const grades = [10, 15, 20, 20, 25]; 
+                            const totalScore = grades.reduce((acc, curr) => acc + (curr || 0), 0);
 
-                        return (
-                            <tr key={student.id}>
-                                <td className="fixed-col mp-id">{student.id}</td>
-                                <td className="fixed-col font-bold">{student.name}</td>
-                                <td className="fixed-col bg-gray">{student.type}</td>
-                                {grades.map((score, idx) => (
-                                    <td key={idx} className={!score ? 'bg-red-alert' : ''}>
-                                        <input type="text" defaultValue={score || ''} className="mp-table-input"/>
-                                    </td>
-                                ))}
-                                <td className="font-bold center-text">{totalScore}</td>
-                            </tr>
-                        );
-                    })}
+                            return (
+                                <tr key={student.id}>
+                                    <td className="fixed-col mp-id">{student.id}</td>
+                                    <td className="fixed-col font-bold">{student.name}</td>
+                                    <td className="fixed-col bg-gray">{student.type}</td>
+                                    {grades.map((score, idx) => (
+                                        <td key={idx} className={!score ? 'bg-red-alert' : ''}>
+                                            <input type="text" defaultValue={score || ''} className="mp-table-input"/>
+                                        </td>
+                                    ))}
+                                    <td className="font-bold center-text">{totalScore}</td>
+                                </tr>
+                            );
+                        })
+                    )}
                 </tbody>
             </table>
         );
@@ -165,11 +179,10 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm', title = 'Mi
                             <ArrowLeft />
                         </button>
                         <div>
-                            {/* Dynamic Title */}
                             <h1 className={currentView !== 'Attendance' ? 'mp-title mp-header-green' : 'mp-title'}>
                                 {title}
                             </h1>
-                            <p className="mp-subtitle">BSIT - 3D • Introduction to Programming</p>
+                            <p className="mp-subtitle">{sectionData?.subtitle || 'BSIT - 3D • Introduction to Programming'}</p>
                         </div>
                     </div>
                     <div className="mp-header-right">
@@ -188,27 +201,35 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm', title = 'Mi
                             <Plus size={14} /> 
                             {currentView !== 'Attendance' ? 'Add Assessment' : 'Add Column'}
                         </button>
-                    </div>
-                    
-                    <div className="mp-view-selector-wrapper">
-                        <select 
-                            className="mp-view-selector" 
-                            value={currentView}
-                            // Allow switching views internally too
-                            onChange={(e) => {
-                                setCurrentView(e.target.value);
-                                // Optional: You might want to update the title here too 
-                                // or better, call onPageChange to reload with new title
+                        
+                        <button 
+                            className="mp-tool-btn" 
+                            onClick={() => setCurrentView('Attendance')}
+                            style={{
+                                backgroundColor: currentView === 'Attendance' ? '#3B82F6' : '#F3F4F6',
+                                color: currentView === 'Attendance' ? 'white' : '#374151'
                             }}
                         >
-                            <option value="Attendance">Attendance</option>
-                            <option value="Assignment">Assignment</option>
-                            <option value="Quizzes">Quizzes</option>
-                            <option value="Activities">Activities</option>
-                            <option value="Midterm">Midterm</option>
-                            <option value="Finals">Finals</option>
-                        </select>
-                        <ChevronDown className="mp-selector-chevron" />
+                            Attendance
+                        </button>
+                        
+                        <div className="mp-view-selector-wrapper" style={{minWidth: '200px'}}>
+                            <select 
+                                className="mp-view-selector" 
+                                value={currentView === 'Attendance' ? 'Assignment' : currentView}
+                                onChange={(e) => {
+                                    setCurrentView(e.target.value);
+                                }}
+                                style={{padding: '0.6rem 2rem 0.6rem 1rem', fontSize: '0.9rem'}}
+                            >
+                                <option value="Assignment">Assignment</option>
+                                <option value="Quizzes">Quizzes</option>
+                                <option value="Activities">Activities</option>
+                                <option value="Midterm">Midterm</option>
+                                <option value="Finals">Finals</option>
+                            </select>
+                            <ChevronDown className="mp-selector-chevron" />
+                        </div>
                     </div>
 
                     <div className="mp-search-wrapper">
