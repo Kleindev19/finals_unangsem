@@ -3,7 +3,7 @@
 .mp-layout {
     display: flex;
     min-height: 100vh;
-    background-color: #FDFDF5; /* Cream/Beige Background */
+    background-color: #FDFDF5;
     font-family: 'Inter', sans-serif;
 }
 
@@ -15,305 +15,147 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
-/* --- HEADER --- */
-.mp-header {
+/* --- 1. HEADER --- */
+.mp-header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
-}
-
-.mp-header-left {
-    display: flex;
-    align-items: center;
+    margin-bottom: 2rem; 
     gap: 1rem;
 }
 
+.mp-header-left { display: flex; align-items: center; gap: 1rem; }
 .mp-back-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #6B7280;
-    padding: 0.5rem;
-    border-radius: 50%;
+    background: none; border: none; cursor: pointer; color: #6B7280; padding: 0.5rem; border-radius: 50%;
 }
 .mp-back-btn:hover { background-color: #e5e7eb; }
 
-.mp-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #1F2937;
-    margin: 0;
-}
-.mp-subtitle {
-    font-size: 0.9rem;
-    color: #6B7280;
-    margin: 0;
-}
+.mp-top-title { font-size: 1.4rem; font-weight: 800; color: #166534; margin: 0; text-transform: uppercase; }
+.mp-top-subtitle { font-size: 0.85rem; color: #6B7280; margin: 0; font-weight: 500; }
 
-.mp-header-right { display: flex; gap: 0.5rem; }
-
-.mp-btn {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.5rem 1rem; border-radius: 6px;
-    font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1px solid #ddd;
-}
-.mp-btn-white { background-color: white; color: #374151; }
-.mp-btn-blue { background-color: #2563EB; color: white; border: none; }
-
-/* --- TOOLBAR --- */
-.mp-toolbar {
-    background-color: white;
-    padding: 0.75rem 1rem;
-    border-radius: 8px 8px 0 0; /* Top rounded */
-    border: 1px solid #E5E7EB;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.mp-tools-left { display: flex; gap: 0.5rem; }
-.mp-tool-btn {
-    background-color: #F3F4F6; border: none; padding: 0.5rem 0.8rem;
-    border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #374151;
-    display: flex; align-items: center; gap: 0.3rem; cursor: pointer;
-}
-
-.mp-search-wrapper { position: relative; width: 250px; }
-.mp-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9CA3AF; }
+.mp-header-center { flex: 1; display: flex; justify-content: center; padding: 0 1rem; }
+.mp-search-wrapper { position: relative; width: 100%; max-width: 350px; height: 40px; }
+.mp-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9CA3AF; }
 .mp-search-input {
-    width: 100%; padding: 0.5rem 1rem 0.5rem 2.2rem;
-    background-color: #F3F4F6; border: none; border-radius: 20px; outline: none;
-}
-
-/* --- CONTENT AREA --- */
-.mp-content-wrapper {
-    background-color: #F4F6E6; /* Light greenish-beige from screenshot */
-    border: 1px solid #E5E7EB;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    padding: 1.5rem;
-    min-height: 400px;
-}
-
-.mp-view-selector {
-    background-color: #E2E4D8;
-    display: inline-flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 1.5rem;
-    cursor: pointer;
+    width: 100%; height: 100%; padding: 0 1rem 0 2.8rem;
+    background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 20px; outline: none;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-/* --- TABLE --- */
-.mp-table-container { overflow-x: auto; }
-
-.mp-table {
-    width: 100%; border-collapse: collapse; font-size: 0.85rem;
-    background-color: transparent;
-}
-
-.mp-table th {
-    background-color: #F9FAFB;
-    border: 1px solid #E5E7EB;
-    padding: 0.8rem;
-    color: #374151;
-    font-weight: 700;
-    text-align: center;
-    white-space: nowrap;
-}
-
-.mp-table td {
-    border: 1px solid #E5E7EB; /* Standard grid lines */
-    padding: 0.5rem;
-    text-align: center;
-    background-color: #FDFDF5; /* Match row bg */
-}
-
-/* Fixed Columns */
-.mp-table .fixed-col {
-    position: sticky; left: 0; z-index: 10;
-    background-color: #F9FAFB;
-    text-align: left;
-    padding-left: 1rem;
-}
-.mp-table td.fixed-col { background-color: #F4F6E4; /* Match the content wrapper bg slightly */ }
-
-.mp-id { color: #666; font-family: monospace; }
-.font-bold { font-weight: 700; }
-.bg-gray { background-color: #F3F4F6 !important; }
-
-/* Sub-dates in header */
-.mp-sub-date { font-size: 0.75rem; font-weight: 400; color: #666; display: block; margin-top: 2px; }
-
-/* --- ATTENDANCE PILLS & INTERACTION --- */
-
-/* Relative container for the cell to hold the hidden select */
-.mp-cell-relative {
-    position: relative;
-    padding: 0.5rem;
-    min-width: 60px; /* Ensure click area is decent */
-}
-
-/* Invisible Select Overlay */
-.mp-cell-select {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0; /* Hidden visually */
-    cursor: pointer; /* Shows hand cursor */
-    z-index: 5; /* Sit on top of the pill */
-    appearance: none;
-}
-
-/* The Visual Pill Styles */
-.mp-status-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 45px; /* Fixed width for consistency */
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-weight: 700;
-    font-size: 0.8rem;
-    border: 1px solid rgba(0,0,0,0.05);
-    /* Pointer events must pass through if pill is clicked directly, 
-       but select sits on top so this is mostly visual */
-    pointer-events: none; 
-}
-
-.mp-p { background-color: #bbf7d0; color: #166534; } /* Green */
-.mp-a { background-color: #fecaca; color: #991b1b; } /* Red */
-.mp-l { background-color: #fed7aa; color: #9a3412; } /* Orange */
-
-.mp-chevron { opacity: 0.6; margin-left: 4px; width: 10px; height: 10px; }
-
-/* Full Width Tags (Suspended/Holiday) */
-.mp-tag-full {
-    width: 100%;
-    background-color: #fbcfe8; /* Pink */
-    color: #be185d;
-    font-weight: 600;
-    font-size: 0.75rem;
-    padding: 5px 0;
-    border-radius: 4px;
-    text-align: center;
-    border: 1px solid #f9a8d4;
-    pointer-events: none;
-}
-
-/* --- ACTIVITY ROW --- */
-.mp-item-row td {
-    background-color: #ffffff !important;
-    font-weight: 700;
-    border-bottom: 2px solid #ddd;
-}
-
-/* --- LEGEND --- */
-.mp-legend {
-    margin-top: 2rem;
-    display: flex; gap: 1.5rem;
-}
-.mp-legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #374151; }
-.mp-box {
-    width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 0.8rem; border-radius: 4px;
-}
-.mp-box-p { background-color: #bbf7d0; color: #166534; }
-.mp-box-a { background-color: #fecaca; color: #991b1b; }
-.mp-box-l { background-color: #fed7aa; color: #9a3412; }
-
-/* 1. Header Styles */
-.mp-header-green {
-    color: #166534 !important; /* Deep Green Text */
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* 2. Grouped Header (The "Quiz" bar) */
-.mp-grouped-header.header-green {
-    background-color: #bbf7d0 !important; /* Light Green Background */
-    color: #14532d !important;
-    text-align: center;
-    border-bottom: 1px solid #86efac;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    font-weight: 800;
-}
-
-/* 3. Total Items Row (First row in body) */
-.mp-total-items-row td {
-    background-color: #FFFBEB !important; /* Very light yellow tint */
-    border-bottom: 2px solid #E5E7EB;
-    color: #4B5563;
-    font-size: 0.85rem;
-}
-
-/* 4. Input Fields inside table */
-.mp-table-input {
-    width: 100%;
-    border: none;
-    background: transparent;
-    text-align: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    color: #1F2937;
-    outline: none;
-}
-.mp-table-input:focus {
-    font-weight: 700;
-}
-
-/* 5. RED ALERT CELL (For missing/zero grades) */
-.bg-red-alert {
-    background-color: #EF4444 !important; /* Red Background */
-}
-.bg-red-alert .mp-table-input {
-    color: white !important; /* White text on red */
-}
-
-/* 6. Green Toolbar Button */
-.mp-tool-btn.btn-green {
-    background-color: #22c55e;
-    color: white;
-}
-.mp-tool-btn.btn-green:hover {
-    background-color: #16a34a;
-}
-
-/* View Selector Styling */
-.mp-view-selector-wrapper {
-    position: relative;
-    margin-right: 1rem;
-}
+.mp-header-right { display: flex; align-items: center; gap: 0.75rem; }
+.mp-view-selector-wrapper { position: relative; width: 180px; height: 40px; }
 .mp-view-selector {
-    appearance: none;
-    padding: 0.5rem 2rem 0.5rem 1rem;
-    border: 1px solid #E5E7EB;
-    border-radius: 6px;
-    background-color: #F9FAFB;
-    font-size: 0.9rem;
-    color: #374151;
-    font-weight: 600;
-    cursor: pointer;
+    appearance: none; width: 100%; height: 100%; padding: 0 2rem 0 1rem;
+    border: 1px solid #E5E7EB; border-radius: 8px; background-color: white;
+    font-size: 0.85rem; color: #374151; font-weight: 600; cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-.mp-selector-chevron {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: #6B7280;
+.mp-selector-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #6B7280; }
+
+.mp-btn {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
+    border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    border: 1px solid #ddd; background-color: white; color: #374151; height: 40px;
 }
 
-.center-text { text-align: center; }
+/* --- 2. TOOLBAR --- */
+.mp-toolbar {
+    background-color: transparent; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: flex-end;
+}
+.mp-toolbar-left { display: flex; align-items: center; gap: 1rem; margin-bottom: 4px; } /* Updated */
+.mp-toolbar-right { display: flex; align-items: flex-end; gap: 1rem; }
+.mp-data-actions { display: flex; gap: 0.5rem; margin-bottom: 2px;}
+
+.btn-add-assessment {
+    background-color: #2563EB; color: white; border: none; padding: 0 1.2rem; height: 40px;
+    border-radius: 6px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;
+    cursor: pointer; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+.btn-utility {
+    background: white; border: 1px solid #E5E7EB; font-size: 0.85rem; font-weight: 600; color: #4B5563;
+    display: flex; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 0.75rem; border-radius: 4px; height: 38px;
+}
+
+/* ATTENDANCE DROPDOWN STYLES */
+.mp-att-selector-wrapper {
+    display: flex; flex-direction: column; gap: 2px;
+}
+.mp-label-small { font-size: 0.75rem; font-weight: 700; color: #6B7280; margin-left: 2px; }
+.mp-att-selector {
+    appearance: none; padding: 0.5rem 2.5rem 0.5rem 1rem; border: 1px solid #166534;
+    border-radius: 6px; background-color: white; color: #166534; font-weight: 700;
+    font-size: 0.9rem; cursor: pointer; height: 38px;
+}
+.relative { position: relative; }
+
+
+/* --- 3. CARDS --- */
+.mp-cards-container { display: flex; gap: 1rem; align-items: flex-start; }
+
+.mp-percentage-card {
+    background: white; border: 1px solid #38761d; border-radius: 2px;
+    overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 180px;
+}
+.mp-pc-header {
+    background-color: #38761d; color: white; padding: 0.3rem;
+    text-align: center; font-weight: 700; text-transform: uppercase; font-size: 0.8rem;
+}
+.mp-pc-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.mp-pc-table th, .mp-pc-table td { padding: 3px 6px; border: 1px solid #38761d; text-align: center; color: #000; }
+.mp-pc-table th { background-color: #fcfcfc; font-weight: 700; }
+.mp-pc-total { background-color: #38761d; color: white !important; font-weight: bold; }
+.mp-pc-total td { color: white !important; border-color: #38761d; }
+
+.scale-table th { background-color: #cfcfcf; } 
+.cell-passed-vertical { background-color: #4ade80 !important; color: black !important; font-weight: 800; writing-mode: vertical-rl; transform: rotate(180deg); }
+.cell-failed { background-color: #ef4444 !important; color: white; font-weight: 800; }
+
+/* --- 4. TABLE STYLES --- */
+.mp-content-wrapper {
+    background-color: white; border: 1px solid #E5E7EB;
+    border-radius: 8px 8px 0 0; overflow: hidden; display: flex; flex-direction: column;
+}
+.mp-table-container { overflow-x: auto; width: 100%; }
+.mp-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #000; }
+
+/* Headers */
+.header-category-green { background-color: #86EFAC !important; color: #064E3B; font-weight: 800; border: 1px solid #ccc; }
+.header-category-orange { background-color: #FDBA74 !important; color: #431407; font-weight: 800; border: 1px solid #ccc; }
+.header-midterm-green { background-color: #DCFCE7 !important; color: #064E3B; font-weight: 800; border: 1px solid #ccc; }
+.bg-green-soft { background-color: #DCFCE7 !important; font-weight: bold; text-align: center; }
+
+/* Summary Table Headers */
+.mp-summary-table th, .mp-summary-table td { border: 1px solid #000; }
+.header-beige-title { background-color: #e2e2e2 !important; color: black; font-weight: 800; font-size: 1.1rem; text-align: center; padding: 0.5rem; }
+.header-green-title { background-color: #559e5e !important; color: white; font-weight: 800; font-size: 1.1rem; text-align: center; padding: 0.5rem; }
+.header-beige { background-color: #efefef !important; color: black; font-weight: 700; padding: 8px; text-align: center; }
+.header-green-col { background-color: #93c47d !important; color: black; font-weight: 700; padding: 8px; text-align: center; }
+.header-beige-cell { background-color: #efefef; }
+.header-green-cell { background-color: #d9ead3; font-weight: bold; }
+.header-summary-green { background-color: #5aa15f !important; color: white !important; font-weight: 800; border: 1px solid #4a8a4f; }
+
+.cell-passed { background-color: #4ade80 !important; color: black; font-weight: 800; }
+
+.mp-table th, .mp-table td { padding: 4px; text-align: center; }
+.mp-table-input { width: 100%; border: none; text-align: center; outline: none; }
+
+/* Sticky Columns */
+.mp-table .sticky-col { position: sticky; z-index: 20; background-color: #F9FAFB; border-right: 2px solid #D1D5DB; }
+.col-no { left: 0; width: 40px; min-width: 40px; }
+.col-id { left: 40px; width: 100px; min-width: 100px; }
+.col-name { left: 140px; width: 220px; min-width: 220px; }
+.mp-table th.sticky-col { z-index: 30; border-bottom: 1px solid #E5E7EB; } 
+.mp-table tbody tr td { border-right: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB; padding: 0; height: 30px; }
+
+/* Attendance Specifics */
+.mp-status-pill { display: inline-flex; align-items: center; justify-content: space-between; width: 45px; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05); pointer-events: none; margin: 0 auto; }
+.mp-p { background-color: #bbf7d0; color: #166534; }
+.mp-a { background-color: #fecaca; color: #991b1b; }
+.mp-l { background-color: #fed7aa; color: #9a3412; }
+.mp-chevron { width: 10px; height: 10px; opacity: 0.6; }
+.mp-tag-full { background-color: #fbcfe8; color: #be185d; font-weight: 600; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-align: center; display: inline-block; width: 80px; }
+.mp-cell-relative { position: relative; min-width: 80px; text-align: center; }
+.mp-cell-select { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; appearance: none; }

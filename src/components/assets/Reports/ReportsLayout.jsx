@@ -3,12 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Reports from './Reports.jsx'; 
-import { 
-    Sidebar, 
-    SIDEBAR_DEFAULT_WIDTH, 
-} from '../Dashboard/Sidebar.jsx'; 
+import { Sidebar, SIDEBAR_DEFAULT_WIDTH } from '../Dashboard/Sidebar.jsx'; 
 
-// --- ICONS ---
+// --- FIXED: Defined Icons Locally instead of importing from Sidebar ---
 const Menu = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>);
 const Search = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
 const HelpIcon = (props) => (
@@ -20,7 +17,7 @@ const HelpIcon = (props) => (
 );
 const Bell = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.36 17a3 3 0 1 0 3.28 0"/></svg>);
 
-const ReportsLayout = ({ onLogout, onPageChange }) => {
+const ReportsLayout = ({ onLogout, onPageChange, sections = [], students = [], attendanceData = {} }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDesktopMode, setIsDesktopMode] = useState(window.innerWidth >= 1024);
     const [sidebarWidth, setSidebarWidth] = useState(isDesktopMode ? SIDEBAR_DEFAULT_WIDTH : 0);
@@ -47,7 +44,7 @@ const ReportsLayout = ({ onLogout, onPageChange }) => {
         <div style={{ 
             display: 'flex', 
             minHeight: '100vh', 
-            backgroundColor: '#FDFDF5', // Cream background
+            backgroundColor: '#FDFDF5', 
             fontFamily: 'Inter, sans-serif'
         }}>
             <Sidebar 
@@ -64,18 +61,17 @@ const ReportsLayout = ({ onLogout, onPageChange }) => {
                 transition: 'margin-left 0.3s ease-in-out',
                 width: `calc(100% - ${isDesktopMode ? sidebarWidth : 0}px)`
             }}>
-                {/* Header - Transparent to show cream background */}
+                {/* Header */}
                 <header style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center', 
-                    marginBottom: '2rem', // Increased spacing
+                    marginBottom: '2rem', 
                     flexWrap: 'wrap',
                     gap: '1rem',
-                    backgroundColor: 'transparent' // No white box
+                    backgroundColor: 'transparent'
                 }}>
                     
-                    {/* Search Bar Group */}
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', width: isDesktopMode ? 'auto' : '100%', flexGrow: 1, maxWidth: '600px' }}>
                          {!isDesktopMode && (
                             <button style={{ background: 'none', border: 'none', padding: '0', cursor: 'pointer' }}>
@@ -86,18 +82,18 @@ const ReportsLayout = ({ onLogout, onPageChange }) => {
                             <Search style={{ position: 'absolute', left: '1rem', width: '1.2rem', height: '1.2rem', color: '#9CA3AF' }} />
                             <input
                                 type="text"
-                                placeholder="Search students..."
+                                placeholder="Search reports..."
                                 style={{ 
                                     paddingLeft: '3rem', 
                                     paddingRight: '1rem', 
                                     paddingTop: '0.75rem', 
                                     paddingBottom: '0.75rem', 
                                     border: '1px solid #E5E7EB', 
-                                    borderRadius: '8px', // Slightly squared corners like image
+                                    borderRadius: '8px',
                                     width: '100%', 
                                     fontSize: '0.95rem',
-                                    backgroundColor: '#FFFFFF', // White input
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)' // Subtle shadow
+                                    backgroundColor: '#FFFFFF',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                 }}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -105,14 +101,19 @@ const ReportsLayout = ({ onLogout, onPageChange }) => {
                         </div>
                     </div>
 
-                    {/* Right Icons */}
                     <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                         <Bell style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} />
                         <HelpIcon style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} />
                     </div>
                 </header>
 
-                <Reports onPageChange={onPageChange} />
+                <Reports 
+                    onPageChange={onPageChange} 
+                    sections={sections} 
+                    students={students}
+                    attendanceData={attendanceData}
+                    searchTerm={searchTerm} 
+                />
             </main>
         </div>
     );
@@ -123,4 +124,7 @@ export default ReportsLayout;
 ReportsLayout.propTypes = {
     onLogout: PropTypes.func,
     onPageChange: PropTypes.func,
+    sections: PropTypes.array,
+    students: PropTypes.array,
+    attendanceData: PropTypes.object
 };

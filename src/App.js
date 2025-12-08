@@ -78,7 +78,7 @@ function App() {
                 atRiskMap[section].push({
                     id: student.id,
                     name: student.name,
-                    avatar: `https://i.pravatar.cc/150?u=${student.id}`,
+                    avatar: `https://ui-avatars.com/api/?name=${student.name}&background=random`,
                     gpa: 2.1,
                     attendance: Math.round((1 - absences/20) * 100) + '%',
                     missed: absences,
@@ -88,7 +88,7 @@ function App() {
         });
         
         setAtRiskStudents(atRiskMap);
-        console.log('✅ At-Risk Students by Section:', atRiskMap);
+        // console.log('✅ At-Risk Students by Section:', atRiskMap);
     }, [attendanceData, students, currentSectionContext]);
 
     // Handler for attendance updates from MultiPageGS
@@ -287,15 +287,18 @@ function App() {
                 return <ReportsLayout 
                     onLogout={handleLogout} 
                     onPageChange={handlePageChange} 
-                    atRiskStudents={atRiskStudents}
+                    sections={sections} 
+                    students={students}
+                    attendanceData={attendanceData} // PASSING ATTENDANCE FOR RISK CALC
                 />;
             
             case 'v-reports': 
                 return <VReports 
                     onLogout={handleLogout} 
                     onPageChange={handlePageChange} 
-                    atRiskStudents={atRiskStudents[selectedSection] || []}
-                    sectionName={selectedSection}
+                    atRiskStudents={pageParams.atRiskStudents || []} // Updated to use pageParams based on Report click
+                    allStudents={pageParams.allStudents || []} // Pass all students if needed
+                    sectionData={pageParams.sectionData}
                 />;
             
             case 'view-rd': 

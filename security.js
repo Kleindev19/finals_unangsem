@@ -12,7 +12,7 @@ function encrypt(text) {
     return iv.toString('hex') + ':' + encrypted.toString('hex');
 }
 
-function decrypt(text) {
+function decrypt(text) {    
     try {
         let textParts = text.split(':');
         let iv = Buffer.from(textParts.shift(), 'hex');
