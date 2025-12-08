@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Smart Start Tracker",
+            "type": "node",
+            "request": "launch",
+            // This runs a dummy command that exits instantly (exit code 0)
+            // This tricks VS Code into thinking the debug session finished successfully.
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "-e", "process.exit(0)"
+            ],
+            "console": "integratedTerminal",
+            // The REAL work happens here:
+            "preLaunchTask": "Smart Start"
+        }
+    ]
+}

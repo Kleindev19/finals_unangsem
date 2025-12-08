@@ -1,0 +1,166 @@
+/* src/components/assets/Reports/ViewRD.css */
+
+.vrd-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #FDFDF5;
+    font-family: 'Inter', sans-serif;
+}
+
+.vrd-main {
+    flex-grow: 1;
+    padding: 1.5rem 2.5rem;
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 1. TOP NAV & PROFILE */
+.vrd-top-nav { margin-bottom: 1.5rem; }
+.vrd-back-link {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: none; border: none; cursor: pointer;
+    color: #4B5563; font-weight: 600; font-size: 0.9rem;
+}
+
+.vrd-profile-header {
+    display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;
+}
+.vrd-header-avatar {
+    width: 70px; height: 70px; border-radius: 50%;
+    border: 3px solid #EF4444; /* High Risk Red Border */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.vrd-student-name { margin: 0; font-size: 1.8rem; color: #1F2937; line-height: 1.2; }
+.vrd-student-meta { margin: 0; color: #6B7280; font-size: 0.95rem; }
+.vrd-meta-risk { color: #DC2626; font-weight: 700; }
+
+/* 2. METRICS GRID */
+.vrd-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.vrd-metric-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E5E7EB;
+}
+
+.vrd-metric-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.vrd-icon-sq {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+}
+.vrd-icon-sq.green { background: #DCFCE7; color: #166534; }
+.vrd-icon-sq.yellow { background: #FEF3C7; color: #B45309; }
+.vrd-icon-sq.red { background: #FEE2E2; color: #991B1B; }
+.vrd-icon-sq.purple { background: #EDE9FE; color: #5B21B6; }
+
+.vrd-metric-num { font-size: 1.8rem; font-weight: 800; color: #1F2937; line-height: 1; }
+.vrd-metric-title { margin: 0; font-weight: 700; color: #374151; font-size: 0.95rem; }
+.vrd-metric-sub { font-size: 0.75rem; color: #6B7280; display: block; margin-top: 2px; }
+
+/* 3. SECTION CARDS */
+.vrd-section-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E5E7EB;
+    margin-bottom: 2rem;
+}
+
+.vrd-sect-title { margin: 0 0 0.3rem 0; font-size: 1.1rem; color: #1F2937; font-weight: 700; }
+.vrd-sect-sub { margin: 0 0 1.5rem 0; font-size: 0.85rem; color: #6B7280; }
+
+/* Course Row */
+.vrd-course-info h4 { margin: 0; font-size: 1.2rem; color: #111827; }
+.vrd-course-info p { margin: 0; font-size: 0.9rem; color: #4B5563; }
+.vrd-prof-name { display: block; font-size: 0.8rem; color: #9CA3AF; margin-top: 4px; }
+
+.vrd-progress-container { margin-top: 1.5rem; }
+.vrd-prog-labels { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+.vrd-badge-green { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 4px; }
+
+.vrd-prog-track {
+    width: 100%; height: 12px; background: #E5E7EB; border-radius: 6px; position: relative;
+}
+.vrd-prog-fill {
+    height: 100%; background: #10B981; border-radius: 6px;
+}
+/* AI Marker */
+.vrd-ai-marker {
+    position: absolute; top: -4px; width: 4px; height: 20px; background: #1F2937;
+    z-index: 2; border-radius: 2px;
+}
+.vrd-ai-tooltip {
+    position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+    background: #1F2937; color: white; padding: 2px 6px; border-radius: 4px;
+    font-size: 0.7rem; white-space: nowrap;
+}
+
+.vrd-stat-footer {
+    display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #F3F4F6;
+    font-size: 0.85rem; color: #4B5563;
+}
+.vrd-divider { color: #E5E7EB; }
+
+/* 4. BOTTOM GRID (Radar + Analytics) */
+.vrd-bottom-grid {
+    display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 1.5rem;
+}
+@media (max-width: 1024px) { .vrd-bottom-grid { grid-template-columns: 1fr; } }
+
+/* AI Panel */
+.vrd-ai-content { display: flex; gap: 2rem; align-items: center; }
+@media (max-width: 768px) { .vrd-ai-content { flex-direction: column; } }
+
+.vrd-radar-container { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.vrd-radar-container h4, .vrd-ai-recos h4 { font-size: 0.95rem; margin-bottom: 1rem; }
+
+/* SVG Radar */
+.vrd-radar-wrapper { width: 220px; position: relative; text-align: center; }
+.vrd-radar-svg { width: 100%; height: auto; overflow: visible; }
+.vrd-radar-label { font-size: 10px; fill: #4B5563; font-weight: 600; }
+.vrd-risk-badge {
+    margin-top: 10px; background: #FEF2F2; color: #991B1B;
+    border: 1px solid #FECACA; padding: 4px 8px; border-radius: 4px;
+    font-size: 0.8rem; font-weight: 700; display: inline-block;
+}
+
+.vrd-ai-recos ul { padding-left: 1.2rem; margin: 0; }
+.vrd-ai-recos li { font-size: 0.85rem; margin-bottom: 0.5rem; color: #374151; }
+
+/* Bar Chart */
+.vrd-bar-chart {
+    display: flex; justify-content: space-around; align-items: flex-end;
+    height: 180px; margin-top: 2rem; margin-bottom: 2rem;
+}
+.vrd-bar-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; width: 40px; }
+.vrd-bar-val { font-size: 0.75rem; font-weight: 700; margin-bottom: 5px; color: #374151; }
+.vrd-bar-track { width: 100%; height: 100%; display: flex; align-items: flex-end; }
+.vrd-bar-fill { width: 100%; border-radius: 4px 4px 0 0; }
+.vrd-bar-lbl { margin-top: 8px; font-size: 0.8rem; font-weight: 600; color: #6B7280; }
+
+.vrd-instructor-notes {
+    background: #F9FAFB; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;
+    border-left: 4px solid #9CA3AF;
+}
+.vrd-instructor-notes h4 { margin: 0 0 0.5rem 0; font-size: 0.9rem; }
+.vrd-instructor-notes p { margin: 0; font-size: 0.85rem; font-style: italic; color: #4B5563; }
+
+.vrd-warning-btn {
+    width: 100%; background: #DC2626; color: white; border: none; padding: 0.8rem;
+    border-radius: 8px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
+}
+.vrd-warning-btn:hover { background: #B91C1C; }

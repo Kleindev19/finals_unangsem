@@ -1,0 +1,180 @@
+/* src/components/assets/Reports/Reports.css */
+
+/* Page Container */
+.reports-page-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- 1. FILTER CARD --- */
+.rep-filter-card {
+    background-color: white;
+    padding: 1.25rem 2rem;
+    border-radius: 16px; /* Larger radius */
+    /* Deep floating shadow */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    flex-wrap: wrap;
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.rep-filter-group {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.rep-filter-group label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #1F2937;
+    margin-left: 2px;
+}
+
+.rep-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.rep-select-wrapper select {
+    width: 100%;
+    appearance: none;
+    padding: 0.6rem 1rem;
+    background-color: #E5E7EB; /* Light Gray Input Background */
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #1F2937;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.rep-select-wrapper select:focus {
+    outline: 2px solid #3B82F6;
+    background-color: white;
+}
+
+.rep-chevron {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #4B5563;
+}
+
+/* --- 2. MAIN CONTENT CARD --- */
+.rep-main-card {
+    background-color: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    /* Deep floating shadow */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    min-height: 600px;
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.rep-card-header {
+    margin-bottom: 2.5rem;
+}
+
+.rep-card-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1F2937;
+    margin: 0 0 0.5rem 0;
+}
+
+.rep-card-header p {
+    color: #6B7280;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* Grid for Class Cards */
+.rep-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* --- CLASS CARD DESIGN --- */
+.rep-class-card {
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    background-color: white;
+}
+
+.rep-class-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: #3B82F6;
+}
+
+.rep-class-icon-box {
+    width: 40px;
+    height: 40px;
+    background-color: #3B82F6; /* Blue Icon Bg */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.rep-class-code {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1F2937;
+    margin: 0 0 0.3rem 0;
+}
+
+.rep-class-name {
+    font-size: 0.9rem;
+    color: #6B7280;
+    margin: 0 0 1.5rem 0;
+}
+
+.rep-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.rep-at-risk {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #6B7280;
+}
+
+.rep-view-link {
+    background: none;
+    border: none;
+    color: #10B981; /* Matches design green */
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    font-size: 0.85rem;
+    transition: gap 0.2s;
+}
+
+.rep-view-link:hover {
+    gap: 0.5rem;
+    text-decoration: none;
+}

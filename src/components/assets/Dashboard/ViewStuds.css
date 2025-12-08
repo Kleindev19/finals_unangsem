@@ -1,0 +1,298 @@
+/* src/components/assets/Dashboard/ViewStuds.css */
+
+/* --- LAYOUT --- */
+.view-studs-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #FDFDF5; /* Cream background */
+    font-family: 'Inter', sans-serif;
+}
+
+.view-studs-main {
+    flex-grow: 1;
+    padding: 1.5rem 3rem;
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- HEADER --- */
+.vs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.vs-search-container {
+    position: relative;
+    width: 400px;
+}
+
+.vs-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA3AF;
+    width: 18px;
+    height: 18px;
+}
+
+.vs-search-input {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    outline: none;
+    background-color: white;
+}
+
+.vs-header-actions {
+    display: flex;
+    gap: 1.5rem;
+    color: #6B7280;
+}
+
+.vs-icon { cursor: pointer; }
+
+/* Top Toolbar for Attendance */
+.vs-top-toolbar {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+.vs-btn-white-outline {
+    background-color: white;
+    border: 1px solid #D1D5DB;
+    color: #374151;
+    font-weight: 600;
+}
+.vs-btn-white-outline:hover { background-color: #F3F4F6; }
+
+
+/* --- FLOATING FILTER BAR --- */
+.vs-floating-filter-bar {
+    background-color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.vs-filter-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.vs-filter-group label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #374151;
+    margin-left: 2px;
+}
+
+.vs-select-wrapper { position: relative; width: 100%; }
+
+.vs-select-wrapper select {
+    width: 100%;
+    appearance: none;
+    padding: 0.6rem 1rem;
+    background-color: #E5E7EB;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #1F2937;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.vs-select-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #4B5563;
+}
+
+/* --- MAIN CONTENT CARD --- */
+.vs-content-card {
+    background-color: white; 
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0,0,0,0.02);
+    min-height: 500px;
+}
+
+.vs-card-header { margin-bottom: 1.5rem; }
+.vs-card-header h1 { font-size: 2rem; font-weight: 800; color: #1F2937; margin: 0 0 0.2rem 0; }
+.vs-subtitle { font-size: 1.1rem; color: #3B82F6; font-weight: 700; }
+
+/* --- SHARE BANNER --- */
+.vs-share-banner {
+    background-color: #6EE7B7;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+.vs-share-header { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; color: #1F2937; margin-bottom: 0.5rem; }
+.vs-share-banner p { font-size: 0.9rem; color: #374151; margin: 0 0 1rem 0; font-weight: 500; }
+.vs-link-row { display: flex; gap: 1rem; margin-bottom: 0.5rem; }
+.vs-link-row input { flex-grow: 1; padding: 0.6rem; border: none; border-radius: 6px; font-size: 0.85rem; background-color: white; outline: none; }
+.vs-copy-btn { display: flex; align-items: center; gap: 0.4rem; background-color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 700; cursor: pointer; }
+.vs-link-note { font-size: 0.75rem !important; font-style: italic; opacity: 0.9; margin: 0 !important; }
+
+/* --- DROPDOWN & CONTROLS --- */
+.vs-controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.vs-dropdown-wrapper { position: relative; width: 250px; }
+
+.vs-section-dropdown {
+    width: 100%;
+    appearance: none;
+    background-color: #E5E7EB;
+    border: none;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #374151;
+    cursor: pointer;
+}
+
+.vs-dropdown-arrow {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #4B5563;
+}
+
+/* --- BUTTONS --- */
+.vs-buttons-row {
+    display: flex; justify-content: space-between; margin-bottom: 1.5rem;
+}
+
+.vs-btn {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.5rem;
+    border-radius: 8px; border: none; font-weight: 700; font-size: 0.95rem;
+    cursor: pointer; color: white; transition: opacity 0.2s;
+}
+.vs-btn:hover { opacity: 0.9; }
+.vs-btn-add { background-color: #4ADE80; color: #064E3B; }
+.vs-btn-export { background-color: #4ADE80; color: #064E3B; }
+
+
+/* --- TABLE --- */
+.vs-table-container { overflow-x: auto; border: 1px solid #E5E7EB; border-radius: 8px; }
+.vs-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.vs-table th {
+    text-align: left; padding: 1rem; background-color: #F9FAFB;
+    color: #6B7280; font-weight: 700; border-bottom: 1px solid #E5E7EB; white-space: nowrap;
+}
+/* Fixed col for Attendance view */
+.vs-table th.fixed-col, .vs-table td.fixed-col {
+    background-color: #F9FAFB; position: sticky; left: 0; z-index: 10;
+    border-right: 2px solid #E5E7EB;
+}
+
+.vs-table td { padding: 1rem; border-bottom: 1px solid #E5E7EB; color: #374151; vertical-align: middle; }
+.vs-col-course { max-width: 200px; line-height: 1.3; }
+.vs-id-text { font-family: monospace; color: #6B7280; }
+
+.vs-edit-btn {
+    background: none; border: none; cursor: pointer; color: #374151; padding: 6px;
+    border-radius: 4px; transition: background-color 0.2s;
+}
+.vs-edit-btn:hover { background-color: #F3F4F6; color: #2563EB; }
+
+/* --- ATTENDANCE CELLS --- */
+.vs-cell-relative { position: relative; min-width: 80px; text-align: center; }
+.vs-cell-select {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0; cursor: pointer; appearance: none;
+}
+
+.vs-status-pill {
+    display: inline-flex; align-items: center; justify-content: space-between;
+    width: 45px; padding: 4px 8px; border-radius: 4px;
+    font-weight: 700; font-size: 0.85rem;
+    border: 1px solid rgba(0,0,0,0.05); pointer-events: none;
+    margin: 0 auto;
+}
+.vs-p { background-color: #bbf7d0; color: #166534; }
+.vs-a { background-color: #fecaca; color: #991b1b; }
+.vs-l { background-color: #fed7aa; color: #9a3412; }
+.vs-chevron-mini { width: 10px; height: 10px; opacity: 0.6; }
+
+.vs-tag-full {
+    background-color: #fbcfe8; color: #be185d; font-weight: 600; font-size: 0.75rem;
+    padding: 4px 8px; border-radius: 4px; text-align: center; display: inline-block; width: 80px;
+}
+
+/* --- LEGEND --- */
+.vs-legend {
+    display: flex; gap: 1.5rem; margin-top: 2rem;
+    padding-top: 1rem; border-top: 1px solid #E5E7EB;
+}
+.vs-legend-item { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+.vs-p-pill { background-color: #bbf7d0; color: #166534; padding: 2px 8px; border-radius: 4px; }
+.vs-a-pill { background-color: #fecaca; color: #991b1b; padding: 2px 8px; border-radius: 4px; }
+.vs-l-pill { background-color: #fed7aa; color: #9a3412; padding: 2px 8px; border-radius: 4px; }
+
+/* --- MODAL --- */
+.vs-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex; justify-content: center; align-items: center; z-index: 1000;
+}
+.vs-modal-card {
+    background-color: #E6F4F1; padding: 2.5rem; border-radius: 16px;
+    width: 600px; max-width: 90vw; position: relative;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #d1e7e2;
+}
+.vs-modal-close { position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; color: #4B5563; }
+.vs-modal-title { text-align: center; margin-top: 0; margin-bottom: 2rem; font-size: 1.5rem; color: #1F2937; font-weight: 800; }
+.vs-modal-form { display: flex; flex-direction: column; gap: 1.2rem; }
+.vs-form-row { display: flex; gap: 1.5rem; }
+.vs-form-group { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+.vs-form-group label { font-weight: 700; font-size: 0.9rem; color: #374151; }
+.vs-modal-input, .vs-modal-select { padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid white; background-color: white; font-size: 0.95rem; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.vs-modal-submit-btn {
+    background-color: #38761d; color: white; border: none; padding: 0.9rem;
+    border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer;
+    margin-top: 1.5rem; box-shadow: 0 4px 6px rgba(56, 118, 29, 0.3); transition: transform 0.1s;
+}
+.vs-modal-submit-btn:hover { background-color: #2e6215; transform: translateY(-1px); }
+
+/* --- NEW: AUTOMATION ANIMATION --- */
+@keyframes slideInHighlight {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+        background-color: #dcfce7; /* Light Green */
+    }
+    30% {
+        opacity: 1;
+        transform: translateY(0);
+        background-color: #86efac; /* Bright Green */
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.vs-row-animate-new {
+    animation: slideInHighlight 1.5s ease-out forwards;
+    border-left: 3px solid #38761d; /* Green accent on the left */
+}

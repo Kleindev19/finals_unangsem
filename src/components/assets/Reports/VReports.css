@@ -1,0 +1,145 @@
+/* src/components/assets/Reports/VReports.css */
+
+.vr-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #FDFDF5;
+    font-family: 'Inter', sans-serif;
+}
+
+.vr-main {
+    flex-grow: 1;
+    padding: 2rem 3rem;
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- HEADER STYLES --- */
+.vr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.vr-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.vr-back-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6B7280;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.vr-back-btn:hover { background-color: #E5E7EB; }
+
+.vr-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1F2937;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.vr-subtitle {
+    font-size: 0.9rem;
+    color: #6B7280;
+    margin: 0;
+}
+
+.vr-header-right { display: flex; gap: 1rem; }
+
+.vr-search-box {
+    position: relative;
+    background-color: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    width: 250px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.vr-search-icon { color: #9CA3AF; margin-right: 0.5rem; }
+.vr-search-box input {
+    border: none; outline: none; width: 100%;
+    font-size: 0.9rem; color: #374151;
+}
+
+.vr-dropdown-box {
+    background-color: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* --- TABLE STYLES --- */
+.vr-table-container { width: 100%; overflow-x: auto; }
+
+.vr-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+
+.vr-table thead tr {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.vr-table th {
+    padding: 1rem;
+    text-align: left;
+    color: #6B7280;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vr-table tbody tr { border-bottom: 1px solid rgba(0,0,0,0.03); }
+.vr-table td { padding: 1rem; color: #1F2937; vertical-align: middle; }
+
+.vr-name-cell { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; }
+.vr-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.vr-text-id { color: #4B5563; font-family: monospace; }
+.center-text { text-align: center; }
+
+.vr-status-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-block;
+}
+.vr-status-high { background-color: #FEE2E2; color: #991B1B; }
+.vr-status-medium { background-color: #FFEDD5; color: #9A3412; }
+.vr-status-low { background-color: #FEF9C3; color: #854D0E; }
+
+.vr-actions { display: flex; justify-content: center; gap: 1rem; }
+.vr-btn-contact {
+    background: none; border: none; color: #10B981;
+    font-weight: 600; cursor: pointer; font-size: 0.85rem;
+}
+.vr-btn-contact:hover { text-decoration: underline; }
+.vr-btn-view {
+    background: none; border: none; color: #3B82F6;
+    font-weight: 600; cursor: pointer; font-size: 0.85rem;
+}
+.vr-btn-view:hover { text-decoration: underline; }

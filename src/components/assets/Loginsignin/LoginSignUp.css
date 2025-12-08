@@ -1,0 +1,227 @@
+/* src/components/assets/Loginsignin/LoginSignUp.css */
+
+/* 1. Wrapper at Background */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
+    /* Background image is inline in JSX */
+}
+
+/* 2. Main Content Container */
+.container {
+    position: relative; 
+    display:flex; 
+    justify-content: center; 
+    align-items: center;
+    width: 100%;
+    max-width: 1200px; 
+    height: 50vh;
+}
+
+/* 3. Logo Area Positioning */
+.logo-area {
+    position: absolute;
+    top: 50%;
+    left: 5%; 
+    transform: translateY(-50%); 
+    z-index: 10;
+}
+
+.logo-image {
+    width: 350px; 
+    height: auto;
+}
+
+/* 4. Login Form Card Styling */
+.login-card {
+    background-color: rgba(240, 240, 230, 0.95); /* Slightly increased opacity for better readability */
+    padding: 2.5rem 3rem;
+    border-radius: 20px; 
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    z-index: 20;
+}
+
+/* 5. Form Elements */
+h2 {
+    color: #1F2937;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 800;
+}
+
+p {
+    color: #666;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    box-sizing: border-box; 
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #38761d;
+    box-shadow: 0 0 0 3px rgba(56, 118, 29, 0.1);
+}
+
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.forgot-password a {
+    color: #3B82F6;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: #38761d; 
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+}
+
+.login-btn:hover {
+    background-color: #275d13;
+}
+
+.login-btn:disabled {
+    background-color: #6b7280;
+    cursor: not-allowed;
+}
+
+/* 6. Separator */
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #9CA3AF;
+    font-size: 0.85rem;
+    margin: 1rem 0;
+}
+
+.separator::before,
+.separator::after {
+    content: '';
+    flex-grow: 1;
+    height: 1px;
+    background: #E5E7EB;
+    margin: 0 10px;
+}
+
+/* 7. Google Button */
+.google-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0.8rem;
+    background-color: white;
+    color: #374151;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.google-btn:hover {
+    background-color: #F9FAFB;
+}
+
+/* 8. Sign Up Area */
+.signup-area {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+.signup-area p {
+    display: inline;
+    margin: 0;
+    color: #6B7280;
+}
+
+.signup-area button {
+    color: #3B82F6; 
+    text-decoration: none;
+    font-weight: 700;
+}
+
+/* Error Message */
+.error-message {
+    color: #DC2626; 
+    text-align: center; 
+    margin-bottom: 1rem; 
+    font-weight: 600;
+    padding: 0.75rem;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    background-color: #FEF2F2;
+    font-size: 0.85rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .logo-area {
+        position: static;
+        transform: none;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .logo-image {
+        width: 150px;
+    }
+    
+    .login-card {
+        margin: 0;
+        padding: 2rem;
+    }
+}

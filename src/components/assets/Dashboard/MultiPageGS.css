@@ -1,0 +1,161 @@
+/* src/components/assets/Dashboard/MultiPageGS.css */
+
+.mp-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #FDFDF5;
+    font-family: 'Inter', sans-serif;
+}
+
+.mp-main {
+    flex-grow: 1;
+    padding: 1.5rem 2rem;
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* --- 1. HEADER --- */
+.mp-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem; 
+    gap: 1rem;
+}
+
+.mp-header-left { display: flex; align-items: center; gap: 1rem; }
+.mp-back-btn {
+    background: none; border: none; cursor: pointer; color: #6B7280; padding: 0.5rem; border-radius: 50%;
+}
+.mp-back-btn:hover { background-color: #e5e7eb; }
+
+.mp-top-title { font-size: 1.4rem; font-weight: 800; color: #166534; margin: 0; text-transform: uppercase; }
+.mp-top-subtitle { font-size: 0.85rem; color: #6B7280; margin: 0; font-weight: 500; }
+
+.mp-header-center { flex: 1; display: flex; justify-content: center; padding: 0 1rem; }
+.mp-search-wrapper { position: relative; width: 100%; max-width: 350px; height: 40px; }
+.mp-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9CA3AF; }
+.mp-search-input {
+    width: 100%; height: 100%; padding: 0 1rem 0 2.8rem;
+    background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 20px; outline: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.mp-header-right { display: flex; align-items: center; gap: 0.75rem; }
+.mp-view-selector-wrapper { position: relative; width: 180px; height: 40px; }
+.mp-view-selector {
+    appearance: none; width: 100%; height: 100%; padding: 0 2rem 0 1rem;
+    border: 1px solid #E5E7EB; border-radius: 8px; background-color: white;
+    font-size: 0.85rem; color: #374151; font-weight: 600; cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.mp-selector-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #6B7280; }
+
+.mp-btn {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
+    border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    border: 1px solid #ddd; background-color: white; color: #374151; height: 40px;
+}
+
+/* --- 2. TOOLBAR --- */
+.mp-toolbar {
+    background-color: transparent; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: flex-end;
+}
+.mp-toolbar-left { display: flex; align-items: center; gap: 1rem; margin-bottom: 4px; } /* Updated */
+.mp-toolbar-right { display: flex; align-items: flex-end; gap: 1rem; }
+.mp-data-actions { display: flex; gap: 0.5rem; margin-bottom: 2px;}
+
+.btn-add-assessment {
+    background-color: #2563EB; color: white; border: none; padding: 0 1.2rem; height: 40px;
+    border-radius: 6px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;
+    cursor: pointer; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+.btn-utility {
+    background: white; border: 1px solid #E5E7EB; font-size: 0.85rem; font-weight: 600; color: #4B5563;
+    display: flex; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 0.75rem; border-radius: 4px; height: 38px;
+}
+
+/* ATTENDANCE DROPDOWN STYLES */
+.mp-att-selector-wrapper {
+    display: flex; flex-direction: column; gap: 2px;
+}
+.mp-label-small { font-size: 0.75rem; font-weight: 700; color: #6B7280; margin-left: 2px; }
+.mp-att-selector {
+    appearance: none; padding: 0.5rem 2.5rem 0.5rem 1rem; border: 1px solid #166534;
+    border-radius: 6px; background-color: white; color: #166534; font-weight: 700;
+    font-size: 0.9rem; cursor: pointer; height: 38px;
+}
+.relative { position: relative; }
+
+
+/* --- 3. CARDS --- */
+.mp-cards-container { display: flex; gap: 1rem; align-items: flex-start; }
+
+.mp-percentage-card {
+    background: white; border: 1px solid #38761d; border-radius: 2px;
+    overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 180px;
+}
+.mp-pc-header {
+    background-color: #38761d; color: white; padding: 0.3rem;
+    text-align: center; font-weight: 700; text-transform: uppercase; font-size: 0.8rem;
+}
+.mp-pc-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.mp-pc-table th, .mp-pc-table td { padding: 3px 6px; border: 1px solid #38761d; text-align: center; color: #000; }
+.mp-pc-table th { background-color: #fcfcfc; font-weight: 700; }
+.mp-pc-total { background-color: #38761d; color: white !important; font-weight: bold; }
+.mp-pc-total td { color: white !important; border-color: #38761d; }
+
+.scale-table th { background-color: #cfcfcf; } 
+.cell-passed-vertical { background-color: #4ade80 !important; color: black !important; font-weight: 800; writing-mode: vertical-rl; transform: rotate(180deg); }
+.cell-failed { background-color: #ef4444 !important; color: white; font-weight: 800; }
+
+/* --- 4. TABLE STYLES --- */
+.mp-content-wrapper {
+    background-color: white; border: 1px solid #E5E7EB;
+    border-radius: 8px 8px 0 0; overflow: hidden; display: flex; flex-direction: column;
+}
+.mp-table-container { overflow-x: auto; width: 100%; }
+.mp-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #000; }
+
+/* Headers */
+.header-category-green { background-color: #86EFAC !important; color: #064E3B; font-weight: 800; border: 1px solid #ccc; }
+.header-category-orange { background-color: #FDBA74 !important; color: #431407; font-weight: 800; border: 1px solid #ccc; }
+.header-midterm-green { background-color: #DCFCE7 !important; color: #064E3B; font-weight: 800; border: 1px solid #ccc; }
+.bg-green-soft { background-color: #DCFCE7 !important; font-weight: bold; text-align: center; }
+
+/* Summary Table Headers */
+.mp-summary-table th, .mp-summary-table td { border: 1px solid #000; }
+.header-beige-title { background-color: #e2e2e2 !important; color: black; font-weight: 800; font-size: 1.1rem; text-align: center; padding: 0.5rem; }
+.header-green-title { background-color: #559e5e !important; color: white; font-weight: 800; font-size: 1.1rem; text-align: center; padding: 0.5rem; }
+.header-beige { background-color: #efefef !important; color: black; font-weight: 700; padding: 8px; text-align: center; }
+.header-green-col { background-color: #93c47d !important; color: black; font-weight: 700; padding: 8px; text-align: center; }
+.header-beige-cell { background-color: #efefef; }
+.header-green-cell { background-color: #d9ead3; font-weight: bold; }
+.header-summary-green { background-color: #5aa15f !important; color: white !important; font-weight: 800; border: 1px solid #4a8a4f; }
+
+.cell-passed { background-color: #4ade80 !important; color: black; font-weight: 800; }
+
+.mp-table th, .mp-table td { padding: 4px; text-align: center; }
+.mp-table-input { width: 100%; border: none; text-align: center; outline: none; }
+
+/* Sticky Columns */
+.mp-table .sticky-col { position: sticky; z-index: 20; background-color: #F9FAFB; border-right: 2px solid #D1D5DB; }
+.col-no { left: 0; width: 40px; min-width: 40px; }
+.col-id { left: 40px; width: 100px; min-width: 100px; }
+.col-name { left: 140px; width: 220px; min-width: 220px; }
+.mp-table th.sticky-col { z-index: 30; border-bottom: 1px solid #E5E7EB; } 
+.mp-table tbody tr td { border-right: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB; padding: 0; height: 30px; }
+
+/* Attendance Specifics */
+.mp-status-pill { display: inline-flex; align-items: center; justify-content: space-between; width: 45px; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05); pointer-events: none; margin: 0 auto; }
+.mp-p { background-color: #bbf7d0; color: #166534; }
+.mp-a { background-color: #fecaca; color: #991b1b; }
+.mp-l { background-color: #fed7aa; color: #9a3412; }
+.mp-chevron { width: 10px; height: 10px; opacity: 0.6; }
+.mp-tag-full { background-color: #fbcfe8; color: #be185d; font-weight: 600; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-align: center; display: inline-block; width: 80px; }
+.mp-cell-relative { position: relative; min-width: 80px; text-align: center; }
+.mp-cell-select { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; appearance: none; }

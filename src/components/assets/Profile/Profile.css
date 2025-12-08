@@ -1,0 +1,251 @@
+/* src/components/assets/Profile/Profile.css */
+
+.pro-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+.pro-loading {
+    padding: 3rem;
+    text-align: center;
+    color: #6B7280;
+    font-size: 1.2rem;
+}
+
+/* --- 1. IDENTITY CARD (Top) --- */
+.pro-identity-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 16px; /* Match Reports */
+    /* Match Dashboard/Reports Shadow */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0,0,0,0.02);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.pro-id-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.pro-avatar-wrapper {
+    position: relative;
+}
+
+.pro-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.pro-edit-avatar-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: #38761d;
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.pro-user-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.pro-name {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1F2937;
+}
+
+.pro-role-badge {
+    display: inline-block;
+    background-color: #F3F4F6;
+    color: #4B5563;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin: 4px 0;
+    width: fit-content;
+}
+
+.pro-id-text {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #9CA3AF;
+    font-family: monospace;
+}
+
+/* Right Side Stats */
+.pro-id-right {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.pro-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background-color: white; /* Or slight tint */
+    padding-right: 1rem;
+    border-right: 1px solid #E5E7EB;
+}
+.pro-stat-item:last-child { border-right: none; }
+
+.pro-stat-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pro-stat-val {
+    display: block;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #1F2937;
+    line-height: 1.1;
+}
+
+.pro-stat-lbl {
+    font-size: 0.75rem;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+
+/* --- 2. SETTINGS CARD (Bottom) --- */
+.pro-settings-card {
+    background-color: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0,0,0,0.02);
+    flex-grow: 1;
+}
+
+.pro-card-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #E5E7EB;
+    padding-bottom: 1rem;
+}
+
+.pro-card-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: #1F2937;
+    font-weight: 700;
+}
+
+.pro-card-header p {
+    margin: 0;
+    color: #6B7280;
+    font-size: 0.9rem;
+}
+
+/* Form Styles */
+.pro-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .pro-form-grid { grid-template-columns: 1fr; }
+    .pro-identity-card { flex-direction: column; align-items: flex-start; }
+    .pro-id-right { width: 100%; justify-content: space-between; margin-top: 1rem; }
+    .pro-stat-item { border: none; }
+}
+
+.pro-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pro-form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.pro-form-group input {
+    padding: 0.75rem 1rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px; /* Match Reports input radius */
+    font-size: 0.95rem;
+    color: #1F2937;
+    background-color: #fff; /* Start white */
+    transition: all 0.2s;
+}
+
+.pro-form-group input:focus {
+    outline: none;
+    border-color: #38761d;
+    box-shadow: 0 0 0 3px rgba(56, 118, 29, 0.1);
+}
+
+.pro-input-disabled {
+    background-color: #F9FAFB !important; /* Lighter gray for disabled */
+    color: #6B7280 !important;
+    border-color: #F3F4F6 !important;
+}
+
+/* Buttons */
+.pro-form-actions {
+    margin-top: 2.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.pro-btn-cancel {
+    background-color: white;
+    border: 1px solid #D1D5DB;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.pro-btn-cancel:hover { background-color: #F3F4F6; }
+
+.pro-btn-save {
+    background-color: #38761d;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(56, 118, 29, 0.2);
+    transition: transform 0.1s;
+}
+.pro-btn-save:hover { background-color: #275d13; transform: translateY(-1px); }
