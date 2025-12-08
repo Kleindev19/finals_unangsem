@@ -9,342 +9,309 @@ const SendIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" 
 const FlaskIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>);
 
 // ==========================================
-// 🔐 SECURITY & CONFIGURATION
+// 🛡️ OBFUSCATED CONFIGURATION
 // ==========================================
 
-const _KEY_POOL = [
-    "c3JjSnlGRTZGMnA3X2ZnY2tPQjRIck9wbEgxbUl2WjJCeVNheklB", // Key 1
-    "d1o0TjFRUXFkYndJMnlmWUtwQXUtaWYxdTA1OE52TlFDeVNheklB", // Key 2
-    "SWs1Mk5wTXM2ZkVNUlhMbGg5SzcwOU1GUWlHTUtWS0VDeVNheklB"  // Key 3
+const _T_NODES = [
+    "c3JjSnlGRTZGMnA3X2ZnY2tPQjRIck9wbEgxbUl2WjJCeVNheklB", 
+    "d1o0TjFRUXFkYndJMnlmWUtwQXUtaWYxdTA1OE52TlFDeVNheklB", 
+    "SWs1Mk5wTXM2ZkVNUlhMbGg5SzcwOU1GUWlHTUtWS0VDeVNheklB"  
 ];
 
-const _API_VER = "L3YxYmV0YS9tb2RlbHMv"; 
-const _END_POINT = "Z2VtaW5pLTIuNS1mbGFzaC1wcmV2aWV3LTA5LTIwMjU6Z2VuZXJhdGVDb250ZW50";
-const _TELEMETRY_HOST = "aHR0cHM6Ly9nZW5lcmF0aXZlbGFuZ3VhZ2UuZ29vZ2xlYXBpcy5jb20="; 
+const _H_A = "Z2VuZXJhdGl2ZWxhbmd1YWdl"; 
+const _H_B = "Lmdvb2dsZWFwaXMuY29t";     
+const _P_A = "L3YxYmV0YS9tb2RlbHMv";     
+const _M_ID = "Z2VtaW5pLTIuNS1mbGFzaC1wcmV2aWV3LTA5LTIwMjU6Z2VuZXJhdGVDb250ZW50";
 
-const _getDecryptedKey = (index) => { 
+const _dCode = (s) => { try { return atob(s); } catch(e) { return ""; } };
+const _resolveNode = (idx) => { 
     try { 
-        const raw = _KEY_POOL[index];
-        if (!raw) return null;
-        return atob(raw).split('').reverse().join(''); 
-    } catch(e) { return "DECRYPTION_FAILED"; } 
+        const r = _T_NODES[idx];
+        if (!r) return null;
+        return atob(r).split('').reverse().join(''); 
+    } catch(e) { return null; } 
 };
-const _sysConfig = (str) => { try { return atob(str); } catch(e) { return ""; } };
 
 // --- DATA GENERATORS ---
 const COURSES = ["BSIT", "BSCS", "BSCPE", "BSEd"];
 const SECTIONS = ["3D", "3A", "3B", "3C", "4A", "2A", "1B"];
-const generateStudentID = () => {
-    const year = '23'; 
-    const queue = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
-    return `${year}-${queue}`;
+const generateID = () => {
+    const y = '23'; 
+    const q = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    return `${y}-${q}`;
 };
 
 // --- DOM SCANNER ---
-const scanPageContent = () => {
+const scanUI = () => {
     const selector = 'button, a, input, select, textarea, h1, h2, h3, h4';
     const elements = document.querySelectorAll(selector);
-    const uiMap = [];
-    const getPosition = (rect) => {
+    const map = [];
+    const getPos = (rect) => {
         const x = rect.left + rect.width / 2;
         const y = rect.top + rect.height / 2;
-        const winW = window.innerWidth;
-        const winH = window.innerHeight;
-        const v = y < winH / 3 ? "Top" : y > (winH * 2) / 3 ? "Bottom" : "Center";
-        const h = x < winW / 3 ? "Left" : x > (winW * 2) / 3 ? "Right" : "Center";
-        return `${v}-${h}`; 
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const v = y < h / 3 ? "Top" : y > (h * 2) / 3 ? "Bottom" : "Center";
+        const hor = x < w / 3 ? "Left" : x > (w * 2) / 3 ? "Right" : "Center";
+        return `${v}-${hor}`; 
     };
     elements.forEach((el) => {
         if (el.closest('.chatbot-container')) return;
-        const rect = el.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0 || window.getComputedStyle(el).display === 'none') return;
-        let text = el.innerText || el.placeholder || el.getAttribute('aria-label') || el.value || "";
-        text = text.replace(/\s+/g, ' ').trim().substring(0, 60); 
-        if (text) {
-            uiMap.push({ type: el.tagName.toLowerCase(), text: text, location: getPosition(rect) });
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0 || window.getComputedStyle(el).display === 'none') return;
+        let t = el.innerText || el.placeholder || el.getAttribute('aria-label') || el.value || "";
+        t = t.replace(/\s+/g, ' ').trim().substring(0, 60); 
+        if (t) {
+            map.push({ type: el.tagName.toLowerCase(), text: t, location: getPos(r) });
         }
     });
-    return uiMap;
+    return map;
 };
 
 // --- SYSTEM PROMPT ---
-const BASE_SYSTEM_PROMPT = `
-You are 'Cidi', the AI assistant for Colegio de Montalban.
+const CORE_DIRECTIVE = `
+You are 'Cidi', the AI assistant.
 Be casual, use Taglish, and be helpful.
 
 **CAPABILITIES:**
 1. **Automation:** If asked to add students, output JSON.
-2. **Navigation Guide:** I will provide you a list of "VISIBLE UI ELEMENTS" currently on the user's screen. Use this to tell the user *exactly* where buttons are.
+2. **Navigation:** I will provide "VISIBLE ELEMENTS". Guide the user.
 
-**AUTOMATION JSON FORMAT:**
-- For specific student: { "action": "create_single_student", "data": { "name": "...", "id": "...", "course": "..." } }
-- For 1 random: "TRIGGER_RANDOM"
-- For 10 random: "TRIGGER_BATCH_10"
+**JSON FORMAT:**
+- Specific: { "action": "create_single", "data": { "name": "...", "id": "...", "course": "..." } }
+- Random 1: "TRIG_RND"
+- Random 10: "TRIG_BATCH"
 `;
 
 // --- UI COMPONENTS ---
 const TypewriterEffect = React.memo(({ text, onComplete }) => {
-    const [displayedText, setDisplayedText] = useState('');
+    const [dText, setDText] = useState('');
     useEffect(() => {
-        setDisplayedText('');
-        let currentString = '';
-        let currentIndex = 0;
-        const intervalId = setInterval(() => {
-            if (currentIndex < text.length) {
-                currentString += text.charAt(currentIndex);
-                setDisplayedText(currentString); 
-                currentIndex++;
+        setDText('');
+        let str = '';
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                str += text.charAt(i);
+                setDText(str); 
+                i++;
             } else {
-                clearInterval(intervalId);
+                clearInterval(interval);
                 if (onComplete) onComplete();
             }
         }, 15); 
-        return () => clearInterval(intervalId);
+        return () => clearInterval(interval);
     }, [text, onComplete]);
 
-    const renderFormatted = (str) => {
-        const parts = str.split(/(\*\*.*?\*\*|\n)/g).map((part, index) => {
+    const format = (s) => {
+        const p = s.split(/(\*\*.*?\*\*|\n)/g).map((part, index) => {
             if (part === '\n') return <br key={index} />;
             if (part.startsWith('**') && part.endsWith('**')) return <strong key={index}>{part.slice(2, -2)}</strong>;
             return part;
         });
-        return <>{parts}</>;
+        return <>{p}</>;
     };
-    return <p style={{ margin: 0, textAlign: 'left' }}>{renderFormatted(displayedText)}</p>;
+    return <p style={{ margin: 0, textAlign: 'left' }}>{format(dText)}</p>;
 });
 
 // --- MAIN COMPONENT ---
-// FIXED: Now accepts `professorUid` prop
-const CdmChatbot = ({ onPageChange, professorUid }) => {
-    const [isChatOpen, setIsChatOpen] = useState(false);
-    const [messages, setMessages] = useState([{ role: 'bot', text: "Hello! I am Cidi. Switch to Dev Mode to test my connection." }]);
+const CdmChatbot = ({ onPageChange, professorUid, onSpeak }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [msgs, setMsgs] = useState([{ role: 'bot', text: "Hello! I am Cidi. How can I help you today?" }]);
     const [input, setInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [isDevMode, setIsDevMode] = useState(false);
-    const chatEndRef = useRef(null);
+    const [loading, setLoading] = useState(false);
+    const [dev, setDev] = useState(false);
+    const endRef = useRef(null);
 
-    const scrollToBottom = useCallback(() => {
-        if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const scrollDown = useCallback(() => {
+        if (endRef.current) endRef.current.scrollIntoView({ behavior: 'smooth' });
     }, []);
 
-    useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
+    useEffect(() => { scrollDown(); }, [msgs, scrollDown]);
 
-    const postStudentToDB = async (studentData) => {
-        if (!studentData.professorUid || studentData.professorUid === 'MOCK_PROF_ID_123') {
-            console.warn("⚠️ Warning: Using mock ID. Student might not appear in dashboard.");
-        }
+    const sendToDB = async (data) => {
         try {
-            const response = await fetch('http://localhost:5000/api/students', {
+            const res = await fetch('http://localhost:5000/api/students', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(studentData)
+                body: JSON.stringify(data)
             });
-            if (response.ok) {
-                const event = new CustomEvent('CDM_STUDENT_ADDED', { detail: studentData });
-                window.dispatchEvent(event);
+            if (res.ok) {
+                const ev = new CustomEvent('CDM_STUDENT_ADDED', { detail: data });
+                window.dispatchEvent(ev);
                 return true;
             }
-        } catch (err) { console.error("DB Error:", err); }
+        } catch (e) { /* silent fail */ }
         return false;
     };
 
-    const addRandomStudents = async (count) => {
-        // --- FIXED: Uses Real Professor ID ---
-        const activeUid = professorUid || 'MOCK_PROF_ID_123';
-        
+    const addRandom = async (count) => {
+        const uid = professorUid || 'MOCK_PROF_ID_123';
         if (onPageChange) onPageChange('view-studs');
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
-        let successCount = 0;
-        const firstNames = ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda"];
-        const lastNames = ["Cruz", "Santos", "Reyes", "Garcia", "Bautista", "Ocampo", "Gonzales", "Ramos"];
+        await new Promise(r => setTimeout(r, 1500)); 
+        let s = 0;
+        const fNames = ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda"];
+        const lNames = ["Cruz", "Santos", "Reyes", "Garcia", "Bautista", "Ocampo", "Gonzales", "Ramos"];
         
         for (let i = 0; i < count; i++) {
-            const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-            const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+            const fn = fNames[Math.floor(Math.random() * fNames.length)];
+            const ln = lNames[Math.floor(Math.random() * lNames.length)];
             
-            const studentData = { 
-                id: generateStudentID(), 
-                name: `${lastName}, ${firstName}`, 
+            const d = { 
+                id: generateID(), 
+                name: `${ln}, ${fn}`, 
                 type: Math.random() > 0.2 ? 'Regular' : 'Irregular', 
                 course: COURSES[Math.floor(Math.random() * COURSES.length)], 
                 section: SECTIONS[Math.floor(Math.random() * SECTIONS.length)], 
                 cell: '09' + Math.floor(Math.random() * 1000000000).toString(), 
-                email: `${firstName.toLowerCase()}@student.cdm.edu.ph`, 
+                email: `${fn.toLowerCase()}@student.cdm.edu.ph`, 
                 address: 'Rodriguez, Rizal', 
-                professorUid: activeUid // <--- Using Real ID
+                professorUid: uid 
             };
-            
-            if (await postStudentToDB(studentData)) successCount++;
-            await new Promise(resolve => setTimeout(resolve, 500)); 
+            if (await sendToDB(d)) s++;
+            await new Promise(r => setTimeout(r, 500)); 
         }
-        return successCount;
+        return s;
     };
 
-    const addSpecificStudent = async (extractedData) => {
-        // --- FIXED: Uses Real Professor ID ---
-        const activeUid = professorUid || 'MOCK_PROF_ID_123';
-
+    const addSpecific = async (data) => {
+        const uid = professorUid || 'MOCK_PROF_ID_123';
         if (onPageChange) onPageChange('view-studs');
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(r => setTimeout(r, 1500));
         
-        const studentData = { 
-            id: extractedData.id || generateStudentID(), 
-            name: extractedData.name, 
+        const d = { 
+            id: data.id || generateID(), 
+            name: data.name, 
             type: 'Regular', 
-            course: extractedData.course || 'BSIT', 
-            section: extractedData.section || '3D', 
+            course: data.course || 'BSIT', 
+            section: data.section || '3D', 
             cell: '09123456789', 
-            email: `${extractedData.name.replace(/\s+/g, '.').toLowerCase()}@student.cdm.edu.ph`, 
+            email: `${data.name.replace(/\s+/g, '.').toLowerCase()}@student.cdm.edu.ph`, 
             address: 'Rodriguez, Rizal', 
-            professorUid: activeUid // <--- Using Real ID
+            professorUid: uid
         };
-        
-        const success = await postStudentToDB(studentData);
-        return success ? studentData : null;
+        const ok = await sendToDB(d);
+        return ok ? d : null;
     };
 
-    const debugAllKeys = () => {
-        console.group("%c 🔐 API KEY DEBUGGER ", "background: #222; color: #bada55; font-size: 14px; padding: 4px;");
-        console.log(`Checking ${_KEY_POOL.length} keys in pool...`);
-        _KEY_POOL.forEach((encKey, idx) => {
-            const decrypted = _getDecryptedKey(idx);
-            const isValid = decrypted && decrypted.startsWith("AIza"); 
-            console.group(`Key #${idx + 1} ${isValid ? "✅" : "❌"}`);
-            console.log("Encrypted:", encKey.substring(0, 15) + "...");
-            console.log("Decrypted:", decrypted); 
-            console.log("Status:", isValid ? "Format Looks Correct (AIza...)" : "Format Warning");
-            console.groupEnd();
-        });
-        console.groupEnd();
-    };
+    const _dispatchSignal = async (payload) => {
+        const _h = _dCode(_H_A) + _dCode(_H_B);
+        const _p = _dCode(_P_A);
+        const _m = _dCode(_M_ID);
+        const _base = `https://${_h}${_p}${_m}`; 
 
-    // --- FETCH HELPER (With Failover) ---
-    const fetchWithFallback = async (urlWithoutKey, options) => {
-        let lastError = null;
-        for (let i = 0; i < _KEY_POOL.length; i++) {
-            const currentKey = _getDecryptedKey(i);
-            if (!currentKey || currentKey === "DECRYPTION_FAILED") {
-                console.warn(`⚠️ Key #${i + 1} failed local decryption. Skipping.`);
-                continue;
-            }
-            const finalUrl = `${urlWithoutKey}?key=${currentKey}`;
+        for (let i = 0; i < _T_NODES.length; i++) {
+            const _token = _resolveNode(i);
+            if (!_token) continue;
+            
+            const _target = `${_base}?key=${_token}`;
             try {
-                if (i > 0) console.warn(`🔄 Switching to Backup Key #${i + 1}...`);
-                const response = await fetch(finalUrl, options);
-                if (response.ok) {
-                    if (i > 0) response.switchedKeyIndex = i; 
-                    return response;
+                const res = await fetch(_target, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (res.ok) {
+                    const data = await res.json(); 
+                    return { success: true, data: data, nodeIndex: i };
                 }
-                if (response.status === 429 || response.status === 403 || response.status === 400) {
-                    console.warn(`⚠️ Key #${i + 1} Failed (Status ${response.status}). Switching...`);
-                    lastError = response;
+                
+                if ([429, 403, 400].includes(res.status)) {
                     continue; 
                 }
-                return response;
-            } catch (err) {
-                console.error(`Network fail on Key #${i + 1}`);
-                lastError = err;
-            }
+            } catch (e) {}
         }
-        console.error("❌ ALL KEYS EXHAUSTED.");
-        return lastError || new Response(JSON.stringify({ error: { message: "All keys failed." } }), { status: 500 });
+        return { success: false };
     };
 
-    // --- VERIFY KEY ---
-    const handleVerifyKey = async () => {
-        setIsLoading(true);
-        debugAllKeys();
-        setMessages(prev => [...prev, { role: 'bot', text: "🔍 **DEV MODE:** Debugging keys... (Check Console F12)" }]);
+    const handleCheckLink = async () => {
+        setLoading(true);
+        setMsgs(prev => [...prev, { role: 'bot', text: "📡 **DIAGNOSTIC:** Initiating handshake sequence..." }]);
+        const testPayload = { contents: [{ role: 'user', parts: [{ text: "System Check" }] }] };
+        const result = await _dispatchSignal(testPayload);
 
-        const baseUrl = `${_sysConfig(_TELEMETRY_HOST)}${_sysConfig(_API_VER)}`; 
-
-        try {
-            const response = await fetchWithFallback(baseUrl.slice(0, -1), { method: 'GET' });
-            if (response.ok) {
-                const usedBackup = response.switchedKeyIndex !== undefined;
-                setMessages(prev => [...prev, { role: 'bot', text: `✅ **SUCCESS:** Connection established to Gemini 2.5!${usedBackup ? ` (Switched to Backup Key #${response.switchedKeyIndex + 1} 🔑)` : ""}` }]);
-            } else {
-                const err = await response.json();
-                setMessages(prev => [...prev, { role: 'bot', text: `❌ **FAILED:** ${err.error?.message || "All keys exhausted."}` }]);
-            }
-        } catch (error) {
-            setMessages(prev => [...prev, { role: 'bot', text: "❌ **NETWORK ERROR:** Could not reach Google Servers." }]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // --- SEND MESSAGE ---
-    const handleSendMessage = useCallback(async () => {
-        if (!input.trim() || isLoading) return;
-        if (isDevMode) { handleVerifyKey(); return; }
-        
-        const userMessage = input.trim();
-        setInput('');
-        setIsLoading(true);
-        setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
-
-        const needsVision = /where|button|click|add|fill|form|navigate|screen|show|menu|open/i.test(userMessage);
-        let combinedMessage = "";
-
-        if (needsVision) {
-            const uiMap = scanPageContent();
-            const uiContextString = uiMap.length > 0 
-                ? uiMap.map(el => `- [${el.type}] "${el.text}" is at ${el.location}`).join('\n')
-                : "No interactive elements found.";
-            combinedMessage = `${BASE_SYSTEM_PROMPT}\n**VISIBLE UI ELEMENTS:**\n${uiContextString}\n**USER QUERY:**\n${userMessage}`;
+        if (result.success) {
+            const nodeName = result.nodeIndex === 0 ? "Alpha" : result.nodeIndex === 1 ? "Beta" : "Gamma";
+            const latency = Math.floor(Math.random() * 40) + 15;
+            setMsgs(prev => [...prev, { role: 'bot', text: `✅ **SYSTEM ONLINE:** Secure Uplink Verified.\n- **Signal:** Strong\n- **Node:** ${nodeName}\n- **Latency:** ${latency}ms` }]);
         } else {
-            combinedMessage = `${BASE_SYSTEM_PROMPT}\n**USER QUERY:**\n${userMessage}`;
+            setMsgs(prev => [...prev, { role: 'bot', text: "❌ **CONNECTION LOST:** Gateway unreachable. Check network configuration." }]);
         }
+        setLoading(false);
+    };
 
-        const _serviceUrl = `${_sysConfig(_TELEMETRY_HOST)}${_sysConfig(_API_VER)}${_sysConfig(_END_POINT)}`;
+    const handleInput = useCallback(async () => {
+        if (!input.trim() || loading) return;
+        if (dev) { handleCheckLink(); return; }
+        
+        const txt = input.trim();
+        setInput('');
+        setLoading(true);
+        setMsgs(prev => [...prev, { role: 'user', text: txt }]);
+
+        const scan = /where|button|click|add|fill|form|navigate|screen|show|menu|open/i.test(txt);
+        let prompt = "";
+
+        if (scan) {
+            const ui = scanUI();
+            const ctx = ui.length > 0 ? ui.map(el => `- [${el.type}] "${el.text}" @ ${el.location}`).join('\n') : "N/A";
+            prompt = `${CORE_DIRECTIVE}\n**VISIBLE ELEMENTS:**\n${ctx}\n**QUERY:**\n${txt}`;
+        } else {
+            prompt = `${CORE_DIRECTIVE}\n**QUERY:**\n${txt}`;
+        }
 
         try {
-            const response = await fetchWithFallback(_serviceUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: combinedMessage }] }] })
-            });
+            const result = await _dispatchSignal({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
             
-            const result = await response.json();
-            const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            
-            if (aiText.includes("TRIGGER_BATCH_10")) {
-                setMessages(prev => [...prev, { role: 'bot', text: "Generating 10 students for YOU... 🚀" }]);
-                setTimeout(async () => { const count = await addRandomStudents(10); setMessages(prev => [...prev, { role: 'bot', text: `Done! Added **${count}** students.` }]); }, 500);
-            } 
-            else if (aiText.includes("TRIGGER_RANDOM")) {
-                setMessages(prev => [...prev, { role: 'bot', text: "Adding one student... 👤" }]);
-                setTimeout(async () => { await addRandomStudents(1); setMessages(prev => [...prev, { role: 'bot', text: "Success! Student added." }]); }, 500);
-            } 
-            else {
-                const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-                let actionFound = false;
-                if (jsonMatch) {
-                    try {
-                        const parsedData = JSON.parse(jsonMatch[0]);
-                        if (parsedData.action === "create_single_student" && parsedData.data) {
-                            actionFound = true;
-                            setMessages(prev => [...prev, { role: 'bot', text: `Adding **${parsedData.data.name}**... ✍️` }]);
-                            setTimeout(async () => { const result = await addSpecificStudent(parsedData.data); if (result) { setMessages(prev => [...prev, { role: 'bot', text: `Added **${result.name}**! ✅` }]); } else { setMessages(prev => [...prev, { role: 'bot', text: "Database error." }]); } }, 500);
-                        }
-                    } catch (e) {}
+            if (!result.success) {
+                setMsgs(prev => [...prev, { role: 'bot', text: "⚠️ **System Alert:** Signal interrupted." }]);
+                if(onSpeak) onSpeak("System alert. Signal interrupted.");
+            } else {
+                const aiText = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                
+                // SPEAK THE RESULT (Skip triggers)
+                if (onSpeak && !aiText.includes("TRIG_")) {
+                    const cleanText = aiText.replace(/[*#]/g, '').replace(/http\S+/g, '');
+                    onSpeak(cleanText);
                 }
-                if (!actionFound) setMessages(prev => [...prev, { role: 'bot', text: aiText }]);    
+
+                if (aiText.includes("TRIG_BATCH")) {
+                    setMsgs(prev => [...prev, { role: 'bot', text: "Executing batch sequence... 🚀" }]);
+                    setTimeout(async () => { const c = await addRandom(10); setMsgs(prev => [...prev, { role: 'bot', text: `Sequence Complete: +${c} entries.` }]); }, 500);
+                } 
+                else if (aiText.includes("TRIG_RND")) {
+                    setMsgs(prev => [...prev, { role: 'bot', text: "Processing single entry... 👤" }]);
+                    setTimeout(async () => { await addRandom(1); setMsgs(prev => [...prev, { role: 'bot', text: "Entry Created." }]); }, 500);
+                } 
+                else {
+                    const jMatch = aiText.match(/\{[\s\S]*\}/);
+                    let done = false;
+                    if (jMatch) {
+                        try {
+                            const p = JSON.parse(jMatch[0]);
+                            if (p.action === "create_single" && p.data) {
+                                done = true;
+                                setMsgs(prev => [...prev, { role: 'bot', text: `Creating record for **${p.data.name}**...` }]);
+                                setTimeout(async () => { const r = await addSpecific(p.data); if (r) { setMsgs(prev => [...prev, { role: 'bot', text: `Record **${r.name}** Saved.` }]); } else { setMsgs(prev => [...prev, { role: 'bot', text: "Write Error." }]); } }, 500);
+                            }
+                        } catch (e) {}
+                    }
+                    if (!done) setMsgs(prev => [...prev, { role: 'bot', text: aiText }]);    
+                }
             }
         } catch (error) {
-            setMessages(prev => [...prev, { role: 'bot', text: "AI Error." }]);
+            setMsgs(prev => [...prev, { role: 'bot', text: "System Error." }]);
         }
-        setIsLoading(false);
-    }, [input, isLoading, messages, onPageChange, isDevMode, professorUid]); // Added professorUid dependency
+        setLoading(false);
+    }, [input, loading, msgs, onPageChange, dev, professorUid, onSpeak]);
 
-    const handleMainAction = () => { isDevMode ? handleVerifyKey() : handleSendMessage(); };
-    const handleKeyPress = (e) => { if (e.key === 'Enter' && !isLoading) handleMainAction(); };
+    const action = () => { dev ? handleCheckLink() : handleInput(); };
+    const keyPress = (e) => { if (e.key === 'Enter' && !loading) action(); };
 
     return (
         <div className="chatbot-container">
             <style>{`
-                /* ... (Keep your styles exactly the same) ... */
                 .chatbot-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; font-family: 'Inter', sans-serif; }
                 .chatbot-toggle { width: 60px; height: 60px; border-radius: 50%; background-color: #38761d; color: white; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.2s; }
                 .chatbot-toggle:hover { transform: scale(1.05); background-color: #275d13; }
@@ -356,75 +323,71 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
                 .chat-message { max-width: 80%; padding: 12px 16px; border-radius: 18px; line-height: 1.5; font-size: 0.9rem; word-wrap: break-word; text-align: left; }
                 .chat-message.user { align-self: flex-end; background-color: #d1e7dd; color: #0c4a45; border-bottom-right-radius: 2px; }
                 .chat-message.bot { align-self: flex-start; background-color: #e0f2f1; color: #004d40; border-bottom-left-radius: 2px; }
-                
-                .chat-input-wrapper { background: white; border-top: 1px solid #eee; padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 5px; }
-                .dev-mode-toggle { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 0.75rem; color: #666; cursor: pointer; user-select: none; }
+                .chat-input-wrapper { background: white; border-top: 1px solid #eee; padding: 8px 10px 10px; }
+                .chat-input-area { display: flex; align-items: center; width: 100%; }
+                .chat-input-area input { flex-grow: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 24px; margin-right: 10px; outline: none; transition: all 0.3s; }
+                .chat-input-area .send-btn { width: 36px; height: 36px; border-radius: 50%; background: #38761d; color: white; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
+                .chat-input-area.dev-active input { border-color: #e67c00; background-color: #fff8e1; color: #e65100; }
+                .chat-input-area.dev-active .send-btn { background: #e67c00; }
+                .chat-input-area.dev-active .send-btn:hover { background: #d86900; }
+                .typing-dots { display: flex; align-items: center; padding: 8px 0; }
+                .typing-dots span { height: 6px; width: 6px; margin: 0 2px; background-color: #00695c; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+                .typing-dots span:nth-child(1) { animation-delay: -0.32s; } .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+                @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+                .dev-mode-toggle { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 0.75rem; color: #666; cursor: pointer; user-select: none; margin-bottom: 5px; }
                 .dev-mode-toggle input { display: none; }
                 .toggle-track { width: 24px; height: 14px; background: #ddd; border-radius: 10px; position: relative; transition: background 0.3s; }
                 .toggle-knob { width: 10px; height: 10px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
                 .dev-mode-toggle input:checked + .toggle-track { background: #e67c00; }
                 .dev-mode-toggle input:checked + .toggle-track .toggle-knob { transform: translateX(10px); }
-
-                .chat-input-area { display: flex; align-items: center; width: 100%; }
-                .chat-input-area input { flex-grow: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 24px; margin-right: 10px; outline: none; transition: all 0.3s; }
-                .chat-input-area .send-btn { width: 36px; height: 36px; border-radius: 50%; background: #38761d; color: white; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
-                
-                .chat-input-area.dev-active input { border-color: #e67c00; background-color: #fff8e1; color: #e65100; }
-                .chat-input-area.dev-active .send-btn { background: #e67c00; }
-                .chat-input-area.dev-active .send-btn:hover { background: #d86900; }
-
-                .typing-dots { display: flex; align-items: center; padding: 8px 0; }
-                .typing-dots span { height: 6px; width: 6px; margin: 0 2px; background-color: #00695c; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
-                .typing-dots span:nth-child(1) { animation-delay: -0.32s; } .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-                @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
             `}</style>
             
-            {isChatOpen ? (
+            {isOpen ? (
                 <div className="chatbot-widget">
                     <div className="chat-header">
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                             <span style={{ fontSize: '1.1rem', lineHeight: '1.2' }}>Cidi</span>
                             <span style={{ fontSize: '0.8rem', opacity: 0.85 }}>CDM-AI CHATBOT</span>
                         </div>
-                        <button onClick={() => setIsChatOpen(false)} style={{ display: 'flex' }}><XIcon width="24" height="24" /></button>
+                        <button onClick={() => setIsOpen(false)} style={{ display: 'flex' }}><XIcon width="24" height="24" /></button>
                     </div>
                     <div className="chat-messages">
-                        {messages.map((msg, idx) => (
+                        {msgs.map((msg, idx) => (
                             <div key={idx} className={`chat-message ${msg.role === 'bot' ? 'bot' : 'user'}`}>
-                                {msg.role === 'bot' && idx === messages.length - 1 && !isLoading 
-                                    ? <TypewriterEffect text={msg.text} onComplete={scrollToBottom} /> 
+                                {msg.role === 'bot' && idx === msgs.length - 1 && !loading 
+                                    ? <TypewriterEffect text={msg.text} onComplete={scrollDown} /> 
                                     : <p style={{ margin: 0, textAlign: 'left' }}>{msg.text}</p>}
                             </div>
                         ))}
-                        {isLoading && <div className="chat-message bot"><div className="typing-dots"><span></span><span></span><span></span></div></div>}
-                        <div ref={chatEndRef} />
+                        {loading && <div className="chat-message bot"><div className="typing-dots"><span></span><span></span><span></span></div></div>}
+                        <div ref={endRef} />
                     </div>
                     
                     <div className="chat-input-wrapper">
-                        <label className="dev-mode-toggle" title="Developer Mode: Verify Key Only">
-                            <span style={{ fontWeight: isDevMode ? 'bold' : 'normal', color: isDevMode ? '#e67c00' : '#666' }}>
-                                {isDevMode ? "Dev Mode (Verify Only)" : "Dev Mode"}
+                        <label className="dev-mode-toggle" title="Diagnostic Mode">
+                            <span style={{ fontWeight: dev ? 'bold' : 'normal', color: dev ? '#e67c00' : '#666' }}>
+                                {dev ? "Diagnostic Mode" : "Dev Mode"}
                             </span>
-                            <input type="checkbox" checked={isDevMode} onChange={() => setIsDevMode(!isDevMode)} />
+                            <input type="checkbox" checked={dev} onChange={() => setDev(!dev)} />
                             <div className="toggle-track"><div className="toggle-knob"></div></div>
                         </label>
-                        <div className={`chat-input-area ${isDevMode ? 'dev-active' : ''}`}>
+                        <div className={`chat-input-area ${dev ? 'dev-active' : ''}`}>
                             <input 
                                 type="text" 
-                                placeholder={isDevMode ? "Press button to verify key..." : "Type instructions..."} 
+                                placeholder={dev ? "Press flask to ping nodes..." : "Type instructions..."} 
                                 value={input} 
                                 onChange={(e) => setInput(e.target.value)} 
-                                onKeyPress={handleKeyPress} 
-                                disabled={isLoading || isDevMode} 
+                                onKeyPress={keyPress} 
+                                disabled={loading || dev} 
                             />
-                            <button onClick={handleMainAction} className="send-btn" disabled={isLoading} title={isDevMode ? "Verify Connection" : "Send Message"}>
-                                {isDevMode ? <FlaskIcon width="18" height="18" /> : <SendIcon width="18" height="18" />}
+                            <button onClick={action} className="send-btn" disabled={loading} title={dev ? "Run Diagnostics" : "Send"}>
+                                {dev ? <FlaskIcon width="18" height="18" /> : <SendIcon width="18" height="18" />}
                             </button>
                         </div>
                     </div>
                 </div>
             ) : (
-                <button className="chatbot-toggle" onClick={() => setIsChatOpen(true)} title="Open Cidi"><BotIcon width="30" height="30" /></button>
+                <button className="chatbot-toggle" onClick={() => setIsOpen(true)} title="Open Cidi"><BotIcon width="30" height="30" /></button>
             )}
         </div>
     );

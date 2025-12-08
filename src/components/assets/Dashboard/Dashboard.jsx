@@ -19,7 +19,6 @@ const BookOpen = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" 
 const ArrowRight = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>);
 const Menu = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>);
 
-// --- UPDATED GREETING SECTION WITH STATUS INDICATOR ---
 const GreetingSection = ({ profileData, isOnline }) => {
     const [text, setText] = useState('');
     const userName = profileData?.displayName || profileData?.fullName || 'Professor';
@@ -126,7 +125,7 @@ const MetricCard = ({ data }) => (
     </div>
 );
 
-// --- UPDATED DASHBOARD COMPONENT ---
+// --- DASHBOARD COMPONENT ---
 const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggleVoice, sections = [], students = [], isOnline }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDesktopMode, setIsDesktopMode] = useState(window.innerWidth >= 1024);
@@ -189,6 +188,8 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#FDFDF5', fontFamily: 'Inter, sans-serif' }}>
             <Sidebar onLogout={onLogout} onPageChange={onPageChange} currentPage="dashboard" onWidthChange={handleWidthChange} />
             <main style={{ flexGrow: 1, padding: isDesktopMode ? '1.5rem 2rem' : '1rem', marginLeft: isDesktopMode ? sidebarWidth : 0, transition: 'margin-left 0.3s ease-in-out', width: `calc(100% - ${isDesktopMode ? sidebarWidth : 0}px)` }}>
+                
+                {/* HEADER - SMART MIC INTEGRATED HERE */}
                 <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', backgroundColor: 'transparent' }}>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', width: isDesktopMode ? 'auto' : '100%', flexGrow: 1, maxWidth: '600px' }}>
                         {!isDesktopMode && (<button style={{ background: 'none', border: 'none', padding: '0', cursor: 'pointer' }}><Menu style={{ width: '1.5rem', height: '1.5rem' }} /></button>)}
@@ -197,14 +198,27 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
                             <input type="text" placeholder="Search Class.." style={{ paddingLeft: '3rem', paddingRight: '1rem', paddingTop: '0.75rem', paddingBottom: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '8px', width: '100%', fontSize: '0.95rem', backgroundColor: '#FFFFFF', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', outline: 'none' }} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
                     </div>
+                    
                     <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                        <button onClick={onToggleVoice} className={isVoiceActive ? 'mic-btn-active' : ''} style={{ background: 'none', border: 'none', padding: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }} title={isVoiceActive ? "Listening..." : "Activate Voice Command"}><Mic style={{ width: '1.5rem', height: '1.5rem', color: isVoiceActive ? 'inherit' : '#4B5563' }} /></button>
+                        {/* SMART MIC BUTTON */}
+                        <button 
+                            onClick={onToggleVoice} 
+                            className={isVoiceActive ? 'mic-btn-active' : ''} 
+                            style={{ 
+                                background: 'none', border: 'none', padding: '5px', cursor: 'pointer', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                transition: 'all 0.3s ease' 
+                            }} 
+                            title={isVoiceActive ? "Listening..." : "Activate Voice Command"}
+                        >
+                            <Mic style={{ width: '1.5rem', height: '1.5rem', color: isVoiceActive ? 'inherit' : '#4B5563' }} />
+                        </button>
+
                         <Bell style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} />
                         <HelpIcon style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} title="Help & Support" />
                     </div>
                 </header>
 
-                {/* --- PASSING isOnline TO GREETING SECTION --- */}
                 <GreetingSection profileData={profileData} isOnline={isOnline} />
 
                 <div className="section-container">

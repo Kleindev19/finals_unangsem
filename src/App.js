@@ -1,6 +1,6 @@
 // src/App.js
 
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect, useRef } from 'react'; 
 import Dashboard from './components/assets/Dashboard/Dashboard.jsx'; 
 import LoginSignUp from './components/assets/Loginsignin/LoginSignUp.jsx';
 import ReportsLayout from './components/assets/Reports/ReportsLayout.jsx'; 
@@ -30,7 +30,21 @@ function App() {
     const [isLoadingAuth, setIsLoadingAuth] = useState(true);
     const [profileData, setProfileData] = useState(null); 
     const [isDataReady, setIsDataReady] = useState(false); 
+    
+    // --- GLOBAL VOICE STATE ---
     const [isVoiceActive, setIsVoiceActive] = useState(false);
+    // NEW: Ref to access the VoiceControl's speak function
+    const voiceRef = useRef(null);
+
+    const handleGlobalSpeak = (text) => {
+        if (voiceRef.current) {
+            voiceRef.current.speak(text);
+        }
+    };
+
+    const toggleVoice = () => {
+        setIsVoiceActive(prev => !prev);
+    };
 
     // --- NEW: OFFLINE/SYNC STATUS ---
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -88,13 +102,11 @@ function App() {
         });
         
         setAtRiskStudents(atRiskMap);
-        // console.log('✅ At-Risk Students by Section:', atRiskMap);
     }, [attendanceData, students, currentSectionContext]);
 
     // Handler for attendance updates from MultiPageGS
     const handleAttendanceUpdate = (updatedData) => {
         setAttendanceData(updatedData);
-        console.log('📊 Attendance Updated:', updatedData);
     };
     // ========== END ATTENDANCE TRACKING ==========
 
@@ -118,10 +130,8 @@ function App() {
     const triggerAutoSync = async () => {
         setIsSyncing(true);
         try {
-            console.log("⚡ Internet Restored! Syncing to Cloud...");
             const res = await fetch('http://localhost:5000/api/sync-now', { method: 'POST' });
             const data = await res.json();
-            console.log("✅ Sync Result:", data);
         } catch (e) {
             console.error("Sync Failed:", e);
         } finally {
@@ -137,9 +147,7 @@ function App() {
             if (!response.ok) throw new Error('Failed to fetch students');
             const data = await response.json();
             setStudents(data);
-            console.log('✅ Students loaded from database:', data.length);
         } catch (error) {
-            console.error('Error fetching students:', error);
             // Don't clear students on error if we are offline, keep current state if possible
             if (isOnline) setStudents([]); 
         }
@@ -219,18 +227,14 @@ function App() {
         if (page === 'multipage-gradesheet' && params.sectionData) {
             const sectionName = params.sectionData.name || params.sectionData.code || params.sectionData.title || params.title || 'Unknown Section';
             setCurrentSectionContext(sectionName);
-            console.log('📍 Section Context Set:', sectionName);
         }
         
         // When navigating to v-reports, save which section to display
         if (page === 'v-reports' && params.section) {
             setSelectedSection(params.section);
-            console.log('📂 Selected Section:', params.section);
         }
     };
     
-    const toggleVoice = (status) => setIsVoiceActive(status);
-
     // --- REFRESH STUDENTS FUNCTION (for ViewStuds to call after adding) ---
     const refreshStudents = () => {
         if (profileData?.id || profileData?.uid) {
@@ -245,11 +249,12 @@ function App() {
             onLogout: handleLogout,
             onPageChange: handlePageChange,
             profileData: profileData,
-            isVoiceActive: isVoiceActive,
-            onToggleVoice: () => toggleVoice(!isVoiceActive),
             sections: sections,
             students: students,
-            isOnline: isOnline
+            isOnline: isOnline,
+            // VOICE PROPS
+            isVoiceActive: isVoiceActive,
+            onToggleVoice: toggleVoice
         };
 
         const profileProps = {
@@ -257,7 +262,21 @@ function App() {
             onPageChange: handlePageChange,
             profileData: profileData,
             sections: sections, 
-            onUpdateSections: setSections 
+            onUpdateSections: setSections,
+            // VOICE PROPS
+            isVoiceActive: isVoiceActive,
+            onToggleVoice: toggleVoice
+        };
+
+        const reportsProps = {
+            onLogout: handleLogout, 
+            onPageChange: handlePageChange, 
+            sections: sections, 
+            students: students,
+            attendanceData: attendanceData,
+            // VOICE PROPS
+            isVoiceActive: isVoiceActive,
+            onToggleVoice: toggleVoice
         };
 
         switch (currentPage) {
@@ -284,20 +303,14 @@ function App() {
                 />;
             
             case 'reports': 
-                return <ReportsLayout 
-                    onLogout={handleLogout} 
-                    onPageChange={handlePageChange} 
-                    sections={sections} 
-                    students={students}
-                    attendanceData={attendanceData} // PASSING ATTENDANCE FOR RISK CALC
-                />;
+                return <ReportsLayout {...reportsProps} />;
             
             case 'v-reports': 
                 return <VReports 
                     onLogout={handleLogout} 
                     onPageChange={handlePageChange} 
-                    atRiskStudents={pageParams.atRiskStudents || []} // Updated to use pageParams based on Report click
-                    allStudents={pageParams.allStudents || []} // Pass all students if needed
+                    atRiskStudents={pageParams.atRiskStudents || []} 
+                    allStudents={pageParams.allStudents || []} 
                     sectionData={pageParams.sectionData}
                 />;
             
@@ -324,12 +337,21 @@ function App() {
                     {isSyncing && "☁️ Internet Restored - Syncing to Cloud..."}
                  </div>
 
-                 <VoiceControl isVoiceActive={isVoiceActive} onToggle={toggleVoice} onPageChange={handlePageChange} />
+                 {/* LOGIC OVERLAY (Pass ref here) */}
+                 <VoiceControl 
+                    ref={voiceRef} 
+                    isVoiceActive={isVoiceActive} 
+                    onToggle={setIsVoiceActive} 
+                    onPageChange={handlePageChange} 
+                 />
+                 
                  {renderMainContent()}
                  
+                 {/* CHATBOT (Pass handleGlobalSpeak) */}
                  <CdmChatbot 
                     onPageChange={handlePageChange} 
                     professorUid={profileData?.id || profileData?.uid} 
+                    onSpeak={handleGlobalSpeak}
                  /> 
              </div>
         );

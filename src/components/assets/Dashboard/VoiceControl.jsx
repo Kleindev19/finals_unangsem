@@ -1,8 +1,8 @@
 // src/components/assets/Dashboard/VoiceControl.jsx
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
-const VoiceControl = ({ isVoiceActive, onToggle, onPageChange }) => {
+const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref) => {
     const [isFading, setIsFading] = useState(false);
     const [voiceText, setVoiceText] = useState('');
     const [voiceStatus, setVoiceStatus] = useState('');
@@ -15,6 +15,35 @@ const VoiceControl = ({ isVoiceActive, onToggle, onPageChange }) => {
     // Keep refs synced with state/props
     useEffect(() => { isVoiceActiveRef.current = isVoiceActive; }, [isVoiceActive]);
     useEffect(() => { isFadingRef.current = isFading; }, [isFading]);
+
+    // --- NEW: TEXT TO SPEECH FUNCTION ---
+    const speak = (text) => {
+        if (!window.speechSynthesis) return;
+        
+        // Cancel previous speech to prevent overlap
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Try to pick a decent English voice
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => 
+            v.name.includes("Google US English") || 
+            v.name.includes("Samantha") || 
+            v.name.includes("Microsoft Zira")
+        );
+        
+        if (preferredVoice) utterance.voice = preferredVoice;
+        utterance.rate = 1.0; 
+        utterance.pitch = 1.0;
+        
+        window.speechSynthesis.speak(utterance);
+    };
+
+    // Expose the 'speak' function to the parent (App.js)
+    useImperativeHandle(ref, () => ({
+        speak: (text) => speak(text)
+    }));
 
     // --- 1. INITIALIZE INSTANCE (Run Once) ---
     useEffect(() => {
@@ -92,6 +121,7 @@ const VoiceControl = ({ isVoiceActive, onToggle, onPageChange }) => {
         if (isVoiceActive) {
             try {
                 recognition.start();
+                speak("Voice system online.");
             } catch (e) {
                 console.log("Mic already active...");
             }
@@ -100,26 +130,32 @@ const VoiceControl = ({ isVoiceActive, onToggle, onPageChange }) => {
             setVoiceText('');
             setVoiceStatus('');
             setIsFading(false);
+            window.speechSynthesis.cancel(); // Stop talking if turned off
         }
     }, [isVoiceActive]);
 
     // --- COMMAND LOGIC ---
     const processVoiceCommand = (command) => {
         let taskExecuted = false;
+        let response = "";
 
         // --- COMMANDS ---
         if (command.includes('dashboard') || command.includes('home')) {
             onPageChange('dashboard');
             taskExecuted = true;
+            response = "Opening Dashboard.";
         } else if (command.includes('report') || command.includes('grades')) {
             onPageChange('reports');
             taskExecuted = true;
+            response = "Opening Reports.";
         } else if (command.includes('profile') || command.includes('settings')) {
             onPageChange('profile');
             taskExecuted = true;
+            response = "Opening Profile.";
         } else if (command.includes('student') || command.includes('list')) {
             onPageChange('view-studs');
             taskExecuted = true;
+            response = "Viewing Students.";
         } else if (command.includes('scroll down')) {
             window.scrollBy({ top: 500, behavior: 'smooth' });
             taskExecuted = true;
@@ -128,11 +164,13 @@ const VoiceControl = ({ isVoiceActive, onToggle, onPageChange }) => {
             taskExecuted = true;
         } else if (command.includes('stop') || command.includes('exit')) {
             handleStopSequence("Deactivating...");
+            speak("Goodbye.");
             return;
         }
 
         if (taskExecuted) {
             setVoiceStatus('Task Done');
+            if(response) speak(response);
             // Trigger the long wait sequence
             handleStopSequence(null, true);
         }
@@ -215,6 +253,6 @@ const VoiceControl = ({ isVoiceActive, onToggle, onPageChange }) => {
             <style>{`@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
         </>
     );
-};
+});
 
 export default VoiceControl;

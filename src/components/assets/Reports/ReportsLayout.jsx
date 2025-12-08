@@ -5,7 +5,8 @@ import PropTypes from 'prop-types';
 import Reports from './Reports.jsx'; 
 import { Sidebar, SIDEBAR_DEFAULT_WIDTH } from '../Dashboard/Sidebar.jsx'; 
 
-// --- FIXED: Defined Icons Locally instead of importing from Sidebar ---
+// --- ICONS ---
+const Mic = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>);
 const Menu = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>);
 const Search = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
 const HelpIcon = (props) => (
@@ -17,7 +18,7 @@ const HelpIcon = (props) => (
 );
 const Bell = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.36 17a3 3 0 1 0 3.28 0"/></svg>);
 
-const ReportsLayout = ({ onLogout, onPageChange, sections = [], students = [], attendanceData = {} }) => {
+const ReportsLayout = ({ onLogout, onPageChange, sections = [], students = [], attendanceData = {}, isVoiceActive, onToggleVoice }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDesktopMode, setIsDesktopMode] = useState(window.innerWidth >= 1024);
     const [sidebarWidth, setSidebarWidth] = useState(isDesktopMode ? SIDEBAR_DEFAULT_WIDTH : 0);
@@ -102,6 +103,20 @@ const ReportsLayout = ({ onLogout, onPageChange, sections = [], students = [], a
                     </div>
 
                     <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                        {/* SMART MIC BUTTON */}
+                        <button 
+                            onClick={onToggleVoice} 
+                            className={isVoiceActive ? 'mic-btn-active' : ''} 
+                            style={{ 
+                                background: 'none', border: 'none', padding: '5px', cursor: 'pointer', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                transition: 'all 0.3s ease' 
+                            }} 
+                            title={isVoiceActive ? "Listening..." : "Activate Voice Command"}
+                        >
+                            <Mic style={{ width: '1.5rem', height: '1.5rem', color: isVoiceActive ? 'inherit' : '#4B5563' }} />
+                        </button>
+                        
                         <Bell style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} />
                         <HelpIcon style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} />
                     </div>
