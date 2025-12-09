@@ -1,10 +1,5 @@
 {
   "APP_VERSION": "0.1.0",
-<<<<<<< HEAD
-  "BUILD_HASH": "23b8da2",
-  "BUILD_DATE": "12/9/2025 3:17:20 PM"
-=======
-  "BUILD_HASH": "cc1e666",
-  "BUILD_DATE": "12/9/2025 2:06:51 PM"
->>>>>>> b41e823c98cbb134046fcadf2a5c7b6194f33368
+  "BUILD_HASH": "e84dd88",
+  "BUILD_DATE": "12/9/2025 5:10:03 PM"
 }

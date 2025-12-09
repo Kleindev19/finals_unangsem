@@ -10,9 +10,14 @@ const CheckCircle = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/sv
 const Clock = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>);
 const AlertCircle = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>);
 const TrendingUp = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>);
+const Calendar = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
 
-// --- MOCK DATABASE FOR DETAILED STATS ---
-// This allows us to show different graphs based on the ID passed
+// --- MOCK ATTENDANCE DETAIL (P: Present, L: Late, A: Absent) ---
+const MOCK_ATTENDANCE_CAROL = ['P', 'P', 'L', 'P', 'A', 'P', 'P', 'L', 'A', 'P', 'P', 'A', 'P', 'P', 'P', 'A', 'P', 'L', 'A', 'P'];
+const MOCK_ATTENDANCE_DAVID = ['P', 'P', 'P', 'P', 'P', 'P', 'L', 'P', 'P', 'P', 'A', 'P', 'P', 'L', 'P', 'P', 'P', 'P', 'A', 'P'];
+
+
+// --- MOCK DATABASE FOR DETAILED STATS (Expanded) ---
 const MOCK_DETAILS_DB = {
     'CS2023001': { // Carol (High Risk)
         completed: 24,
@@ -21,7 +26,7 @@ const MOCK_DETAILS_DB = {
         overall: 68,
         riskLabel: "High Risk",
         riskColor: "#EF4444",
-        radar: { attendance: 60, engagement: 50, quiz: 60, assignment: 50, pattern: 80 },
+        radar: { attendance: 60, engagement: 50, quiz: 60, assignment: 50, pattern: 80 }, 
         barData: [
             { label: 'Q1', val: 45, color: '#EF4444' },
             { label: 'Q2', val: 60, color: '#F59E0B' },
@@ -30,7 +35,8 @@ const MOCK_DETAILS_DB = {
             { label: 'Act1', val: 70, color: '#10B981' },
             { label: 'Act2', val: 30, color: '#EF4444' },
         ],
-        notes: "Student is struggling with basic syntax. Attendance dropped significantly. Recommend remedial classes."
+        notes: "Student is struggling with basic syntax. Attendance dropped significantly. Recommend remedial classes.",
+        attendanceRecord: MOCK_ATTENDANCE_CAROL
     },
     'CS2023002': { // David (Medium Risk)
         completed: 30,
@@ -39,7 +45,7 @@ const MOCK_DETAILS_DB = {
         overall: 78,
         riskLabel: "Medium Risk",
         riskColor: "#F59E0B",
-        radar: { attendance: 85, engagement: 70, quiz: 75, assignment: 80, pattern: 60 },
+        radar: { attendance: 85, engagement: 70, quiz: 75, assignment: 80, pattern: 60 }, 
         barData: [
             { label: 'Q1', val: 75, color: '#10B981' },
             { label: 'Q2', val: 78, color: '#10B981' },
@@ -48,7 +54,8 @@ const MOCK_DETAILS_DB = {
             { label: 'Act1', val: 85, color: '#10B981' },
             { label: 'Act2', val: 60, color: '#F59E0B' },
         ],
-        notes: "David is doing well in practicals but falling behind on theory quizzes. Needs to review Chapter 4."
+        notes: "David is doing well in practicals but falling behind on theory quizzes. Needs to review Chapter 4.",
+        attendanceRecord: MOCK_ATTENDANCE_DAVID
     }
 };
 
@@ -57,13 +64,13 @@ const DEFAULT_STATS = { // Fallback if no ID matches
     riskLabel: "Unknown", riskColor: "#9CA3AF",
     radar: { attendance: 50, engagement: 50, quiz: 50, assignment: 50, pattern: 50 },
     barData: [],
-    notes: "No data available."
+    notes: "No data available.",
+    attendanceRecord: [] 
 };
 
 
 // --- CUSTOM RADAR CHART COMPONENT (SVG) ---
 const RadarChart = ({ stats }) => {
-    // Helper to calculate points on a pentagon
     const getPoint = (value, index, total) => {
         const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
         const radius = (value / 100) * 80; 
@@ -79,7 +86,7 @@ const RadarChart = ({ stats }) => {
         getPoint(stats.assignment, 3, 5),
         getPoint(stats.pattern, 4, 5),
     ].join(" ");
-
+    
     return (
         <div className="vrd-radar-wrapper">
             <svg viewBox="0 0 200 200" className="vrd-radar-svg">
@@ -107,6 +114,7 @@ const RadarChart = ({ stats }) => {
     );
 };
 
+
 // --- BAR CHART COMPONENT ---
 const PerformanceChart = ({ data }) => {
     return (
@@ -124,19 +132,154 @@ const PerformanceChart = ({ data }) => {
     );
 };
 
+
+// --- MODIFIED COMPONENT: Attendance Report (Now Interactive) ---
+const AttendanceReport = ({ record, attendancePercentage, studentId, onUpdateStatus }) => {
+    const totalClasses = record.length;
+    const absences = record.filter(s => s === 'A').length;
+    const lates = record.filter(s => s === 'L').length;
+    const present = totalClasses - absences - lates;
+
+    // Function to handle cell click and attempt status update
+    const handleCellClick = (index, currentStatus) => {
+        // Simple cycle: P -> A -> L -> P
+        let nextStatus;
+        if (currentStatus === 'P') {
+            nextStatus = 'A'; 
+        } else if (currentStatus === 'A') {
+            nextStatus = 'L';
+        } else if (currentStatus === 'L') {
+            nextStatus = 'P'; 
+        } else {
+            nextStatus = 'P';
+        }
+        
+        // Pass the update attempt to the parent component/handler
+        onUpdateStatus(studentId, index, nextStatus);
+    };
+
+    const getCellClass = (status) => {
+        switch (status) {
+            case 'P': return 'atd-present';
+            case 'L': return 'atd-late';
+            case 'A': return 'atd-absent';
+            default: return 'atd-unknown';
+        }
+    };
+    
+    return (
+        <div className="vrd-attendance-card">
+            <div className="vrd-attendance-summary">
+                <div className="vrd-summary-item">
+                    <span className="vrd-summary-value" style={{color: attendancePercentage < 70 ? '#EF4444' : '#10B981'}}>{attendancePercentage}%</span>
+                    <span className="vrd-summary-label">Overall Attendance</span>
+                </div>
+                <div className="vrd-summary-item">
+                    <span className="vrd-summary-value vrd-green-text">{present}</span>
+                    <span className="vrd-summary-label">Present Count</span>
+                </div>
+                <div className="vrd-summary-item">
+                    <span className="vrd-summary-value vrd-yellow-text">{lates}</span>
+                    <span className="vrd-summary-label">Late Count</span>
+                </div>
+                <div className="vrd-summary-item">
+                    <span className="vrd-summary-value vrd-red-text">{absences}</span>
+                    <span className="vrd-summary-label">Absent Count</span>
+                </div>
+            </div>
+
+            <div className="vrd-attendance-grid-container">
+                <h4 className="vrd-grid-title">
+                    <Calendar size={16} /> Daily Attendance Pattern 
+                    <span style={{marginLeft: '10px', color: '#DC2626', fontSize: '0.8em'}}>
+                        (Click to change status - 'P' is Permanent)
+                    </span>
+                </h4>
+                <div className="vrd-attendance-grid">
+                    {record.map((status, index) => (
+                        <div 
+                            key={index} 
+                            className={`vrd-attendance-cell ${getCellClass(status)}`} 
+                            title={`Day ${index + 1}: ${status === 'P' ? 'Present' : status === 'L' ? 'Late' : 'Absent'}. Click to update.`}
+                            onClick={() => handleCellClick(index, status)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            {status}
+                            <span className="vrd-cell-day">D{index + 1}</span>
+                        </div>
+                    ))}
+                    {record.length === 0 && (
+                        <p style={{gridColumn: '1 / -1', textAlign: 'center', color: '#9CA3AF'}}>No attendance record found.</p>
+                    )}
+                </div>
+            </div>
+            
+        </div>
+    );
+};
+// ---------------------------------------------
+
+
 const ViewRD = ({ onLogout, onPageChange, studentData }) => {
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
 
-    // 1. Get Basic Info from Props (passed from VReports)
-    // Fallback data in case page is loaded directly without navigation
     const student = studentData || { 
         id: 'CS2023001', 
         name: 'Carol Martinez', 
         avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d' 
     };
 
-    // 2. Get Detailed Mock Stats based on ID
-    const details = MOCK_DETAILS_DB[student.id] || DEFAULT_STATS;
+    // 1. Get Initial Mock Stats
+    const initialDetails = MOCK_DETAILS_DB[student.id] || DEFAULT_STATS;
+    
+    // 2. Initialize local state for the attendance record
+    const [localAttendanceRecord, setLocalAttendanceRecord] = useState(initialDetails.attendanceRecord);
+    
+    // Create a dynamic details object that uses the local state
+    const details = { ...initialDetails, attendanceRecord: localAttendanceRecord };
+    
+    // --- **PERMANENCE LOGIC HERE** ---
+    const handleStatusChange = (studentId, dayIndex, newStatus) => {
+        setLocalAttendanceRecord(prevRecord => {
+            const currentStatus = prevRecord[dayIndex];
+            
+            // CORE REQUIREMENT: Block change if current status is 'P' and new status is different
+            if (currentStatus === 'P' && newStatus !== 'P') {
+                console.warn(`[PERMANENCE CHECK] Blocked attempt to change Day ${dayIndex + 1} from Present (P) to ${newStatus}.`);
+                return prevRecord; // Return the old state, preventing the update.
+            }
+
+            // Otherwise, update the record
+            const newRecord = [...prevRecord];
+            newRecord[dayIndex] = newStatus;
+            
+            console.log(`[UPDATE] Day ${dayIndex + 1} successfully changed to ${newStatus}.`);
+            return newRecord;
+        });
+    };
+    // ---------------------------------
+    
+    // 3. Calculate dynamic stats using local state
+    const totalClasses = details.attendanceRecord.length;
+    
+    // We count Present (P) as 100% and Late (L) as 50% for the percentage calculation
+    const attendanceScore = details.attendanceRecord.reduce((score, status) => {
+        if (status === 'P') return score + 1;
+        if (status === 'L') return score + 0.5; 
+        return score;
+    }, 0);
+    
+    // Calculate final percentage (using 0 if totalClasses is 0 to prevent division by zero)
+    const calculatedAttendancePercentage = totalClasses > 0 
+        ? Math.round((attendanceScore / totalClasses) * 100)
+        : 0;
+
+    // Clone and update the radar object to use the calculated percentage
+    const dynamicRadar = { 
+        ...details.radar, 
+        attendance: calculatedAttendancePercentage // Overrides the static mock value
+    };
+
 
     return (
         <div className="vrd-layout">
@@ -149,14 +292,13 @@ const ViewRD = ({ onLogout, onPageChange, studentData }) => {
 
             <main className="vrd-main" style={{ marginLeft: sidebarWidth }}>
                 
-                {/* Header */}
+                {/* Header & Profile Section */}
                 <div className="vrd-top-nav">
                     <button className="vrd-back-link" onClick={() => onPageChange('v-reports')}>
                         <ArrowLeft size={18} /> Back to List
                     </button>
                 </div>
 
-                {/* Profile Section (Dynamic Name/Avatar) */}
                 <div className="vrd-profile-header">
                     <img src={student.avatar} alt="Student" className="vrd-header-avatar" style={{borderColor: details.riskColor}} />
                     <div>
@@ -167,85 +309,78 @@ const ViewRD = ({ onLogout, onPageChange, studentData }) => {
                     </div>
                 </div>
 
-                {/* Metrics Grid (Dynamic Values) */}
+                {/* Metrics Grid (omitted for brevity) */}
                 <div className="vrd-metrics-grid">
                     <div className="vrd-metric-card">
-                        <div className="vrd-metric-top">
-                            <div className="vrd-icon-sq green"><CheckCircle size={20}/></div>
-                            <span className="vrd-metric-num">{details.completed}</span>
+                        <CheckCircle size={24} className="vrd-metric-icon vrd-green-icon"/>
+                        <div>
+                            <span className="vrd-metric-val">{details.completed}</span>
+                            <span className="vrd-metric-lbl">Completed Tasks</span>
                         </div>
-                        <p className="vrd-metric-title">Completed Tasks</p>
-                        <span className="vrd-metric-sub">(AI Class Avg: 22)</span>
                     </div>
-
                     <div className="vrd-metric-card">
-                        <div className="vrd-metric-top">
-                            <div className="vrd-icon-sq yellow"><Clock size={20}/></div>
-                            <span className="vrd-metric-num">{details.pending}</span>
+                        <Clock size={24} className="vrd-metric-icon vrd-yellow-icon"/>
+                        <div>
+                            <span className="vrd-metric-val">{details.pending}</span>
+                            <span className="vrd-metric-lbl">Pending Tasks</span>
                         </div>
-                        <p className="vrd-metric-title">Pending Tasks</p>
-                        <span className="vrd-metric-sub">(AI Predicted Delay: High)</span>
                     </div>
-
                     <div className="vrd-metric-card">
-                        <div className="vrd-metric-top">
-                            <div className="vrd-icon-sq red"><AlertCircle size={20}/></div>
-                            <span className="vrd-metric-num">{details.missing}</span>
+                        <AlertCircle size={24} className="vrd-metric-icon vrd-red-icon"/>
+                        <div>
+                            <span className="vrd-metric-val">{details.missing}</span>
+                            <span className="vrd-metric-lbl">Missing Tasks</span>
                         </div>
-                        <p className="vrd-metric-title">Missing Tasks</p>
-                        <span className="vrd-metric-sub">(AI Critical Flag)</span>
                     </div>
-
                     <div className="vrd-metric-card">
-                        <div className="vrd-metric-top">
-                            <div className="vrd-icon-sq purple"><TrendingUp size={20}/></div>
-                            <span className="vrd-metric-num">{details.overall}%</span>
+                        <TrendingUp size={24} className="vrd-metric-icon vrd-blue-icon"/>
+                        <div>
+                            <span className="vrd-metric-val">{details.overall}%</span>
+                            <span className="vrd-metric-lbl">Overall Course Grade</span>
                         </div>
-                        <p className="vrd-metric-title">Overall Progress</p>
-                        <span className="vrd-metric-sub">(AI Predicted Final: {details.overall - 3}%)</span>
                     </div>
                 </div>
 
-                {/* Progress Bar Section (Visuals only, static for now or can use details.overall) */}
+
+                {/* --- DETAILED ATTENDANCE SECTION --- */}
+                <div className="vrd-section-card" style={{ marginBottom: '1.5rem' }}>
+                    <h3 className="vrd-sect-title">Detailed Attendance Report</h3>
+                    <p className="vrd-sect-sub">Class attendance record (P: Present, L: Late (50%), A: Absent (0%))</p>
+                    <AttendanceReport 
+                        record={localAttendanceRecord} 
+                        attendancePercentage={calculatedAttendancePercentage} 
+                        studentId={student.id}
+                        onUpdateStatus={handleStatusChange} // Passes the state updater with permanence logic
+                    />
+                </div>
+                {/* -------------------------------------- */}
+
+                {/* Progress Bar Section */}
                 <div className="vrd-section-card">
                     <h3 className="vrd-sect-title">Student Performance by Subject</h3>
                     <p className="vrd-sect-sub">Current semester courses</p>
                     
                     <div className="vrd-course-row">
                         <div className="vrd-course-info">
-                            <h4>CS101</h4>
-                            <p>Introduction to Programming</p>
-                            <span className="vrd-prof-name">Prof. Michael Chen</span>
+                            <h4>CS 301 - Data Structures and Algorithms</h4>
+                            <p>Instructor: Dr. Jane Doe | Schedule: T/Th 10:00 AM</p>
                         </div>
-                        <div className="vrd-progress-container">
-                            <div className="vrd-prog-labels">
-                                <span>Progress: {details.overall + 5}%</span>
-                                <span className="vrd-badge-green">{details.overall + 5}%</span>
-                            </div>
-                            <div className="vrd-prog-track">
-                                <div className="vrd-prog-fill" style={{width: `${details.overall + 5}%`}}></div>
-                                <div className="vrd-ai-marker" style={{left: '58%'}}>
-                                    <div className="vrd-ai-tooltip">AI Forecast 58%</div>
-                                </div>
-                            </div>
+                        <div className="vrd-course-stats">
+                            <span>GPA: <strong>3.2</strong></span>
+                            <span className="vrd-divider">|</span>
+                            <span>Attendance: <strong>{calculatedAttendancePercentage}%</strong></span> 
                         </div>
                     </div>
                     
                     <div className="vrd-stat-footer">
-                        <span>Assignment Avg: <strong>{details.barData[4]?.val || 80}%</strong></span>
-                        <span className="vrd-divider">|</span>
-                        <span>Quiz Avg: <strong>{details.barData[2]?.val || 75}%</strong></span>
-                        <span className="vrd-divider">|</span>
-                        <span>Midterm: <strong>{details.barData[3]?.val || 60}%</strong></span>
-                        <span className="vrd-divider">|</span>
-                        <span>Attendance: <strong>{details.radar.attendance}%</strong></span>
+                        <PerformanceChart data={details.barData} />
                     </div>
                 </div>
 
-                {/* Bottom Grid: Dynamic Charts */}
+                {/* Bottom Grid: Dynamic Charts and Notes */}
                 <div className="vrd-bottom-grid">
                     
-                    {/* Left: AI Radar */}
+                    {/* Left: AI Radar - Passed dynamicRadar */}
                     <div className="vrd-section-card vrd-ai-panel">
                         <div className="vrd-panel-header">
                             <h3>AI Analytics Engine</h3>
@@ -253,30 +388,22 @@ const ViewRD = ({ onLogout, onPageChange, studentData }) => {
                         <div className="vrd-ai-content">
                             <div className="vrd-radar-container">
                                 <h4>AI Risk Factor Analysis</h4>
-                                <RadarChart stats={details.radar} />
+                                <RadarChart stats={dynamicRadar} /> 
                             </div>
-                            <div className="vrd-ai-recos">
-                                <h4>AI Intervention Recommendations</h4>
-                                <ul>
-                                    <li>Schedule 1:1 with student (High Priority)</li>
-                                    <li>Enroll in Friday remedial class (AI Suggestion)</li>
-                                    <li>Review basic syntax modules (AI Targeted Content)</li>
-                                </ul>
+                            <div className="vrd-ai-recommendations">
+                                <h4>Intervention Notes</h4>
+                                <blockquote style={{borderColor: details.riskColor}}>
+                                    {details.notes}
+                                </blockquote>
                             </div>
                         </div>
                     </div>
 
-                    {/* Right: Bar Chart & Notes */}
+                    {/* Right: Bar Chart & Notes (omitted for brevity) */}
                     <div className="vrd-section-card">
-                        <h3 className="vrd-sect-title">Performance Overview</h3>
+                        <h3 className="vrd-sect-title">Latest Submission Scores</h3>
+                        <p className="vrd-sect-sub">Performance in the last six graded activities</p>
                         <PerformanceChart data={details.barData} />
-                        
-                        <div className="vrd-instructor-notes">
-                            <h4>Instructor Notes</h4>
-                            <p>{details.notes}</p>
-                        </div>
-
-                        <button className="vrd-warning-btn">Send Warning Email</button>
                     </div>
                 </div>
 

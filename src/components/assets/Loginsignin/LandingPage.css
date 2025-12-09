@@ -1,16 +1,14 @@
 /* src/components/assets/Loginsignin/LandingPage.css */
 
-/* General Reset */
+/* General Reset and Base */
 .landing-container {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #333;
     overflow-x: hidden;
     background-color: #f9fafb;
     width: 100%;
-    position: absolute; /* Ensures it covers the screen if parent has padding */
-    top: 0;
-    left: 0;
-    z-index: 50; /* Higher than login wrapper if needed */
+    position: relative;
+    z-index: 50;
 }
 
 /* ANIMATION CLASSES */
@@ -33,7 +31,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+    clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%); 
 }
 
 .navbar {
@@ -107,49 +105,188 @@
     background-color: #f59e0b;
 }
 
-/* FEATURES CAROUSEL */
-.features-section {
-    padding: 5rem 1rem;
+/* --- NEW ABOUT US SECTIONS --- */
+
+.content-section {
+    padding: 5rem 5%;
+    max-width: 1200px;
+    margin: 0 auto;
     text-align: center;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    color: #1b4d3e;
+    margin-bottom: 2rem;
+    display: inline-block;
+    border-bottom: 3px solid #a7f3d0;
+    padding-bottom: 5px;
+}
+
+.text-block {
+    text-align: left;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.text-block p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+/* 1. About System Section */
+.about-system-section {
+    background-color: white;
+    padding-top: 3rem; 
+}
+
+.system-goals {
+    background-color: #ecfdf5; 
+    border-left: 5px solid #1b4d3e;
+    padding: 25px;
+    margin-top: 25px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.system-goals h4 {
+    color: #064e3b;
+    margin-top: 0;
+    font-size: 1.2rem;
+}
+
+.system-goals ul {
+    list-style-type: none;
+    padding: 0;
+    columns: 2; 
+    text-align: left;
+}
+
+.system-goals li {
+    padding: 5px 0;
+    font-size: 1rem;
+    position: relative;
+    padding-left: 25px;
+}
+
+.system-goals li::before {
+    content: '✅';
+    position: absolute;
+    left: 0;
+    font-size: 1.1rem;
+}
+
+/* 2. Mission & Vision Section */
+.mission-vision-section {
+    display: flex;
+    gap: 30px;
+    text-align: left;
+    padding: 4rem 5%;
+    background-color: #f0fdf4; 
+}
+
+.mission-box, .vision-box {
+    flex: 1;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s;
+}
+
+.mission-box:hover, .vision-box:hover {
+    transform: translateY(-5px);
+}
+
+.vision-box {
+    background-color: #1b4d3e; 
+    color: rgb(255, 255, 255);
+}
+
+.mission-box {
+    background-color: white;
+    border: 1px solid #d1fae5;
+    color: #333;
+}
+
+.mission-box h3, .vision-box h3 {
+    font-size: 1.7rem;
+    margin-top: 0;
+}
+
+/* 3. Developers Section */
+.developers-section {
     background-color: white;
 }
 
-.features-section h2 {
-    font-size: 2.5rem;
-    color: #1b4d3e;
-    margin-bottom: 3rem;
+.developer-intro {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    color: #000000;
 }
 
-.carousel-window {
+/* --- DEVELOPER CAROUSEL STYLES --- */
+
+.developer-carousel-window {
     width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
+    max-width: 400px; /* Set a specific width for the carousel */
+    margin: 30px auto 0;
     overflow: hidden;
     position: relative;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    background-color: #f0fdf4; 
 }
 
-.carousel-track {
+.developer-carousel-track {
     display: flex;
     transition: transform 0.5s ease-in-out;
 }
 
-.carousel-card {
-    min-width: 100%;
-    background: #1b4d3e;
-    color: white;
+.developer-carousel-card {
+    min-width: 100%; 
     padding: 3rem 2rem;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    background: #1b4d3e; 
+    color: white;
+    text-align: center;
 }
 
-.carousel-card h3 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
+/* --- NEW STYLE FOR PROFILE PICTURES --- */
+.dev-profile-picture {
+    width: 130px; 
+    height: 130px;
+    border-radius: 50%; /* Make it a circle */
+    object-fit: cover; /* Ensures image covers the area */
+    border: 5px solid #a7f3d0; /* Highlight border */
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Stronger shadow on the picture */
+}
+/* ------------------------------------- */
+
+.developer-carousel-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: #a7f3d0;
+}
+.developer-carousel-card p {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.dev-role-carousel {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin: 0;
+    padding: 5px 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
 }
 
 .carousel-indicators {
@@ -173,43 +310,45 @@
     transform: scale(1.2);
 }
 
-/* INFO SECTION */
-.info-section {
-    padding: 5rem 5%;
-    background-color: #ecfdf5;
-    text-align: center;
-    margin-top: 3rem;
-}
-
-.info-text h2 {
-    font-size: 2.5rem;
-    color: #064e3b;
-}
-
-.info-text p {
-    font-size: 1.1rem;
-    color: #065f46;
-    max-width: 700px;
-    margin: 1rem auto;
+/* 4. Why We Built This */
+.why-built-section {
+    background-color: white;
 }
 
 /* FOOTER */
 footer {
-    padding: 2rem;
-    background-color: #1f2937;
-    color: #9ca3af;
     text-align: center;
+    padding: 1.5rem 5%;
+    background-color: #1b4d3e;
+    color: #a7f3d0;
+    font-size: 0.9rem;
 }
 
-/* MOBILE */
+
+/* --- MOBILE STYLES --- */
 @media (max-width: 768px) {
+    .hero-section {
+        height: 70vh;
+    }
+
     .hero-content h1 {
         font-size: 2.5rem;
     }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .mission-vision-section {
+        flex-direction: column;
+        gap: 20px;
+    }
     
-    .hero-section {
-        height: auto;
-        padding-bottom: 5rem;
-        clip-path: none;
+    .system-goals ul {
+        columns: 1; /* Stack goals vertically on small screens */
+    }
+    
+    .developer-carousel-window {
+        max-width: 90%; 
     }
 }

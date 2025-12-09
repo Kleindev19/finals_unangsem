@@ -8,19 +8,19 @@ const schoolData = {
     "Institute of Computing Studies": {
         "1st Year": {
             "Bachelor of Science in Information Technology": ["BSIT 1A", "BSIT 1B","BSIT 1C","BSIT 1D"],
-            "Bachelor of Science in Computer Science": ["BSCS 1A","BSCS 1B","BSCS 1C","BSCS 1D"],
+            "Bachelor of Science in Computer Engineering": ["BSCPE 1A","BSCPE 1B","BSCPE 1C","BSCPE 1D"],
         },
         "2nd Year": {
             "Bachelor of Science in Information Technology": ["BSIT 2A", "BSIT 2B","BSIT 2C","BSIT 2D"],
-            "Bachelor of Science in Computer Science": ["BSCS 2A","BSCS 2B","BSCS 2C","BSCS 2D"],
+            "Bachelor of Science in Computer Engineering": ["BSCPE 2A","BSCPE 2B","BSCPE 2C","BSCPE 2D"],
         },
          "3rd Year": {
             "Bachelor of Science in Information Technology": ["BSIT 3A", "BSIT 3B","BSIT 3C","BSIT 3D"],
-            "Bachelor of Science in Computer Science": ["BSCS 3A","BSCS 3B","BSCS 3C","BSCS 3D"],
+            "Bachelor of Science in Computer Engineering": ["BSCPE 3A","BSCPE 3B","BSCPE 3C","BSCPE 3D"],
         },
          "4th Year": {
             "Bachelor of Science in Information Technology": ["BSIT 4A", "BSIT 4B","BSIT 4C","BSIT 4D"],
-            "Bachelor of Science in Computer Science": ["BSCS 4A","BSCS 4B","BSCS 4C","BSCS 4D"],
+            "Bachelor of Science in Computer Engineering": ["BSCPE 4A","BSCPE 4B","BSCPE 4C","BSCPE 4D"],
         },
     },
     
