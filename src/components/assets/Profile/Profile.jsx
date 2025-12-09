@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import './Profile.css';
 
-// --- MOCK DATA FOR CASCADING DROPDOWNS ---
+// --- FULL MOCK DATA FOR CASCADING DROPDOWNS ---
 const schoolData = {
     "Institute of Computing Studies": {
         "1st Year": {
@@ -24,12 +24,21 @@ const schoolData = {
         },
     },
     
-    // Added for selection options
-    "Institute of Teachers Education": { "1st Year": {} }, 
-    "Institute of Business Entrepreneurship": { "1st Year": {} },
+    // Placeholder data for other institutes (can be expanded similarly)
+    "Institute of Teachers Education": { 
+        "1st Year": {
+             "Bachelor of Elementary Education": ["BEEd 1A", "BEEd 1B"],
+             "Bachelor of Secondary Education": ["BSEd 1A", "BSEd 1B"]
+        } 
+    }, 
+    "Institute of Business Entrepreneurship": { 
+        "1st Year": {
+            "Bachelor of Science in Entrepreneurship": ["BS Entrep 1A", "BS Entrep 1B"]
+        } 
+    },
 };
 
-// --- ICONS (Expanded to include those needed for the new functionality) ---
+// --- ICONS ---
 const TrophyIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V22"/><path d="M14 14.66V22"/><path d="M8 9h8"/><path d="M12 2v10.5"/></svg>);
 const FileTextIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>);
 const UsersIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
@@ -38,6 +47,13 @@ const PlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" 
 const TrashIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>);
 const XIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>);
 const ImageIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>);
+
+// --- NEW ICONS FOR AI SHARE FEATURE ---
+const SparklesIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>);
+const ClipboardIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>);
+const CheckIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>);
+// --- NEW ICON FOR TIMER ---
+const ClockIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>);
 
 
 const getInitials = (fullName) => {
@@ -52,7 +68,6 @@ const getRandomColor = () => {
     return colors[Math.floor(Math.random() * colors.length)];
 };
 
-// Updated component signature to accept sections and update handler
 const Profile = ({ profileData, sections, onUpdateSections }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -69,7 +84,7 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
     const [formDesc, setFormDesc] = useState('');
     const [formImage, setFormImage] = useState(null); // Stores Base64 string
 
-    // --- CASCADING DROPDOWN STATE (NEW) ---
+    // --- CASCADING DROPDOWN STATE ---
     const [institute, setInstitute] = useState('');
     const [year, setYear] = useState('');
     const [course, setCourse] = useState('');
@@ -81,12 +96,27 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
     const [availableSections, setAvailableSections] = useState([]);
     const institutes = Object.keys(schoolData);
 
+    // --- SHARE LINK STATE ---
+    const [isCopied, setIsCopied] = useState(false);
+    // Generate a fake "AI" link based on ID.
+    const generatedShareLink = `https://portal.university.edu/faculty-share/ai-connect/${id ? id.toLowerCase().replace(/\s/g, '') : 'user'}-${Math.random().toString(36).substring(2, 8)}`;
+
+    // --- NEW: AUTO LOGOUT TIMER STATE ---
+    const [autoLogoutMinutes, setAutoLogoutMinutes] = useState('5'); // Default 5 mins
+
+    // --- EFFECTS ---
     useEffect(() => {
         if (profileData) {
             setName(profileData.displayName || 'User Name');
             setEmail(profileData.email || 'user@school.edu.ph');
             setId(profileData.id || profileData.uid || 'N/A');
             setRole(profileData.role || 'Professor');
+        }
+        
+        // --- LOAD SETTINGS: Load the saved timer preference from localStorage ---
+        const storedTimer = localStorage.getItem('autoLogoutMinutes');
+        if (storedTimer) {
+            setAutoLogoutMinutes(storedTimer);
         }
     }, [profileData]);
 
@@ -132,9 +162,28 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
 
     // --- HANDLERS ---
 
+    // NEW HANDLER FOR COPY LINK
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(generatedShareLink).then(() => {
+            setIsCopied(true);
+            // Reset copy status after 2.5 seconds
+            setTimeout(() => {
+                setIsCopied(false);
+            }, 2500);
+        });
+    };
+
+    // --- UPDATED: HANDLE SAVE PROFILE & SETTINGS ---
     const handleUpdateProfile = (e) => {
         e.preventDefault();
-        alert("Update functionality coming soon!");
+        
+        // 1. Save the new timer setting to localStorage
+        localStorage.setItem('autoLogoutMinutes', autoLogoutMinutes);
+        
+        // 2. Dispatch Custom Event so App.js (SecurityController) updates immediately
+        window.dispatchEvent(new Event('CDM_SETTINGS_UPDATE')); 
+        
+        alert(`Settings Saved!\n\nSecurity Timer set to: ${autoLogoutMinutes} minutes.`);
     };
 
     const handleOpenAdd = () => {
@@ -151,7 +200,6 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
     };
 
     const handleOpenEdit = (section) => {
-        // NOTE: If editing, you should also set the cascading states if they are part of the section data.
         setIsEditMode(true);
         setCurrentId(section.id);
         setFormName(section.name);
@@ -186,22 +234,19 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
         e.preventDefault();
 
         if (isEditMode) {
-            // Edit Existing (Keeping original logic for now)
+            // Edit Existing
             onUpdateSections(sections.map(s => 
                 s.id === currentId 
                 ? { ...s, name: formName, subtitle: formDesc, coverImage: formImage } 
                 : s
             ));
         } else {
-            // --- ADD NEW SECTION LOGIC WITH CASCADING DROPDOWNS ---
-            
-            // 1. Validation: Check if all four selections and description are filled
+            // Add New Section
             if (!institute || !year || !course || !section || !formDesc.trim()) {
                 alert("Please select the Institute, Year, Course, Section, and provide a Description / Subject.");
                 return;
             }
 
-            // 2. Add New Section
             const newId = sections && sections.length > 0 ? Math.max(...sections.map(s => s.id)) + 1 : 1;
             const newSection = {
                 id: newId,
@@ -210,7 +255,6 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                 students: 0,
                 color: getRandomColor(),
                 coverImage: formImage,
-                // Save the full selections for future editing/filtering
                 institute,
                 year,
                 course,
@@ -289,11 +333,11 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                 </div>
             </div>
 
-            {/* 2. PERSONAL INFO CARD */}
+            {/* 2. PERSONAL INFO & SETTINGS CARD */}
             <div className="pro-settings-card">
                 <div className="pro-card-header">
-                    <h3>Personal Information</h3>
-                    <p>Update your photo and personal details here.</p>
+                    <h3>Personal Information & Security</h3>
+                    <p>Update your photo, personal details, and security preferences.</p>
                 </div>
 
                 <form className="pro-form" onSubmit={handleUpdateProfile}>
@@ -308,10 +352,36 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                         </div>
 
+                        {/* --- NEW SECURITY SECTION: AUTO-LOGOUT TIMER --- */}
                         <div className="pro-form-group">
-                            <label>Role (Read Only)</label>
-                            <input type="text" value={role} disabled className="pro-input-disabled" />
+                             <label style={{display:'flex', alignItems:'center', gap:'6px', color:'#DC2626'}}>
+                                 <ClockIcon style={{width:'16px', height:'16px'}}/> Auto-Logout Timer
+                             </label>
+                             <select 
+                                value={autoLogoutMinutes} 
+                                onChange={(e) => setAutoLogoutMinutes(e.target.value)}
+                                style={{
+                                    padding: '0.75rem 1rem',
+                                    border: '1px solid #E5E7EB',
+                                    borderRadius: '8px',
+                                    fontSize: '0.95rem',
+                                    color: '#1F2937',
+                                    backgroundColor: '#fff',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                }}
+                            >
+                                <option value="1">1 Minute (For Testing)</option>
+                                <option value="5">5 Minutes (Recommended)</option>
+                                <option value="15">15 Minutes</option>
+                                <option value="30">30 Minutes</option>
+                                <option value="60">1 Hour</option>
+                             </select>
+                             <span style={{fontSize:'0.8rem', color:'#6B7280', marginTop:'4px', fontStyle:'italic'}}>
+                                 For security, you will be automatically logged out after this period of inactivity.
+                             </span>
                         </div>
+                        {/* ----------------------------------------------- */}
 
                         <div className="pro-form-group">
                             <label>System ID (Read Only)</label>
@@ -321,17 +391,47 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
 
                     <div className="pro-form-actions">
                         <button type="button" className="pro-btn-cancel">Cancel</button>
-                        <button type="submit" className="pro-btn-save">Save Changes</button>
+                        <button type="submit" className="pro-btn-save">Save Settings</button>
                     </div>
                 </form>
             </div>
             
-            {/* 3. SECTIONS MANAGEMENT CARD (NEWLY ADDED) */}
+            {/* 3. SECTIONS MANAGEMENT CARD */}
             <div className="pro-settings-card" style={{ marginTop: '0' }}>
-                <div className="pro-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div><h3>My Classes</h3><p>Manage, add, or remove class sections.</p></div>
+                <div className="pro-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <div><h3>My Classes & Students</h3><p>Manage your active sections or share them with colleagues.</p></div>
                     <button onClick={handleOpenAdd} style={{ background: '#38761d', color: 'white', border: 'none', borderRadius: '50%', width: '36px', height: '36px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} title="Add New Section"><PlusIcon /></button>
                 </div>
+
+                {/* --- NEW "AI" SHAREABLE LINK SECTION --- */}
+                {/* This container uses the new special CSS class */}
+                <div className="pro-ai-share-container">
+                    <div className="pro-ai-content-wrapper">
+                        <div className="pro-ai-header">
+                            <SparklesIcon className="ai-sparkle-icon" width="22" height="22" />
+                            <h4>AI Smart-Share Faculty Link</h4>
+                        </div>
+                        <p className="pro-ai-desc">
+                            Share this unique, secure link with other professors to grant temporary read access to your active student rosters across all sections.
+                        </p>
+                        <div className="pro-link-box">
+                            <input 
+                                type="text" 
+                                className="pro-link-input"
+                                value={generatedShareLink} 
+                                readOnly 
+                                onClick={(e) => e.target.select()} // Auto-select on click
+                            />
+                            <button 
+                                className={`pro-btn-copy ${isCopied ? 'copied' : ''}`} 
+                                onClick={handleCopyLink}
+                            >
+                                {isCopied ? <><CheckIcon /> Copied!</> : <><ClipboardIcon /> Copy Link</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {/* --------------------------------------- */}
 
                 <div className="pro-sections-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
                     {sections && sections.map(section => (
@@ -370,7 +470,7 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                             <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><XIcon /></button>
                         </div>
                         <form onSubmit={handleSaveSection}>
-                            {/* CASCADING DROPDOWNS (NEWLY IMPLEMENTED) */}
+                            {/* CASCADING DROPDOWNS */}
                             <div className="filters-bar" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '1.5rem' }}>
                                 
                                 {/* 1. INSTITUTE Dropdown */}

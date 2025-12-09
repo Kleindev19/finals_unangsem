@@ -1,6 +1,8 @@
 // src/App.js
 
 import React, { useState, useEffect, useRef } from 'react'; 
+
+// --- PAGE IMPORTS ---
 import Dashboard from './components/assets/Dashboard/Dashboard.jsx'; 
 import LoginSignUp from './components/assets/Loginsignin/LoginSignUp.jsx';
 import ReportsLayout from './components/assets/Reports/ReportsLayout.jsx'; 
@@ -11,52 +13,42 @@ import MultiPageGS from './components/assets/Dashboard/MultiPageGS.jsx';
 import VReports from './components/assets/Reports/VReports.jsx'; 
 import ViewRD from './components/assets/Reports/ViewRD.jsx'; 
 import LoadingAnimation from './components/assets/LoadingAnimation/LoadingAnimation.jsx'; 
-import './App.css';
-
-// --- UPDATED IMPORT PATH FOR LANDING PAGE ---
 import LandingPage from './components/assets/Loginsignin/LandingPage.jsx'; 
 
+// --- FEATURE IMPORTS ---
 import VoiceControl from './components/assets/Dashboard/VoiceControl.jsx';
+import CdmChatbot from './Apps.jsx'; 
 import { auth } from './apiService'; 
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'; 
-import CdmChatbot from './Apps.jsx'; 
+import './App.css';
+
+// --- NEW SECURITY IMPORT ---
+import { useSecurityController } from './security/SecurityController';
 
 import meta from './meta.json'; 
-const { APP_VERSION, BUILD_HASH, BUILD_DATE } = meta; 
+const { APP_VERSION } = meta; 
 
 function App() {
+    // --- AUTH & NAVIGATION STATE ---
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    
-    // --- STATE: Controls if Landing Page is visible ---
     const [showLanding, setShowLanding] = useState(true);
-
     const [currentPage, setCurrentPage] = useState('dashboard'); 
     const [pageParams, setPageParams] = useState({}); 
-
     const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+    
+    // --- DATA STATE ---
     const [profileData, setProfileData] = useState(null); 
     const [isDataReady, setIsDataReady] = useState(false); 
     
-    // --- GLOBAL VOICE STATE ---
+    // --- VOICE CONTROL STATE ---
     const [isVoiceActive, setIsVoiceActive] = useState(false);
-    // Ref to access the VoiceControl's speak function
     const voiceRef = useRef(null);
 
-    const handleGlobalSpeak = (text) => {
-        if (voiceRef.current) {
-            voiceRef.current.speak(text);
-        }
-    };
-
-    const toggleVoice = () => {
-        setIsVoiceActive(prev => !prev);
-    };
-
-    // --- OFFLINE/SYNC STATUS ---
+    // --- SYSTEM STATUS STATE ---
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [isSyncing, setIsSyncing] = useState(false);
 
-    // --- LOAD FROM LOCALSTORAGE ON MOUNT ---
+    // --- HELPER: LOAD FROM LOCAL STORAGE ---
     const loadFromStorage = (key, defaultValue) => {
         try {
             const stored = localStorage.getItem(key);
@@ -67,19 +59,47 @@ function App() {
         }
     };
 
-    // --- SHARED SECTIONS STATE (LOAD FROM LOCALSTORAGE) ---
+    // --- CORE DATA (Sections & Students) ---
     const [sections, setSections] = useState(() => loadFromStorage('cdm_sections', []));
-    
-    // --- SHARED STUDENTS STATE (LOAD FROM DATABASE) ---
     const [students, setStudents] = useState([]);
 
-    // ========== ATTENDANCE TRACKING FOR AT-RISK STUDENTS ==========
+    // --- ATTENDANCE & RISK TRACKING ---
     const [attendanceData, setAttendanceData] = useState({});
     const [atRiskStudents, setAtRiskStudents] = useState({});
     const [currentSectionContext, setCurrentSectionContext] = useState('');
     const [selectedSection, setSelectedSection] = useState('CS 101 - A');
 
-    // Track at-risk students whenever attendance changes
+    // -------------------------------------------------------------------------
+    // 1. SECURITY & LOGOUT LOGIC
+    // -------------------------------------------------------------------------
+
+    // Manual Logout Handler
+    const handleLogout = async () => {
+        try { 
+            await firebaseSignOut(auth); 
+            // Clear all sensitive state
+            setProfileData(null); 
+            setIsLoggedIn(false); 
+            setIsVoiceActive(false);
+            setStudents([]);
+            // Redirect to Landing Page
+            setShowLanding(true); 
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
+
+    // **ACTIVATE SECURITY CONTROLLER**
+    // This hook runs in the background, detects idle mouse/keyboard activity,
+    // checks the user's timer setting, and triggers handleLogout if time expires.
+    useSecurityController(isLoggedIn, handleLogout);
+
+
+    // -------------------------------------------------------------------------
+    // 2. DATA SYNC & ATTENDANCE LOGIC
+    // -------------------------------------------------------------------------
+
+    // Track At-Risk Students based on Attendance Data
     useEffect(() => {
         const atRiskMap = {};
         
@@ -87,9 +107,8 @@ function App() {
             const studentAttendance = attendanceData[student.id] || [];
             const absences = studentAttendance.filter(status => status === 'A').length;
             
-            // If student has 3 or more absences, mark as at-risk
+            // Threshold: 3 absences = At Risk
             if (absences >= 3) {
-                // Use currentSectionContext to group students by the section they're viewing
                 const section = currentSectionContext || 'CS 101 - A';
                 
                 if (!atRiskMap[section]) {
@@ -99,7 +118,7 @@ function App() {
                     id: student.id,
                     name: student.name,
                     avatar: `https://ui-avatars.com/api/?name=${student.name}&background=random`,
-                    gpa: 2.1,
+                    gpa: 2.1, // Placeholder for future GPA logic
                     attendance: Math.round((1 - absences/20) * 100) + '%',
                     missed: absences,
                     status: absences >= 10 ? 'High Risk' : 'Medium Risk'
@@ -110,17 +129,16 @@ function App() {
         setAtRiskStudents(atRiskMap);
     }, [attendanceData, students, currentSectionContext]);
 
-    // Handler for attendance updates from MultiPageGS
+    // Updates attendance state when changed in MultiPageGS or ViewStuds
     const handleAttendanceUpdate = (updatedData) => {
         setAttendanceData(updatedData);
     };
-    // ========== END ATTENDANCE TRACKING ==========
 
-    // --- AUTO-SYNC LISTENER ---
+    // Auto-Sync Listener (Online/Offline Toggle)
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
-            triggerAutoSync(); // Call sync when internet returns
+            triggerAutoSync(); // Sync immediately when connection returns
         };
         const handleOffline = () => setIsOnline(false);
 
@@ -141,12 +159,12 @@ function App() {
         } catch (e) {
             console.error("Sync Failed:", e);
         } finally {
-            // Keep the blue badge for 2 seconds so the user sees it
+            // Keep the "Syncing" badge visible for 2s for UX
             setTimeout(() => setIsSyncing(false), 2000);
         }
     };
 
-    // --- FETCH STUDENTS FROM DATABASE ---
+    // Fetch Students from MongoDB
     const fetchStudentsFromDB = async (professorUid) => {
         try {
             const response = await fetch(`http://localhost:5000/api/students/${professorUid}/All Sections`);
@@ -154,12 +172,12 @@ function App() {
             const data = await response.json();
             setStudents(data);
         } catch (error) {
-            // Don't clear students on error if we are offline, keep current state if possible
+            // If offline, keep existing state to prevent UI clearing
             if (isOnline) setStudents([]); 
         }
     };
 
-    // --- SAVE SECTIONS TO LOCALSTORAGE WHENEVER IT CHANGES ---
+    // Persist Sections to LocalStorage
     useEffect(() => {
         try {
             localStorage.setItem('cdm_sections', JSON.stringify(sections));
@@ -168,13 +186,21 @@ function App() {
         }
     }, [sections]);
 
+
+    // -------------------------------------------------------------------------
+    // 3. AUTHENTICATION & INITIALIZATION
+    // -------------------------------------------------------------------------
+
     useEffect(() => {
         console.log(`%c Progress Tracker v${APP_VERSION} `, 'background: #38761d; color: white; padding: 4px; border-radius: 4px;');
+        
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
                 setIsLoggedIn(true);
-                setShowLanding(false); // Hide landing page if user is already logged in
+                setShowLanding(false); // Skip Landing Page if session exists
+                
                 try {
+                    // Sync User Profile with Backend
                     const response = await fetch('http://localhost:5000/api/user-sync', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -185,16 +211,24 @@ function App() {
                             photoURL: firebaseUser.photoURL || "" 
                         })
                     });
+                    
                     if (!response.ok) throw new Error('Failed to sync');
                     const mongoProfile = await response.json();
-                    setProfileData({ ...mongoProfile, id: mongoProfile.uid, displayName: mongoProfile.displayName, photoURL: mongoProfile.photoURL || firebaseUser.photoURL });
                     
-                    // --- FETCH STUDENTS FROM DATABASE ---
+                    setProfileData({ 
+                        ...mongoProfile, 
+                        id: mongoProfile.uid, 
+                        displayName: mongoProfile.displayName, 
+                        photoURL: mongoProfile.photoURL || firebaseUser.photoURL 
+                    });
+                    
+                    // Load Students
                     await fetchStudentsFromDB(firebaseUser.uid);
                     
-                    setIsDataReady(true);
+                    setIsDataReady(true); // Triggers LoadingAnimation exit
                 } catch (error) {
                     console.warn("⚠️ Offline Mode Detected during login.");
+                    // Set minimal profile data for offline use
                     setProfileData({ 
                         displayName: firebaseUser.displayName || 'Professor', 
                         email: firebaseUser.email, 
@@ -205,6 +239,7 @@ function App() {
                     setIsDataReady(true);
                 }
             } else {
+                // Not Logged In
                 setIsLoggedIn(false); 
                 setProfileData(null); 
                 setIsDataReady(false); 
@@ -214,138 +249,128 @@ function App() {
         return () => unsubscribe();
     }, []);
 
-    const handleLogout = async () => {
-        try { 
-            await firebaseSignOut(auth); 
-            setProfileData(null); 
-            setIsLoggedIn(false); 
-            setIsVoiceActive(false);
-            setStudents([]);
-            setShowLanding(true); // Return to Landing Page on Logout
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-    };
+
+    // -------------------------------------------------------------------------
+    // 4. NAVIGATION & PROPS
+    // -------------------------------------------------------------------------
 
     const handlePageChange = (page, params = {}) => { 
         setCurrentPage(page); 
         setPageParams(params);
         
-        // When navigating to multipage-gradesheet, save the section context
+        // Context saving for MultiPage Gradesheet
         if (page === 'multipage-gradesheet' && params.sectionData) {
             const sectionName = params.sectionData.name || params.sectionData.code || params.sectionData.title || params.title || 'Unknown Section';
             setCurrentSectionContext(sectionName);
         }
         
-        // When navigating to v-reports, save which section to display
+        // Context saving for Virtual Reports
         if (page === 'v-reports' && params.section) {
             setSelectedSection(params.section);
         }
     };
     
-    // --- REFRESH STUDENTS FUNCTION (for ViewStuds to call after adding) ---
+    // Callback for ViewStuds to refresh data after adding a student
     const refreshStudents = () => {
         if (profileData?.id || profileData?.uid) {
             fetchStudentsFromDB(profileData.id || profileData.uid);
         }
     };
 
-    const renderMainContent = () => {
-        if (isLoadingAuth || !profileData || !isDataReady) return <LoadingAnimation isDataReady={isDataReady} />;
+    // Voice & Chatbot Helpers
+    const handleGlobalSpeak = (text) => { 
+        if (voiceRef.current) voiceRef.current.speak(text); 
+    };
+    
+    const toggleVoice = () => { 
+        setIsVoiceActive(prev => !prev); 
+    };
 
-        const dashboardProps = {
+    // -------------------------------------------------------------------------
+    // 5. RENDER LOGIC
+    // -------------------------------------------------------------------------
+
+    const renderMainContent = () => {
+        // Show Loading Screen until Auth & Data are ready
+        if (isLoadingAuth || !profileData || !isDataReady) {
+            return <LoadingAnimation isDataReady={isDataReady} />;
+        }
+
+        // Shared Props Bundle
+        const commonProps = {
             onLogout: handleLogout,
             onPageChange: handlePageChange,
             profileData: profileData,
             sections: sections,
             students: students,
-            isOnline: isOnline,
-            // VOICE PROPS
-            isVoiceActive: isVoiceActive,
-            onToggleVoice: toggleVoice
-        };
-
-        const profileProps = {
-            onLogout: handleLogout,
-            onPageChange: handlePageChange,
-            profileData: profileData,
-            sections: sections, 
-            onUpdateSections: setSections,
-            // VOICE PROPS
-            isVoiceActive: isVoiceActive,
-            onToggleVoice: toggleVoice
-        };
-
-        const reportsProps = {
-            onLogout: handleLogout, 
-            onPageChange: handlePageChange, 
-            sections: sections, 
-            students: students,
             attendanceData: attendanceData,
-            // VOICE PROPS
             isVoiceActive: isVoiceActive,
-            onToggleVoice: toggleVoice
+            onToggleVoice: toggleVoice,
+            isOnline: isOnline
         };
 
         switch (currentPage) {
             case 'gradesheet': 
-                return <Gradesheet onLogout={handleLogout} onPageChange={handlePageChange} />;
+                return <Gradesheet {...commonProps} />;
             
             case 'multipage-gradesheet': 
                 return <MultiPageGS 
-                    onLogout={handleLogout} 
-                    onPageChange={handlePageChange} 
+                    {...commonProps}
                     onAttendanceUpdate={handleAttendanceUpdate}
-                    students={students}
-                    {...pageParams} 
+                    {...pageParams} // Passes title, viewType, etc.
                 />;
             
             case 'view-studs': 
                 return <ViewStuds 
-                    onLogout={handleLogout} 
-                    onPageChange={handlePageChange} 
+                    {...commonProps}
                     sectionData={pageParams.sectionData} 
-                    students={students} 
                     onRefreshStudents={refreshStudents}
                     professorUid={profileData.id || profileData.uid}
                 />;
             
             case 'reports': 
-                return <ReportsLayout {...reportsProps} />;
+                return <ReportsLayout {...commonProps} />;
             
             case 'v-reports': 
                 return <VReports 
-                    onLogout={handleLogout} 
-                    onPageChange={handlePageChange} 
+                    {...commonProps}
                     atRiskStudents={pageParams.atRiskStudents || []} 
                     allStudents={pageParams.allStudents || []} 
                     sectionData={pageParams.sectionData}
                 />;
             
             case 'view-rd': 
-                return <ViewRD onLogout={handleLogout} onPageChange={handlePageChange} studentData={pageParams.student} />;
+                return <ViewRD 
+                    {...commonProps}
+                    studentData={pageParams.student} 
+                />;
             
             case 'profile': 
-                return <ProfileLayout {...profileProps} />; 
-            
-            // The case 'tributes' is now REMOVED
+                return <ProfileLayout 
+                    {...commonProps}
+                    onUpdateSections={setSections} 
+                />; 
             
             case 'dashboard': 
             default: 
-                return <Dashboard {...dashboardProps} />;
+                return <Dashboard {...commonProps} />;
         }
     };
 
-    // --- MAIN RENDER LOGIC ---
+    // -------------------------------------------------------------------------
+    // 6. FINAL RETURN
+    // -------------------------------------------------------------------------
+
     if (isLoggedIn) {
         return (
              <div className="dashboard-container">
+                 {/* Status Bar for Sync/Offline */}
                  <div className={`status-bar ${!isOnline ? 'offline' : ''} ${isSyncing ? 'syncing' : ''}`}>
                      {!isOnline && "📡 Offline Mode - Saving Locally"}
                      {isSyncing && "☁️ Internet Restored - Syncing to Cloud..."}
                    </div>
 
-                 {/* LOGIC OVERLAY (Pass ref here) */}
+                 {/* Voice Logic Overlay (Invisible until active) */}
                  <VoiceControl 
                      ref={voiceRef} 
                      isVoiceActive={isVoiceActive} 
@@ -353,9 +378,10 @@ function App() {
                      onPageChange={handlePageChange} 
                    />
                    
+                   {/* Main Application Area */}
                    {renderMainContent()}
                    
-                 {/* CHATBOT (Pass handleGlobalSpeak) */}
+                 {/* Floating Chatbot */}
                  <CdmChatbot 
                      onPageChange={handlePageChange} 
                      professorUid={profileData?.id || profileData?.uid} 
@@ -364,7 +390,7 @@ function App() {
                </div>
         );
     } else {
-        // --- SHOW LANDING PAGE FIRST, THEN LOGIN ---
+        // If not logged in, decide between Landing Page or Login Form
         if (showLanding) {
             return <LandingPage onGetStarted={() => setShowLanding(false)} />;
         }

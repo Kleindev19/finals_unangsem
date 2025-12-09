@@ -249,3 +249,119 @@
     transition: transform 0.1s;
 }
 .pro-btn-save:hover { background-color: #275d13; transform: translateY(-1px); }
+
+/* --- AI SMART SHARE SECTION (New) --- */
+
+.pro-ai-share-container {
+    /* Create a subtle green gradient background to make it look "special" */
+    background: linear-gradient(135deg, rgba(56, 118, 29, 0.08), rgba(167, 243, 208, 0.25));
+    border: 1px solid rgba(56, 118, 29, 0.15);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem; 
+    position: relative;
+    overflow: hidden;
+}
+
+/* Optional: Adds a very subtle "sheen" effect */
+.pro-ai-share-container::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 60%);
+    transform: rotate(30deg);
+    pointer-events: none;
+}
+
+.pro-ai-content-wrapper {
+    position: relative; /* Ensure content is above the sheen effect */
+    z-index: 2;
+}
+
+.pro-ai-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.8rem;
+    color: #38761d; /* Use primary green for text header */
+}
+
+.ai-sparkle-icon {
+    color: #38761d;
+    filter: drop-shadow(0 0 4px rgba(56, 118, 29, 0.3));
+}
+
+.pro-ai-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.pro-ai-desc {
+    margin: 0 0 1.5rem 0;
+    font-size: 0.9rem;
+    color: #546e5a; /* A slightly darker, mellower green-gray for description */
+    max-width: 650px;
+    line-height: 1.5;
+}
+
+/* Link Box Area */
+.pro-link-box {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+}
+
+@media (max-width: 640px) {
+    .pro-link-box { flex-direction: column; align-items: stretch; }
+}
+
+.pro-link-input {
+    flex-grow: 1;
+    padding: 0.85rem 1rem;
+    border: 1px solid #A7F3D0; /* Softer green border */
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #374151;
+    font-family: 'Courier New', Courier, monospace; /* Monospace font for URL look */
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    outline: none;
+    cursor: text;
+}
+
+.pro-btn-copy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: white;
+    border: 2px solid #38761d;
+    color: #38761d;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(56, 118, 29, 0.1);
+}
+
+.pro-btn-copy:hover {
+    background-color: #f0fdf4;
+    box-shadow: 0 4px 8px rgba(56, 118, 29, 0.15);
+    transform: translateY(-1px);
+}
+
+/* State when the link is copied */
+.pro-btn-copy.copied {
+    background-color: #38761d;
+    color: white;
+    border-color: #38761d;
+}

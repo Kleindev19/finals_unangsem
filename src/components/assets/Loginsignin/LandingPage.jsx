@@ -3,18 +3,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './LandingPage.css';
 import CdmLogo from './cdmm.png'; 
-// NOTE: Make sure the path to CdmLogo is correct.
 
-// Import individual developer images (Place these files in the same folder as this JSX file)
+// Import individual developer images
 import MarryAnnNediaImg from './Marry Ann Nedia.jpg';
 import JoshLanderFerreraImg from './Josh Lander Ferrera.jpg';
 import MarvhenneKleinOrtegaImg from './Marvhenne Klein Ortega.jpg';
 import EdwardMarcelinoImg from './Edward Marcelino.jpg';
-import VhyanccaTablonImg from './Vhyancca Tablon.jpg'; // Corrected name used
+import VhyanccaTablonImg from './Vhyancca Tablon.jpg';
 import JazonWilliamsChangImg from './Jazon Williams Chang.jpg';
 import JonaMaeObordoImg from './Jona Mae Obordo.jpg';
 import ShamellPeranteImg from './Shamell Perante.jpg';
-
 
 const developers = [
     { name: "Marry Ann Nedia", role: "Project Leader", image: MarryAnnNediaImg },
@@ -29,63 +27,75 @@ const developers = [
 
 const LandingPage = ({ onGetStarted }) => {
     
-    // CAROUSEL STATE AND LOGIC
+    // CAROUSEL STATE
     const [currentIndex, setCurrentIndex] = useState(0);
     const timeoutRef = useRef(null);
-    const delay = 5000; // Slide changes every 5 seconds (5000 milliseconds)
+    const delay = 5000; 
 
-    const goToSlide = (index) => {
-        setCurrentIndex(index);
-    };
+    // --- NEW: SESSION EXPIRATION MODAL STATE ---
+    const [showSecurityModal, setShowSecurityModal] = useState(false);
 
-    // --- AUTO-SLIDING LOGIC ---
-    function resetTimeout() {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
+    // --- CHECK FOR IDLE LOGOUT ON MOUNT ---
+    useEffect(() => {
+        // Check if the user was sent here due to idle timeout (set by SecurityController)
+        const logoutReason = sessionStorage.getItem('logoutReason');
+        if (logoutReason === 'idle') {
+            setShowSecurityModal(true);
+            sessionStorage.removeItem('logoutReason'); // Clear flag so it doesn't persist on refresh
         }
-    }
+    }, []);
+
+    const goToSlide = (index) => { setCurrentIndex(index); };
+    function resetTimeout() { if (timeoutRef.current) { clearTimeout(timeoutRef.current); } }
 
     useEffect(() => {
         resetTimeout();
         timeoutRef.current = setTimeout(
-            () =>
-                setCurrentIndex((prevIndex) =>
-                    // Cycle back to 0 when the last developer is reached
-                    prevIndex === developers.length - 1 ? 0 : prevIndex + 1
-                ),
+            () => setCurrentIndex((prevIndex) => prevIndex === developers.length - 1 ? 0 : prevIndex + 1),
             delay
         );
-
-        return () => {
-            resetTimeout(); // Cleanup on unmount or before effect runs again
-        };
+        return () => { resetTimeout(); };
     }, [currentIndex]);
     
-    // --- ANIMATION ON SCROLL LOGIC ---
+    // Scroll Animation Observer
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
+            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); } });
         }, { threshold: 0.1 }); 
-
         const hiddenElements = document.querySelectorAll('.animate-on-scroll');
         hiddenElements.forEach((el) => observer.observe(el));
-        
         return () => hiddenElements.forEach(el => observer.unobserve(el));
     }, []);
 
-    // Calculate the translation style for the carousel track
-    const trackStyle = {
-        transform: `translateX(-${currentIndex * 100}%)`,
-    };
+    const trackStyle = { transform: `translateX(-${currentIndex * 100}%)` };
 
     return (
         <div className="landing-container">
             
-            {/* HERO/HEADER SECTION */}
+            {/* --- SECURITY POPUP MODAL (Overlay) --- */}
+            {showSecurityModal && (
+               <div className="security-modal-overlay">
+                   <div className="security-modal-card">
+                       <div className="security-icon-circle">
+                           <span role="img" aria-label="shield">🛡️</span>
+                       </div>
+                       <h2>Security Alert</h2>
+                       <p>You have been logged out due to inactivity to protect your account.</p>
+                       
+                       {/* UPDATED: EXIT BUTTON */}
+                       <button 
+                            onClick={() => {
+                                setShowSecurityModal(false);
+                                // Removed onGetStarted() so user stays on Landing Page
+                            }}
+                            className="security-login-btn"
+                       >
+                           Exit
+                       </button>
+                   </div>
+               </div>
+            )}
+            
             <header className="hero-section">
                 <nav className="navbar">
                     <img src={CdmLogo} alt="CDM Logo" className="nav-logo"/>
@@ -101,7 +111,6 @@ const LandingPage = ({ onGetStarted }) => {
                 </div>
             </header>
 
-            {/* 1. ABOUT THE SYSTEM (Placeholder content) */}
             <section className="content-section about-system-section animate-on-scroll">
                  <h2 className="section-title">📊 About the System</h2>
                  <div className="text-block">
@@ -120,7 +129,6 @@ const LandingPage = ({ onGetStarted }) => {
                 </div>
             </section>
 
-            {/* 2. MISSION & VISION (Placeholder content) */}
             <section className="content-section mission-vision-section animate-on-scroll">
                 <div className="mission-box">
                     <h3>Our Mission</h3>
@@ -132,22 +140,15 @@ const LandingPage = ({ onGetStarted }) => {
                 </div>
             </section>
 
-
-            {/* 3. THE DEVELOPERS - AUTO CAROUSEL WITH IMAGES */}
             <section className="content-section developers-section animate-on-scroll">
                 <h2 className="section-title">👨‍💻 The Developers</h2>
                 <p className="developer-intro">Meet the dedicated team behind the Student Progress Tracker System.</p>
                 
-                {/* CAROUSEL STRUCTURE */}
                 <div className="developer-carousel-window">
                     <div className="developer-carousel-track" style={trackStyle}>
                         {developers.map((dev, index) => (
                             <div key={index} className="developer-carousel-card">
-                                <img 
-                                    src={dev.image} 
-                                    alt={dev.name} 
-                                    className="dev-profile-picture"
-                                />
+                                <img src={dev.image} alt={dev.name} className="dev-profile-picture"/>
                                 <h3>{dev.name}</h3>
                                 <p className="dev-role-carousel">{dev.role}</p>
                             </div>
@@ -155,20 +156,13 @@ const LandingPage = ({ onGetStarted }) => {
                     </div>
                 </div>
 
-                {/* INDICATORS (Clickable for manual override) */}
                 <div className="carousel-indicators">
                     {developers.map((_, index) => (
-                        <div
-                            key={index}
-                            className={`dot ${index === currentIndex ? 'active' : ''}`}
-                            onClick={() => goToSlide(index)}
-                        ></div>
+                        <div key={index} className={`dot ${index === currentIndex ? 'active' : ''}`} onClick={() => goToSlide(index)}></div>
                     ))}
                 </div>
             </section>
-            {/* END DEVELOPERS CAROUSEL */}
 
-            {/* 4. WHY WE BUILT THIS (Placeholder content) */}
             <section className="content-section why-built-section animate-on-scroll">
                 <h2 className="section-title">💡 Why We Built This</h2>
                 <div className="text-block">
@@ -177,7 +171,6 @@ const LandingPage = ({ onGetStarted }) => {
                 </div>
             </section>
 
-            {/* FOOTER */}
             <footer>
                 <p>&copy; 2024 Colegio de Montalban. All rights reserved. | Student Progress Tracker System</p>
             </footer>
