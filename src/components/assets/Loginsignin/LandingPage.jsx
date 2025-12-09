@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './LandingPage.css';
 import CdmLogo from './cdmm.png'; 
 
-// Import individual developer images
+// Import Developer Images
 import MarryAnnNediaImg from './Marry Ann Nedia.jpg';
 import JoshLanderFerreraImg from './Josh Lander Ferrera.jpg';
 import MarvhenneKleinOrtegaImg from './Marvhenne Klein Ortega.jpg';
@@ -25,154 +25,150 @@ const developers = [
     { name: "Shamell Perante", role: "Documentation", image: ShamellPeranteImg },
 ];
 
+const features = [
+    { title: "Centralized Data", desc: "A unified platform for all student academic records.", icon: "📂" },
+    { title: "Real-time Reports", desc: "Instant generation of gradesheets and attendance analytics.", icon: "⚡" },
+    { title: "Risk Identification", desc: "AI-driven flagging of at-risk students for early intervention.", icon: "🛡️" },
+    { title: "Secure Access", desc: "Role-based security ensuring data privacy and integrity.", icon: "🔒" },
+    { title: "Smart Sync", desc: "Seamless offline capability with automatic cloud syncing.", icon: "☁️" },
+    { title: "Voice Control", desc: "Navigate the dashboard hands-free with voice commands.", icon: "🎙️" },
+];
+
 const LandingPage = ({ onGetStarted }) => {
     
-    // CAROUSEL STATE
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const timeoutRef = useRef(null);
-    const delay = 5000; 
+    // --- ANIMATION OBSERVER ---
+    const observer = useRef(null);
 
-    // --- NEW: SESSION EXPIRATION MODAL STATE ---
+    useEffect(() => {
+        observer.current = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        const hiddenElements = document.querySelectorAll('.fade-in-up');
+        hiddenElements.forEach((el) => observer.current.observe(el));
+
+        return () => {
+            if (observer.current) observer.current.disconnect();
+        };
+    }, []);
+
+    // --- SECURITY MODAL STATE ---
     const [showSecurityModal, setShowSecurityModal] = useState(false);
 
-    // --- CHECK FOR IDLE LOGOUT ON MOUNT ---
     useEffect(() => {
-        // Check if the user was sent here due to idle timeout (set by SecurityController)
         const logoutReason = sessionStorage.getItem('logoutReason');
         if (logoutReason === 'idle') {
             setShowSecurityModal(true);
-            sessionStorage.removeItem('logoutReason'); // Clear flag so it doesn't persist on refresh
+            sessionStorage.removeItem('logoutReason'); 
         }
     }, []);
 
-    const goToSlide = (index) => { setCurrentIndex(index); };
-    function resetTimeout() { if (timeoutRef.current) { clearTimeout(timeoutRef.current); } }
-
-    useEffect(() => {
-        resetTimeout();
-        timeoutRef.current = setTimeout(
-            () => setCurrentIndex((prevIndex) => prevIndex === developers.length - 1 ? 0 : prevIndex + 1),
-            delay
-        );
-        return () => { resetTimeout(); };
-    }, [currentIndex]);
-    
-    // Scroll Animation Observer
-    useEffect(() => {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); } });
-        }, { threshold: 0.1 }); 
-        const hiddenElements = document.querySelectorAll('.animate-on-scroll');
-        hiddenElements.forEach((el) => observer.observe(el));
-        return () => hiddenElements.forEach(el => observer.unobserve(el));
-    }, []);
-
-    const trackStyle = { transform: `translateX(-${currentIndex * 100}%)` };
+    // --- SCROLL HANDLER ---
+    const scrollToAbout = () => {
+        document.getElementById('about-section').scrollIntoView({ behavior: 'smooth' });
+    };
 
     return (
         <div className="landing-container">
-            
-            {/* --- SECURITY POPUP MODAL (Overlay) --- */}
+            {/* Background Animation Layer */}
+            <div className="animated-bg"></div>
+
+            {/* --- SECURITY POPUP MODAL --- */}
             {showSecurityModal && (
                <div className="security-modal-overlay">
                    <div className="security-modal-card">
-                       <div className="security-icon-circle">
-                           <span role="img" aria-label="shield">🛡️</span>
+                       <div className="security-icon-box">
+                           <span>🛡️</span>
                        </div>
-                       <h2>Security Alert</h2>
-                       <p>You have been logged out due to inactivity to protect your account.</p>
-                       
-                       {/* UPDATED: EXIT BUTTON */}
-                       <button 
-                            onClick={() => {
-                                setShowSecurityModal(false);
-                                // Removed onGetStarted() so user stays on Landing Page
-                            }}
-                            className="security-login-btn"
-                       >
-                           Exit
+                       <h2 style={{color: '#1f2937', margin: '0 0 10px 0'}}>Security Alert</h2>
+                       <p style={{color: '#6b7280', margin: '0 0 20px 0'}}>
+                           You have been automatically logged out due to inactivity to protect your account data.
+                       </p>
+                       <button onClick={() => setShowSecurityModal(false)} className="security-btn">
+                           Exit to Home
                        </button>
                    </div>
                </div>
             )}
-            
+
+            {/* NAVBAR */}
+            <nav className="navbar fade-in-up">
+                <img src={CdmLogo} alt="CDM Logo" className="nav-logo"/>
+                <button className="nav-login-btn" onClick={onGetStarted}>Login Portal</button>
+            </nav>
+
+            {/* 1. HERO / OVERVIEW SECTION */}
             <header className="hero-section">
-                <nav className="navbar">
-                    <img src={CdmLogo} alt="CDM Logo" className="nav-logo"/>
-                    <button className="nav-login-btn" onClick={onGetStarted}>Login Portal</button>
-                </nav>
+                <div className="hero-content">
+                    <div className="hero-badge fade-in-up">System Version 8.1.0</div>
+                    <h1 className="hero-title fade-in-up delay-100">
+                        Student progress <br/> <span>Tracker System</span>
+                    </h1>
+                    <p className="hero-subtitle fade-in-up delay-200">
+                        The Smart Monitoring for
+Student Success empowers educators with real-time data, AI-driven insights, and centralized record-keeping to ensure no student is left behind.
+                    </p>
+                    <div className="hero-cta-group fade-in-up delay-300">
+                        <button className="btn-primary" onClick={onGetStarted}>Access Dashboard</button>
+                        <button className="btn-secondary" onClick={scrollToAbout}>Learn More</button>
+                    </div>
+                </div>
                 
-                <div className="hero-content animate-on-scroll">
-                    <h1>✅ ABOUT US – <br/><span className="highlight">Student Progress Tracker System</span></h1>
-                    <p>Learn more about our mission to streamline academic monitoring and support student success.</p>
-                    <button className="cta-button" onClick={onGetStarted}>
-                        Access Portal
-                    </button>
+                <div className="scroll-indicator" onClick={scrollToAbout} style={{cursor:'pointer'}}>
+                    <span>Scroll Down</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
                 </div>
             </header>
 
-            <section className="content-section about-system-section animate-on-scroll">
-                 <h2 className="section-title">📊 About the System</h2>
-                 <div className="text-block">
-                    <p>The Student Progress Tracker System is designed to provide teachers, administrators, and parents with real-time insights into student performance. This centralized platform aims to enhance communication and facilitate proactive intervention strategies.</p>
-                    <div className="system-goals">
-                        <h4>Key Goals:</h4>
-                        <ul>
-                            <li>Centralized data management.</li>
-                            <li>Automated progress reports.</li>
-                            <li>Identification of at-risk students.</li>
-                            <li>Secure data access.</li>
-                            <li>Efficient communication channels.</li>
-                            <li>Compliance with educational standards.</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <section className="content-section mission-vision-section animate-on-scroll">
-                <div className="mission-box">
-                    <h3>Our Mission</h3>
-                    <p>To provide an intuitive and powerful platform that empowers educators to effectively monitor, analyze, and support the academic journey of every student, fostering a data-driven approach to educational success.</p>
-                </div>
-                <div className="vision-box">
-                    <h3>Our Vision</h3>
-                    <p>To be the leading progress tracking solution for educational institutions, known for reliability, security, and the ability to significantly improve student outcomes through actionable insights.</p>
-                </div>
-            </section>
-
-            <section className="content-section developers-section animate-on-scroll">
-                <h2 className="section-title">👨‍💻 The Developers</h2>
-                <p className="developer-intro">Meet the dedicated team behind the Student Progress Tracker System.</p>
-                
-                <div className="developer-carousel-window">
-                    <div className="developer-carousel-track" style={trackStyle}>
-                        {developers.map((dev, index) => (
-                            <div key={index} className="developer-carousel-card">
-                                <img src={dev.image} alt={dev.name} className="dev-profile-picture"/>
-                                <h3>{dev.name}</h3>
-                                <p className="dev-role-carousel">{dev.role}</p>
-                            </div>
-                        ))}
-                    </div>
+            {/* 2. ABOUT SYSTEM SECTION */}
+            <section id="about-section" className="section-wrapper">
+                <div className="section-header fade-in-up">
+                    <span className="section-tag">Powerful Features</span>
+                    <h2 className="section-title">Why We Built This</h2>
+                    <p style={{color: '#6b7280', fontSize: '1.1rem', maxWidth:'600px', margin:'0 auto'}}>
+                        To replace fragmented paper-based records with an integrated digital solution that frees up administrative time for actual mentorship.
+                    </p>
                 </div>
 
-                <div className="carousel-indicators">
-                    {developers.map((_, index) => (
-                        <div key={index} className={`dot ${index === currentIndex ? 'active' : ''}`} onClick={() => goToSlide(index)}></div>
+                <div className="features-grid">
+                    {features.map((feature, idx) => (
+                        <div key={idx} className={`feature-card fade-in-up delay-${(idx % 3) * 100}`}>
+                            <div className="feature-icon">{feature.icon}</div>
+                            <h3>{feature.title}</h3>
+                            <p>{feature.desc}</p>
+                        </div>
                     ))}
                 </div>
             </section>
 
-            <section className="content-section why-built-section animate-on-scroll">
-                <h2 className="section-title">💡 Why We Built This</h2>
-                <div className="text-block">
-                    <p>The project was initiated to address the common challenges faced by Colegio de Montalban: the lack of a unified, real-time mechanism for tracking student achievements and identifying those who require timely intervention. Our goal is to replace fragmented paper-based records with an integrated digital solution.</p>
-                    <p>By digitizing this process, we aim to free up administrative and teaching staff to focus more on instruction and mentorship, ultimately leading to improved educational efficiency and higher student retention rates.</p>
+            {/* 3. DEVELOPERS SECTION */}
+            <section className="developers-section">
+                <div className="section-header fade-in-up">
+                    <span className="section-tag">The Team</span>
+                    <h2 className="section-title">Meet the Minds</h2>
+                    <p style={{color: '#6b7280'}}>The dedicated development team behind the system.</p>
+                </div>
+
+                <div className="dev-grid">
+                    {developers.map((dev, idx) => (
+                        <div key={idx} className={`dev-card fade-in-up delay-${(idx % 4) * 100}`}>
+                            <div className="dev-img-container">
+                                <img src={dev.image} alt={dev.name} className="dev-img" />
+                            </div>
+                            <h4>{dev.name}</h4>
+                            <p>{dev.role}</p>
+                        </div>
+                    ))}
                 </div>
             </section>
 
-            <footer>
-                <p>&copy; 2024 Colegio de Montalban. All rights reserved. | Student Progress Tracker System</p>
+            {/* FOOTER */}
+            <footer style={{textAlign: 'center', padding: '2rem', background: '#38761d', color: 'white'}}>
+                <p style={{opacity: 0.8, fontSize: '0.9rem'}}>&copy; 2024 Colegio de Montalban. All rights reserved.</p>
             </footer>
         </div>
     );
