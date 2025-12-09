@@ -38,7 +38,6 @@ const navItems = [
     { name: 'Dashboard', icon: LayoutDashboardIcon, page: 'dashboard' },
     { name: 'Reports', icon: ReportsIcon, page: 'reports' },
     { name: 'Profile', icon: UserIcon, page: 'profile' },
-    { name: 'Developers', icon: CodeIcon, page: 'tributes' },
 ];
 
 export const Sidebar = ({ onLogout, onPageChange, currentPage, onWidthChange }) => { 
