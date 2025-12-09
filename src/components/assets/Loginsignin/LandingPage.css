@@ -190,7 +190,7 @@
     flex: 1;
     padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(248, 246, 246, 0.1);
     transition: transform 0.3s;
 }
 
@@ -202,6 +202,13 @@
     background-color: #1b4d3e; 
     color: rgb(255, 255, 255);
 }
+
+/* --- ADDED RULE TO MAKE VISION PARAGRAPH TEXT WHITE --- */
+.vision-box p {
+    color: white; /* Explicitly sets the main paragraph text to white */
+    opacity: 0.9; /* Optional: adds a slight transparency for better contrast */
+}
+/* -------------------------------------------------------- */
 
 .mission-box {
     background-color: white;
