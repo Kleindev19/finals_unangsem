@@ -216,8 +216,8 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
 
 
     const METRICS_DATA = [
-        { label: 'Total Students', value: totalStudents, icon: Users, color: '#3B82F6', change: '+12%' },
-        { label: 'Active Sections', value: sections.length, icon: BookOpen, color: '#F97316', change: '+8%' },
+        { label: 'Total Students', value: totalStudents, icon: Users, color: '#3B82F6' },
+        { label: 'Active Sections', value: sections.length, icon: BookOpen, color: '#F97316' },
     ];
     
     const handleOpenAboutUs = () => setIsAboutUsOpen(true);
