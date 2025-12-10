@@ -15,14 +15,14 @@ import JonaMaeObordoImg from './Jona Mae Obordo.jpg';
 import ShamellPeranteImg from './Shamell Perante.jpg';
 
 const developers = [
-    { name: "Marry Ann Nedia", role: "Project Leader", image: MarryAnnNediaImg },
+    { name: "Marry Ann Nedia", role: "TESTER", image: MarryAnnNediaImg },
     { name: "Josh Lander Ferrera", role: "Full Stack Developer", image: JoshLanderFerreraImg },
     { name: "Marvhenne Klein Ortega", role: "Full Stack Developer", image: MarvhenneKleinOrtegaImg },
     { name: "Edward Marcelino", role: "Full Stack Developer", image: EdwardMarcelinoImg },
-    { name: "Vhyancca Tablon", role: "UI/Front-End Developer", image: VhyanccaTablonImg },
-    { name: "Jazon Williams Chang", role: "UI/Front-End Developer", image: JazonWilliamsChangImg },
-    { name: "Jona Mae Obordo", role: "Documentation", image: JonaMaeObordoImg },
-    { name: "Shamell Perante", role: "Documentation", image: ShamellPeranteImg },
+    { name: "Vhyancca Tablon", role: "UI/UX Developer", image: VhyanccaTablonImg },
+    { name: "Jazon Williams Chang", role: "UI/UX Developer", image: JazonWilliamsChangImg },
+    { name: "Jona Mae Obordo", role: "Documentation/UI", image: JonaMaeObordoImg },
+    { name: "Shamell Perante", role: "Documentation/UI", image: ShamellPeranteImg },
 ];
 
 const features = [

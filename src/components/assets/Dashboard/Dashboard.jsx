@@ -210,7 +210,10 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
     const handleYearChange = (e) => setFilterYear(e.target.value === 'Select Year' ? '' : e.target.value);
     const handleCourseChange = (e) => setFilterCourse(e.target.value === 'Select Course' ? '' : e.target.value);
 
-    const totalStudents = students.length;
+    // FIX: Calculate total students based on the sum of students in all processed sections (sectionsWithStudentCount).
+    // This ensures the count only includes students tied to the sections visible on the dashboard.
+    const totalStudents = sectionsWithStudentCount.reduce((sum, section) => sum + section.students, 0);
+
 
     const METRICS_DATA = [
         { label: 'Total Students', value: totalStudents, icon: Users, color: '#3B82F6', change: '+12%' },
