@@ -8,6 +8,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// --- GLOBAL STATE FOR DB MODE (NEW) ---
+let DB_MODE = 'N/A'; // Tracks the current connection mode: 'ONLINE', 'LOCAL', or 'N/A'
+
 // --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json());
@@ -70,6 +73,7 @@ const connectDB = async () => {
             serverSelectionTimeoutMS: 5000 
         });
         console.log("✅ CONNECTED TO: MongoDB Atlas (Online Mode)");
+        DB_MODE = 'ONLINE'; // Set global mode on successful Atlas connection
         
     } catch (err) {
         console.warn("⚠️  Internet connection failed or Atlas is unreachable.");
@@ -78,6 +82,7 @@ const connectDB = async () => {
             // Fallback to Local Connection (No encryption needed for localhost)
             await mongoose.connect(process.env.MONGO_URI_LOCAL);
             console.log("✅ CONNECTED TO: Localhost (Offline Mode)");
+            DB_MODE = 'LOCAL'; // Set global mode on successful Localhost connection
         } catch (localErr) {
             console.error("❌ CRITICAL ERROR: Could not connect to ANY database (Online or Local).");
             console.error(localErr);
@@ -93,10 +98,19 @@ connectDB();
 // 3. API ROUTES
 // ==========================================
 
-// --- AUTO-SYNC ENDPOINT (NEW & SECURE) ---
+// --- AUTO-SYNC ENDPOINT (MODIFIED TO CHECK DB MODE) ---
 app.post('/api/sync-now', async (req, res) => {
     console.log("🔄 Auto-Sync Triggered by Frontend...");
     
+    // Check if the server is running in Online Mode (Atlas)
+    if (DB_MODE !== 'ONLINE') {
+        console.warn("❌ Sync Aborted: Server is not connected to MongoDB Atlas.");
+        return res.status(503).json({ 
+            success: false, 
+            message: "Sync failed. Server is currently running in Localhost (Offline) mode." 
+        });
+    }
+
     // 1. Decrypt the Cloud URI again for this specific connection
     const onlineURI = decrypt(process.env.MONGO_URI_CLOUD);
     

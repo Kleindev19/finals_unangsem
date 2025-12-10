@@ -41,8 +41,8 @@ const GRADES_STORAGE_KEY = 'progressTracker_studentScores_v1';
 const ATTENDANCE_STORAGE_KEY = 'progressTracker_attendanceData_v1';
 const QUIZ_COLS_KEY = 'progressTracker_quizCols_v1';
 const ACT_COLS_KEY = 'progressTracker_actCols_v1';
-const REMOVED_QUIZ_COLS_KEY = 'progressTracker_removedQuizCols_v1'; // NEW KEY
-const REMOVED_ACT_COLS_KEY = 'progressTracker_removedActCols_v1'; // NEW KEY
+const REMOVED_QUIZ_COLS_KEY = 'progressTracker_removedQuizCols_v1'; 
+const REMOVED_ACT_COLS_KEY = 'progressTracker_removedActCols_v1'; 
 const REC_MAX_KEY = 'progressTracker_recMax_v1';
 const EXAM_MAX_KEY = 'progressTracker_examMax_v1';
 
@@ -67,6 +67,23 @@ const initializeMaxScore = (key, initialMax) => {
     }
     return initialMax;
 };
+
+// --- NEW HELPER: Persistence Loader for Attendance (WITH DEBUG LOG) ---
+const initializeAttendance = () => {
+    const savedAttendanceJSON = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
+    if (savedAttendanceJSON) {
+        try {
+            const data = JSON.parse(savedAttendanceJSON);
+            console.log("DEBUG (Attendance): Loaded attendance data from localStorage:", data); // ADDED DEBUG LOG: LOAD
+            return data;
+        } catch (e) {
+            console.error("Could not parse saved attendance data:", e);
+        }
+    }
+    console.log("DEBUG (Attendance): No attendance data found in localStorage. Initializing empty state."); // ADDED DEBUG LOG: NO DATA FOUND
+    return {};
+};
+
 
 // --- HELPER: Initialize Score State (Handles initial load from storage OR creating new placeholders) ---
 const initializeScores = (students, currentQuizCols, currentActCols) => {
@@ -227,8 +244,8 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     // STATE: Holds the editable scores
     const [studentScores, setStudentScores] = useState(() => initializeScores(students, quizCols, actCols));
     // STATE: Placeholder for Attendance Data
-    const [localAttendanceData, setLocalAttendanceData] = useState({});
-
+    const [localAttendanceData, setLocalAttendanceData] = useState(() => initializeAttendance()); // MODIFIED: Use initializeAttendance
+    
     // Effect to persist studentScores whenever it changes (CRUCIAL for grade persistence)
     useEffect(() => {
         try {
@@ -249,6 +266,15 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     useEffect(() => { try { localStorage.setItem(REC_MAX_KEY, String(recMax)); } catch (e) { console.error("Could not save recMax to localStorage:", e); } }, [recMax]);
     useEffect(() => { try { localStorage.setItem(EXAM_MAX_KEY, String(examMax)); } catch (e) { console.error("Could not save examMax to localStorage:", e); } }, [examMax]);
 
+    // --- NEW EFFECT: To persist attendance data whenever it changes (WITH DEBUG LOG) ---
+    useEffect(() => {
+        try {
+            localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(localAttendanceData));
+            console.log("DEBUG (Attendance): Saved attendance data to localStorage."); // ADDED DEBUG LOG: SAVE
+        } catch (e) {
+            console.error("Could not save attendance data to localStorage:", e);
+        }
+    }, [localAttendanceData]);
 
     // Initialize/Re-initialize scores if the students list OR columns change
     useEffect(() => {
@@ -312,13 +338,14 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     };
 
-    // Handler for Attendance cell changes
+    // Handler for Attendance cell changes (WITH DEBUG LOG)
     const handleAttendanceCellChange = (studentId, dateIndex, status) => {
         setLocalAttendanceData(prevData => {
             const currentTermDates = attendanceTerm === 'Midterm Attendance' ? MIDTERM_DATES : FINALS_DATES;
             const key = `${studentId}-${currentTermDates[dateIndex]}`;
             
             const newData = { ...prevData, [key]: status };
+            console.log(`DEBUG (Attendance): Updated attendance status for ${studentId} on ${currentTermDates[dateIndex]} to ${status}.`); // ADDED DEBUG LOG: CHANGE
             return newData;
         });
     };
@@ -548,7 +575,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                             let absences = 0;
                             const studentAttendanceStatuses = dates.map((date, i) => {
                                 const key = `${student.id}-${date}`;
-                                const mockStatus = localAttendanceData[key] || (Math.random() > 0.8 ? 'A' : 'P'); 
+                                const mockStatus = localAttendanceData[key] || 'P'; // Changed from Math.random() to always default to 'P' on first load
                                 if (mockStatus === 'A') absences++;
                                 return mockStatus;
                             });
