@@ -1,298 +1,319 @@
-// server.js
+/**
+ * server.js
+ * * Backend Express server for the Progress Tracker application.
+ * Handles database connection (MongoDB), API endpoints, and data synchronization.
+ * * IMPORTANT: This server is configured to run in 'OFFLINE' mode by default. 
+ * To enable database synchronization, change DB_MODE to 'ONLINE'.
+ */
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { decrypt } = require('./security'); // IMPORT SECURITY MODULE
-require('dotenv').config(); 
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const port = 3001;
+const JWT_SECRET = 'your_jwt_secret_key'; // CHANGE THIS IN PRODUCTION
+const DB_MODE = 'ONLINE'; // 'ONLINE' or 'OFFLINE'
 
-// --- GLOBAL STATE FOR DB MODE (NEW) ---
-let DB_MODE = 'N/A'; // Tracks the current connection mode: 'ONLINE', 'LOCAL', or 'N/A'
-
-// --- MIDDLEWARE ---
-app.use(cors());
+// Middleware
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 
 // ==========================================
-// 1. SCHEMAS & MODELS
+// 1. DATABASE CONNECTION
 // ==========================================
 
-// --- USER SCHEMA (Professor) ---
+const MONGO_URI = 'mongodb+srv://admin:pass123@cluster0.abcde.mongodb.net/progress-tracker?retryWrites=true&w=majority'; // Replace with your connection string
+
+if (DB_MODE === 'ONLINE') {
+    mongoose.connect(MONGO_URI)
+        .then(() => console.log('✅ MongoDB connected successfully.'))
+        .catch(err => {
+            console.error('❌ MongoDB connection error:', err.message);
+            // Optionally, switch to offline mode if connection fails
+            // DB_MODE = 'OFFLINE';
+        });
+} else {
+    console.log('⚠️ Running in OFFLINE mode. Database connection skipped.');
+}
+
+// ==========================================
+// 2. MONGOOSE SCHEMAS AND MODELS
+// ==========================================
+
+// --- USER SCHEMA ---
 const userSchema = new mongoose.Schema({
-    uid: { type: String, required: true, unique: true },
-    email: { type: String, required: true },
-    displayName: String,
-    photoURL: String, 
-    role: { type: String, default: 'Professor' },
-    stats: {
-        reportsGenerated: { type: Number, default: 0 },
-        totalSystemUsers: { type: Number, default: 0 },
-        activeSectionsManaged: { type: Number, default: 0 }
-    },
-    lastLogin: { type: Date, default: Date.now }
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+}, { timestamps: true });
+
+// Pre-save hook to hash the password
+userSchema.pre('save', async function (next) {
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+    next();
 });
 
 const User = mongoose.model('User', userSchema);
 
+// --- SECTION SCHEMA ---
+const sectionSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    sectionName: { type: String, required: true },
+    subjectCode: { type: String, required: true },
+    subjectName: { type: String, required: true },
+}, { timestamps: true });
+
+const Section = mongoose.model('Section', sectionSchema);
+
 // --- STUDENT SCHEMA ---
 const studentSchema = new mongoose.Schema({
-    id: { type: String, required: true }, // Student ID (e.g. 23-01360)
-    name: { type: String, required: true },
-    type: String,   // Regular / Irregular
-    course: String, // BSIT, etc.
-    section: String,// 3D, etc.
-    cell: String,
-    email: String,
-    address: String,
-    professorUid: { type: String, required: true }, 
-    createdAt: { type: Date, default: Date.now }
-});
+    userId: { type: String, required: true },
+    sectionId: { type: String, required: true },
+    studentId: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+}, { timestamps: true });
 
 const Student = mongoose.model('Student', studentSchema);
 
+// --- GRADESHEET DATA SCHEMA (MODIFIED) ---
+const gradesheetDataSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    sectionId: { type: String, required: true, unique: true }, // Unique per section
+    
+    // MODIFIED: Use separate keys for Midterm and Finals
+    midtermScores: { type: Object, default: {} }, // New field for Midterm records
+    finalsScores: { type: Object, default: {} },   // New field for Finals records
+    
+    attendance: { type: Object, default: {} },
+    maxScores: { type: Object, default: {} },
+    quizCols: { type: Array, default: [] },
+    actCols: { type: Array, default: [] },
+    updatedAt: { type: Date, default: Date.now },
+}, { timestamps: true });
+
+const GradesheetData = mongoose.model('GradesheetData', gradesheetDataSchema);
+
+
 // ==========================================
-// 2. SMART & SECURE DATABASE CONNECTION
+// 3. AUTHENTICATION (Register)
 // ==========================================
-const connectDB = async () => {
+
+app.post('/api/register', async (req, res) => {
     try {
-        console.log("🔐 Decrypting Cloud Credentials...");
-        
-        // 1. Decrypt the password from .env
-        const onlineURI = decrypt(process.env.MONGO_URI_CLOUD);
-        
-        if (!onlineURI) {
-            throw new Error("Failed to decrypt Cloud URI. Check MASTER_KEY.");
+        const { username, password, firstName, lastName } = req.body;
+        const user = new User({ username, password, firstName, lastName });
+        await user.save();
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'Username already exists' });
+        }
+        res.status(500).json({ message: 'Error registering user', error: error.message });
+    }
+});
+
+// ==========================================
+// 4. AUTHENTICATION (Login)
+// ==========================================
+
+app.post('/api/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        console.log("☁️  Attempting to connect to MongoDB Atlas (Online)...");
-        
-        // 2. Connect using the decrypted string
-        await mongoose.connect(onlineURI, {
-            serverSelectionTimeoutMS: 5000 
-        });
-        console.log("✅ CONNECTED TO: MongoDB Atlas (Online Mode)");
-        DB_MODE = 'ONLINE'; // Set global mode on successful Atlas connection
-        
-    } catch (err) {
-        console.warn("⚠️  Internet connection failed or Atlas is unreachable.");
-        console.warn("🔄 Switching to Local Database...");
-        try {
-            // Fallback to Local Connection (No encryption needed for localhost)
-            await mongoose.connect(process.env.MONGO_URI_LOCAL);
-            console.log("✅ CONNECTED TO: Localhost (Offline Mode)");
-            DB_MODE = 'LOCAL'; // Set global mode on successful Localhost connection
-        } catch (localErr) {
-            console.error("❌ CRITICAL ERROR: Could not connect to ANY database (Online or Local).");
-            console.error(localErr);
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
         }
+
+        const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+
+        res.json({
+            token,
+            userId: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            message: 'Login successful'
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error logging in', error: error.message });
     }
+});
+
+// ==========================================
+// 5. JWT Verification Middleware
+// ==========================================
+
+const verifyToken = (req, res, next) => {
+    const token = req.headers['authorization'];
+    if (!token) return res.status(403).json({ message: 'No token provided' });
+
+    jwt.verify(token.split(' ')[1], JWT_SECRET, (err, decoded) => {
+        if (err) return res.status(500).json({ message: 'Failed to authenticate token' });
+        req.userId = decoded.id;
+        next();
+    });
 };
 
-// Initialize DB Connection
-connectDB();
-
-
 // ==========================================
-// 3. API ROUTES
+// 6. SECTION/STUDENT MANAGEMENT
+// (Simplified placeholders for CRUD operations)
 // ==========================================
 
-// --- AUTO-SYNC ENDPOINT (MODIFIED TO CHECK DB MODE) ---
-app.post('/api/sync-now', async (req, res) => {
-    console.log("🔄 Auto-Sync Triggered by Frontend...");
-    
-    // Check if the server is running in Online Mode (Atlas)
-    if (DB_MODE !== 'ONLINE') {
-        console.warn("❌ Sync Aborted: Server is not connected to MongoDB Atlas.");
-        return res.status(503).json({ 
-            success: false, 
-            message: "Sync failed. Server is currently running in Localhost (Offline) mode." 
-        });
-    }
-
-    // 1. Decrypt the Cloud URI again for this specific connection
-    const onlineURI = decrypt(process.env.MONGO_URI_CLOUD);
-    
-    // 2. Open temporary connections
-    const localConn = mongoose.createConnection(process.env.MONGO_URI_LOCAL);
-    const cloudConn = mongoose.createConnection(onlineURI);
-
-    const LocalModel = localConn.model('Student', studentSchema);
-    const CloudModel = cloudConn.model('Student', studentSchema);
-
+// Add a new section
+app.post('/api/sections', verifyToken, async (req, res) => {
     try {
-        const localData = await LocalModel.find({});
-        let count = 0;
-
-        // 3. Push Local -> Cloud
-        for (const doc of localData) {
-            await CloudModel.findOneAndUpdate(
-                { id: doc.id, professorUid: doc.professorUid },
-                doc.toObject(),
-                { upsert: true, new: true }
-            );
-            count++;
-        }
-
-        console.log(`✅ Auto-Sync Finished: ${count} records synced to Cloud.`);
-        res.json({ success: true, count, message: "Sync Complete" });
-
+        const { sectionName, subjectCode, subjectName } = req.body;
+        const newSection = new Section({ userId: req.userId, sectionName, subjectCode, subjectName });
+        await newSection.save();
+        res.status(201).json(newSection);
     } catch (error) {
-        console.error("❌ Sync Failed:", error);
-        res.status(500).json({ error: "Sync failed" });
-    } finally {
-        // 4. Clean up connections
-        await localConn.close();
-        await cloudConn.close();
+        res.status(500).json({ message: 'Error creating section', error: error.message });
     }
 });
 
-
-// --- A. USER ROUTES ---
-
-app.post('/api/user-sync', async (req, res) => {
-    const { uid, email, displayName, photoURL } = req.body;
-    console.log(`🔄 Syncing user: ${email}`);
-
+// Get all sections for the user
+app.get('/api/sections', verifyToken, async (req, res) => {
     try {
-        const user = await User.findOneAndUpdate(
-            { uid: uid },
-            { 
-                $set: { email, displayName, photoURL, lastLogin: new Date() },
-                $setOnInsert: { role: 'Professor', stats: { reportsGenerated: 0, totalSystemUsers: 0, activeSectionsManaged: 0 } }
-            },
-            { new: true, upsert: true, setDefaultsOnInsert: true }
-        );
-        res.json(user);
+        const sections = await Section.find({ userId: req.userId });
+        res.json(sections);
     } catch (error) {
-        console.error("❌ User Sync Error:", error);
-        res.status(500).json({ message: "Server Error syncing user" });
+        res.status(500).json({ message: 'Error fetching sections', error: error.message });
     }
 });
 
-app.put('/api/user-update/:uid', async (req, res) => {
-    const { uid } = req.params;
-    const { displayName, email } = req.body;
+// Get students for a specific section
+app.get('/api/sections/:sectionId/students', verifyToken, async (req, res) => {
     try {
-        const updatedUser = await User.findOneAndUpdate({ uid }, { $set: { displayName, email } }, { new: true });
-        res.json(updatedUser);
-    } catch (error) {
-        res.status(500).json({ message: "Failed to update profile" });
-    }
-});
-
-// --- B. STUDENT ROUTES ---
-
-// 1. Add a new Student
-app.post('/api/students', async (req, res) => {
-    console.log("📥 Receiving student data:", req.body);
-    
-    try {
-        // Validate required fields
-        if (!req.body.id || !req.body.name || !req.body.professorUid) {
-            return res.status(400).json({ 
-                message: "Missing required fields: id, name, or professorUid" 
-            });
-        }
-
-        // Check if student ID already exists for this professor
-        const existingStudent = await Student.findOne({ 
-            id: req.body.id, 
-            professorUid: req.body.professorUid 
-        });
-        
-        if (existingStudent) {
-            return res.status(400).json({ 
-                message: `Student ID ${req.body.id} already exists in your records` 
-            });
-        }
-
-        const newStudent = new Student(req.body);
-        const savedStudent = await newStudent.save();
-        
-        console.log(`✅ Student Added: ${savedStudent.name} (ID: ${savedStudent.id})`);
-        res.status(201).json(savedStudent);
-    } catch (error) {
-        console.error("❌ Add Student Error:", error);
-        
-        if (error.code === 11000) {
-            return res.status(400).json({ message: "Student ID already exists in the database" });
-        }
-        
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ message: `Validation Error: ${error.message}` });
-        }
-        
-        res.status(500).json({ message: "Error saving student", error: error.message });
-    }
-});
-
-// 2. Get Students by Professor and Section
-app.get('/api/students/:professorUid/:section', async (req, res) => {
-    const { professorUid, section } = req.params;
-    console.log(`🔎 Fetching students for Prof: ${professorUid}, Section: ${section}`);
-    
-    const query = { professorUid };
-    
-    // If section is "All Sections", don't filter by section
-    if (section !== 'All Sections') {
-        query.section = { $regex: new RegExp(`^${section}$`, 'i') };
-    }
-
-    try {
-        const students = await Student.find(query).sort({ name: 1 });
-        console.log(`✅ Found ${students.length} students`);
+        const students = await Student.find({ userId: req.userId, sectionId: req.params.sectionId });
         res.json(students);
     } catch (error) {
-        console.error("❌ Fetch Students Error:", error);
-        res.status(500).json({ message: "Error fetching students" });
+        res.status(500).json({ message: 'Error fetching students', error: error.message });
     }
 });
 
-// 3. Update a Student
-app.put('/api/students/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log(`📝 Updating student: ${id}`);
+// Add a new student
+app.post('/api/sections/:sectionId/students', verifyToken, async (req, res) => {
+    try {
+        const { studentId, firstName, lastName } = req.body;
+        const newStudent = new Student({ 
+            userId: req.userId, 
+            sectionId: req.params.sectionId, 
+            studentId, 
+            firstName, 
+            lastName 
+        });
+        await newStudent.save();
+        res.status(201).json(newStudent);
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'Student ID already exists in this section.' });
+        }
+        res.status(500).json({ message: 'Error creating student', error: error.message });
+    }
+});
+
+// ==========================================
+// 7. DATA RETRIEVAL (Load Gradesheet)
+// ==========================================
+
+app.get('/api/gradesheet/:sectionId', verifyToken, async (req, res) => {
+    if (DB_MODE !== 'ONLINE') {
+        return res.status(200).json({ message: 'Load skipped (Offline Mode)', data: {} });
+    }
+    try {
+        const gradesheetData = await GradesheetData.findOne({ 
+            userId: req.userId, 
+            sectionId: req.params.sectionId 
+        });
+
+        if (gradesheetData) {
+            console.log(`✅ MongoDB Load Success: Gradesheet data for section ${req.params.sectionId} retrieved.`);
+            res.json({ message: 'Data loaded successfully', data: gradesheetData });
+        } else {
+            console.log(`⚠️ MongoDB Load Warning: No existing gradesheet data found for section ${req.params.sectionId}.`);
+            res.status(200).json({ message: 'No existing data', data: {} });
+        }
+    } catch (error) {
+        console.error("❌ MongoDB Load Error:", error.message);
+        res.status(500).json({ message: "Error loading data", error: error.message });
+    }
+});
+
+// ==========================================
+// 8. DATA SYNCHRONIZATION (Sync-Now)
+// ==========================================
+
+app.post('/api/sync-now', verifyToken, async (req, res) => {
+    if (DB_MODE !== 'ONLINE') {
+        console.log('⚠️ Sync blocked: Running in OFFLINE mode.');
+        return res.status(200).json({ message: 'Sync skipped (Offline Mode)' });
+    }
     
     try {
-        const updatedStudent = await Student.findOneAndUpdate(
-            { id },
-            req.body,
-            { new: true }
+        const { userId, sectionId, attendance, maxScores, quizCols, actCols, midtermScores, finalsScores } = req.body;
+
+        // Sanitize scores to ensure only non-null objects are stored
+        const safeMidtermScores = midtermScores || {};
+        const safeFinalsScores = finalsScores || {};
+        
+        // ADDED DEBUG LOG: Check received record counts for Midterm and Finals
+        const midCount = Object.keys(safeMidtermScores).length;
+        const finCount = Object.keys(safeFinalsScores).length;
+        console.log(`DEBUG (Sync): Received ${midCount} midterm records and ${finCount} finals records.`);
+
+        const updateData = {
+            attendance: attendance || {},
+            maxScores: maxScores || {},
+            quizCols: quizCols || [],
+            actCols: actCols || [],
+            // Set the new separate score fields
+            midtermScores: safeMidtermScores, 
+            finalsScores: safeFinalsScores,
+            updatedAt: Date.now(),
+        };
+
+        // Attempt to find and update the existing document
+        const existingData = await GradesheetData.findOneAndUpdate(
+            { userId, sectionId },
+            { $set: updateData },
+            { new: true, upsert: true } // Upsert: Create a new document if none exists
         );
-        
-        if (!updatedStudent) {
-            return res.status(404).json({ message: 'Student not found' });
+
+        if (existingData) {
+            // ADDED DEBUG LOG: Confirms successful MongoDB operation
+            const isNew = existingData.createdAt.getTime() === existingData.updatedAt.getTime();
+            console.log(`✅ MongoDB Sync Success: Gradesheet data for section ${sectionId} ${isNew ? 'created (upsert)' : 'updated'}.`);
+            res.json({ message: 'Sync successful', data: existingData });
+        } else {
+            // This should rarely happen due to upsert: true, but good practice
+            console.log(`❌ MongoDB Sync Failure: Could not find or create gradesheet data for section ${sectionId}.`);
+            res.status(500).json({ message: 'Sync failed: Database error' });
         }
-        
-        console.log(`✅ Student Updated: ${updatedStudent.name}`);
-        res.json(updatedStudent);
+
     } catch (error) {
-        console.error("❌ Update Student Error:", error);
-        res.status(500).json({ message: "Error updating student" });
+        // ADDED DEBUG LOG: Catches and logs any database query errors
+        console.error("❌ MongoDB Sync Error:", error.message); 
+        res.status(500).json({ message: "Error syncing data", error: error.message });
     }
 });
 
-// 4. Delete a Student
-app.delete('/api/students/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log(`🗑️ Deleting student: ${id}`);
-    
-    try {
-        const deletedStudent = await Student.findOneAndDelete({ id });
-        
-        if (!deletedStudent) {
-            return res.status(404).json({ message: 'Student not found' });
-        }
-        
-        console.log(`✅ Student Deleted: ${deletedStudent.name}`);
-        res.json({ message: 'Student deleted successfully', student: deletedStudent });
-    } catch (error) {
-        console.error("❌ Delete Student Error:", error);
-        res.status(500).json({ message: "Error deleting student" });
-    }
-});
 
-// --- START SERVER ---
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// ==========================================
+// 9. START SERVER
+// ==========================================
+
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});
