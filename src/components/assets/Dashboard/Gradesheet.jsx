@@ -3,6 +3,10 @@
 import React from 'react';
 import './MultiPageGS.css';
 
+// --- CONSTANTS (Required for rendering headers) ---
+const REC_COLS = [{ id: 'r1', label: 'R1' }]; 
+const EXAM_COLS = [{ id: 'exam', label: 'Major Exam' }]; 
+
 // --- HELPER: Grade Calculation (Exported for reuse if needed) ---
 export const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentActCols, recMax, examMax) => {
     // Recalculate MAX points based on current dynamic columns
@@ -61,8 +65,8 @@ export const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentAc
     return Math.min(100, Math.max(0, termGrade)); // Cap at 100%
 };
 
+
 // --- COMPONENT: Side Cards (Composition & Grading Scale) ---
-// Not exported as default, but exported via alias at the bottom
 const GradesheetSideCards = () => {
     return (
         <div className="mp-cards-container">
@@ -93,7 +97,7 @@ const GradesheetSideCards = () => {
     );
 };
 
-// --- COMPONENT: Main Gradesheet Table ---
+// --- COMPONENT: Main Gradesheet Summary Table ---
 const GradesheetTable = ({ 
     students, 
     studentScores, 
@@ -171,8 +175,204 @@ const GradesheetTable = ({
     );
 };
 
-// --- NEW MAIN EXPORT COMPONENT (Default export) ---
-// This component encapsulates the GradesheetTable for rendering.
+// --- UTILITY COMPONENT: Max Score Input (Moved from MultiPageGS.jsx) ---
+const MaxScoreInput = ({ value, type, id, onChange }) => (
+    <input 
+        type="number"
+        className="mp-table-input mp-max-score-input"
+        value={value === 0 ? '' : value}
+        onChange={(e) => onChange(type, id, e.target.value)}
+        min="0"
+        style={{textAlign: 'center', width: '90%'}}
+    />
+);
+
+// --- COMPONENT: Midterm/Finals Records Table (Moved/Refactored from MultiPageGS.jsx) ---
+export const RecordsTableComponent = ({ 
+    isMidterm, 
+    students, 
+    studentScores, 
+    quizCols, 
+    actCols, 
+    recMax, 
+    examMax, 
+    handleMaxScoreChange, // Handler for Max Score
+    handleScoreChange,    // Handler for Student Score
+    searchTerm 
+}) => {
+    const filteredStudents = students; // Students are already filtered by the parent component
+    
+    const examLabel = isMidterm ? 'Mid Exam' : 'Final Exam';
+    const dynamicActCols = isMidterm ? actCols : actCols.map(c => ({...c, label: c.label.replace('ACT', 'LAB')}));
+    
+    const totalCols = 6 + quizCols.length + actCols.length; 
+
+    return (
+        <table className="mp-table">
+            <thead>
+                <tr>
+                    <th rowSpan="3" className="sticky-col col-no">No.</th>
+                    <th rowSpan="3" className="sticky-col col-id">Student ID</th>
+                    <th rowSpan="3" className="sticky-col col-name">Student Name</th>
+                    <th className="sticky-col col-grade header-category-green">CATEGORY</th>
+                    
+                    <th colSpan={quizCols.length} className="header-category-orange">Quiz (15%)</th>
+                    <th colSpan={dynamicActCols.length} className="header-category-orange">{isMidterm ? 'Activity (35%)' : 'Assignment (25%)'}</th>
+                    <th colSpan={REC_COLS.length} className="header-category-orange">{isMidterm ? 'Recitation (10%)' : 'Recitation (20%)'}</th>
+                    <th colSpan={EXAM_COLS.length} className="header-category-orange">Exam (40%)</th>
+                </tr>
+
+                <tr>
+                    <th className="sticky-col col-grade header-midterm-green">
+                        {isMidterm ? 'Midterm' : 'Finals'}<br/>Percentage
+                    </th>
+                    {quizCols.map(c => <th key={c.id}>{c.label}</th>)}
+                    {dynamicActCols.map(c => <th key={c.id}>{c.label}</th>)}
+                    {REC_COLS.map(c => <th key={c.id}>{c.label}</th>)}
+                    <th>{examLabel}</th>
+                </tr>
+
+                {/* ROW FOR EDITABLE MAX SCORES */}
+                <tr>
+                    <th className="sticky-col col-grade bg-green-soft">100%</th>
+                    {/* Editable Quiz Max Scores */}
+                    {quizCols.map(c => (
+                        <th key={c.id}>
+                            <MaxScoreInput 
+                                value={c.max} 
+                                type="quiz" 
+                                id={c.id} 
+                                onChange={handleMaxScoreChange} 
+                            />
+                        </th>
+                    ))} 
+                    {/* Editable Activity/Lab Max Scores */}
+                    {actCols.map(c => (
+                        <th key={c.id}>
+                            <MaxScoreInput 
+                                value={c.max} 
+                                type="act" 
+                                id={c.id} 
+                                onChange={handleMaxScoreChange} 
+                            />
+                        </th>
+                    ))} 
+                    {/* Editable Recitation Max Score */}
+                    {REC_COLS.map(c => (
+                        <th key={c.id}>
+                            <MaxScoreInput 
+                                value={recMax} 
+                                type="rec" 
+                                id={c.id}
+                                onChange={handleMaxScoreChange} 
+                            />
+                        </th>
+                    ))}
+                    {/* Editable Exam Max Score */}
+                    {EXAM_COLS.map(c => (
+                        <th key={c.id}>
+                            <MaxScoreInput 
+                                value={examMax} 
+                                type="exam" 
+                                id={c.id}
+                                onChange={handleMaxScoreChange} 
+                            />
+                        </th>
+                    ))}
+                </tr>
+            </thead>
+            
+            <tbody>
+                {filteredStudents.length === 0 ? (
+                    <tr><td colSpan={totalCols} style={{padding: '2rem', textAlign:'center'}}>No students found matching "{searchTerm}".</td></tr>
+                ) : (
+                    filteredStudents.map((student, index) => {
+                        const scores = studentScores[student.id] || {};
+                        const termPercentage = calculateTermGrade(scores, isMidterm, quizCols, actCols, recMax, examMax).toFixed(2);
+                        
+                        return (
+                            <tr key={student.id}>
+                                <td className="sticky-col col-no center-text">{index + 1}</td>
+                                <td className="sticky-col col-id center-text">{student.id}</td>
+                                <td className="sticky-col col-name" style={{fontWeight:'600', paddingLeft:'8px'}}>{student.name}</td>
+                                <td className="sticky-col col-grade bg-green-soft">{termPercentage}</td>
+
+                                {/* Quiz Scores */}
+                                {quizCols.map(c => (
+                                    <td key={c.id}>
+                                        <input 
+                                            type="number" 
+                                            className="mp-table-input" 
+                                            value={scores[c.id] || ''} 
+                                            onChange={(e) => handleScoreChange(student.id, c.id, e.target.value)}
+                                            max={c.max} 
+                                            min="0"
+                                        />
+                                    </td>
+                                ))}
+
+                                {/* Activity/Lab Scores */}
+                                {actCols.map(c => {
+                                    const assessmentId = isMidterm ? c.id : c.id.replace('act', 'lab');
+                                    
+                                    return (
+                                        <td key={c.id}>
+                                            <input 
+                                                type="number" 
+                                                className="mp-table-input" 
+                                                value={scores[assessmentId] || ''} 
+                                                onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
+                                                max={c.max} 
+                                                min="0"
+                                            />
+                                        </td>
+                                    );
+                                })}
+
+                                {/* Recitation Score */}
+                                {REC_COLS.map(c => {
+                                    const assessmentId = isMidterm ? 'r1_mid' : 'r1_fin';
+                                    return (
+                                        <td key={c.id}>
+                                            <input 
+                                                type="number" 
+                                                className="mp-table-input" 
+                                                value={scores[assessmentId] || ''} 
+                                                onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
+                                                max={recMax} 
+                                                min="0"
+                                            />
+                                        </td>
+                                    );
+                                })}
+
+                                {/* Exam Score */}
+                                {EXAM_COLS.map(c => {
+                                    const assessmentId = isMidterm ? 'exam_mid' : 'exam_fin';
+                                    return (
+                                        <td key={c.id}>
+                                            <input 
+                                                type="number" 
+                                                className="mp-table-input" 
+                                                value={scores[assessmentId] || ''} 
+                                                onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
+                                                max={examMax} 
+                                                min="0"
+                                            />
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        );
+                    })
+                )}
+            </tbody>
+        </table>
+    );
+};
+
+
+// --- NEW MAIN EXPORT COMPONENT (Default export for Gradesheet Summary) ---
 const GradesheetView = (props) => {
     return (
         <div className="mp-table-container">

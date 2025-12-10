@@ -5,8 +5,8 @@ import './MultiPageGS.css';
 import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 import { ActivityModal } from './ModalComponents';
 // ---------------------------------------------
-// NEW IMPORT: GradesheetView (default), GradesheetSideCardsExport, and calculateTermGrade helper
-import GradesheetView, { GradesheetSideCardsExport, calculateTermGrade } from './Gradesheet';
+// UPDATED IMPORT: Import all necessary components and helpers from Gradesheet.jsx
+import GradesheetView, { GradesheetSideCardsExport, calculateTermGrade, RecordsTableComponent } from './Gradesheet';
 // ---------------------------------------------
 
 // --- ICONS ---
@@ -33,8 +33,7 @@ const INITIAL_ACT_COLS = [
     { id: 'act3', label: 'ACT 3', max: 50 },
     { id: 'act4', label: 'ACT 4', max: 50 }, 
 ];
-const REC_COLS = [{ id: 'r1', label: 'R1' }]; 
-const EXAM_COLS = [{ id: 'exam', label: 'Major Exam' }]; 
+// REMOVED REC_COLS and EXAM_COLS constants (now in Gradesheet.jsx)
 
 // --- MOCK DATES FOR ATTENDANCE ---
 const MIDTERM_DATES = ['Sept 4', 'Sept 11', 'Sept 18', 'Sept 25', 'Oct 2', 'Oct 9'];
@@ -72,24 +71,24 @@ const initializeMaxScore = (key, initialMax) => {
     return initialMax;
 };
 
-// --- NEW HELPER: Persistence Loader for Attendance (WITH DEBUG LOG) ---
+// --- HELPER: Persistence Loader for Attendance ---
 const initializeAttendance = () => {
     const savedAttendanceJSON = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
     if (savedAttendanceJSON) {
         try {
             const data = JSON.parse(savedAttendanceJSON);
-            console.log("DEBUG (Attendance): Loaded attendance data from localStorage:", data); // ADDED DEBUG LOG: LOAD
+            console.log("DEBUG (Attendance): Loaded attendance data from localStorage:", data);
             return data;
         } catch (e) {
             console.error("Could not parse saved attendance data:", e);
         }
     }
-    console.log("DEBUG (Attendance): No attendance data found in localStorage. Initializing empty state."); // ADDED DEBUG LOG: NO DATA FOUND
+    console.log("DEBUG (Attendance): No attendance data found in localStorage. Initializing empty state.");
     return {};
 };
 
 
-// --- HELPER: Initialize Score State (Handles initial load from storage OR creating new placeholders) ---
+// --- HELPER: Initialize Score State ---
 const initializeScores = (students, currentQuizCols, currentActCols) => {
     const savedScoresJSON = localStorage.getItem(GRADES_STORAGE_KEY);
     let savedScores = {};
@@ -124,13 +123,7 @@ const initializeScores = (students, currentQuizCols, currentActCols) => {
     return initialScores;
 };
 
-
-// --- HELPER: Grade Calculation based on the user's formula (REMOVED - now imported from Gradesheet.jsx) ---
-// const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentActCols, recMax, examMax) => {
-//     // ... (REMOVED LOGIC)
-// };
-
-
+// --- AttendanceCell component remains unchanged ---
 const AttendanceCell = ({ status, onChange }) => {
     let className = 'mp-status-pill';
     let content = status;
@@ -154,17 +147,7 @@ const AttendanceCell = ({ status, onChange }) => {
     );
 };
 
-// Component for the editable max score input field
-const MaxScoreInput = ({ value, type, id, onChange }) => (
-    <input 
-        type="number"
-        className="mp-table-input mp-max-score-input"
-        value={value === 0 ? '' : value} // Show empty string if value is 0
-        onChange={(e) => onChange(type, id, e.target.value)}
-        min="0"
-        style={{textAlign: 'center', width: '90%'}}
-    />
-);
+// REMOVED MaxScoreInput (now imported via RecordsTableComponent)
 
 
 const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', title = 'Midterm Grade', students = [], sectionData }) => {
@@ -195,7 +178,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     // STATE: Holds the editable scores
     const [studentScores, setStudentScores] = useState(() => initializeScores(students, quizCols, actCols));
     // STATE: Placeholder for Attendance Data
-    const [localAttendanceData, setLocalAttendanceData] = useState(() => initializeAttendance()); // MODIFIED: Use initializeAttendance
+    const [localAttendanceData, setLocalAttendanceData] = useState(() => initializeAttendance());
     
     // Effect to persist studentScores whenever it changes (CRUCIAL for grade persistence)
     useEffect(() => {
@@ -217,11 +200,11 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     useEffect(() => { try { localStorage.setItem(REC_MAX_KEY, String(recMax)); } catch (e) { console.error("Could not save recMax to localStorage:", e); } }, [recMax]);
     useEffect(() => { try { localStorage.setItem(EXAM_MAX_KEY, String(examMax)); } catch (e) { console.error("Could not save examMax to localStorage:", e); } }, [examMax]);
 
-    // --- NEW EFFECT: To persist attendance data whenever it changes (WITH DEBUG LOG) ---
+    // --- EFFECT: To persist attendance data whenever it changes ---
     useEffect(() => {
         try {
             localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(localAttendanceData));
-            console.log("DEBUG (Attendance): Saved attendance data to localStorage."); // ADDED DEBUG LOG: SAVE
+            console.log("DEBUG (Attendance): Saved attendance data to localStorage.");
         } catch (e) {
             console.error("Could not save attendance data to localStorage:", e);
         }
@@ -289,14 +272,14 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     };
 
-    // Handler for Attendance cell changes (WITH DEBUG LOG)
+    // Handler for Attendance cell changes
     const handleAttendanceCellChange = (studentId, dateIndex, status) => {
         setLocalAttendanceData(prevData => {
             const currentTermDates = attendanceTerm === 'Midterm Attendance' ? MIDTERM_DATES : FINALS_DATES;
             const key = `${studentId}-${currentTermDates[dateIndex]}`;
             
             const newData = { ...prevData, [key]: status };
-            console.log(`DEBUG (Attendance): Updated attendance status for ${studentId} on ${currentTermDates[dateIndex]} to ${status}.`); // ADDED DEBUG LOG: CHANGE
+            console.log(`DEBUG (Attendance): Updated attendance status for ${studentId} on ${currentTermDates[dateIndex]} to ${status}.`);
             return newData;
         });
     };
@@ -321,7 +304,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     }, [isRestoreMenuOpen]);
 
 
-    // --- UPDATE: Handle Remove Column (Moves to removed state) ---
+    // --- Handle Remove Column (Moves to removed state) ---
     const handleRemoveColumn = (type, id, label) => {
         if (window.confirm(`Are you sure you want to remove ${label}? The scores in this column will be preserved for restoration.`)) {
             if (type === 'quiz') {
@@ -345,7 +328,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     };
 
-    // --- NEW: Handle Restore Column (Moves from removed state back to active state) ---
+    // --- Handle Restore Column (Moves from removed state back to active state) ---
     const handleRestoreColumn = (type, id) => {
         if (type === 'quiz') {
             setRemovedQuizCols(prevRemoved => {
@@ -379,12 +362,10 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         setIsRestoreMenuOpen(false); // Close menu after selection
     };
 
-    // --- NEW: Add Column Handlers (No change, just keeping for context) ---
+    // --- Add Column Handlers ---
     const handleAddAssessment = (assessmentType) => {
         let type;
-        if (currentView.includes('Midterm')) {
-            type = assessmentType === 'Quiz' ? 'quiz' : 'activity';
-        } else if (currentView.includes('Finals')) {
+        if (currentView.includes('Midterm') || currentView.includes('Finals')) {
             type = assessmentType === 'Quiz' ? 'quiz' : 'activity';
         }
         
@@ -404,7 +385,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     };
     
-    // ... (handleExport function remains unchanged as it relies on the state being correct)
+    // --- handleExport (Uses imported calculateTermGrade) ---
     const handleExport = () => {
         let csvContent = '';
         let fileName = '';
@@ -412,7 +393,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         const BOM = "\ufeff"; 
 
         if (currentView === 'Gradesheet') {
-            // ... Gradesheet export logic (unchanged)
+            // ... Gradesheet export logic
             fileName = 'Summary_Gradesheet.csv';
             csvContent += "Student ID,Student Name,Midterm,40%,Final,60%,FINAL GRADE,EQVT GRADE,REMARKS\n";
             studentsToExport.forEach(student => {
@@ -436,7 +417,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
             });
 
         } else if (currentView === 'Attendance') {
-            // ... Attendance export logic (unchanged)
+            // ... Attendance export logic
             fileName = `${attendanceTerm.replace(/\s/g, '_')}_Record.csv`;
             const dates = attendanceTerm === 'Midterm Attendance' ? MIDTERM_DATES : FINALS_DATES;
             
@@ -457,7 +438,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
             });
             
         } else { // Midterm/Finals Records
-            // ... Records export logic (unchanged)
+            // ... Records export logic
             const isMidterm = currentView.includes('Midterm');
             fileName = `${isMidterm ? 'Midterm' : 'Finals'}_Records.csv`;
             
@@ -528,7 +509,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                             let absences = 0;
                             const studentAttendanceStatuses = dates.map((date, i) => {
                                 const key = `${student.id}-${date}`;
-                                const mockStatus = localAttendanceData[key] || 'P'; // Changed from Math.random() to always default to 'P' on first load
+                                const mockStatus = localAttendanceData[key] || 'P'; 
                                 if (mockStatus === 'A') absences++;
                                 return mockStatus;
                             });
@@ -562,183 +543,10 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         );
     };
 
-    // --- REMOVED: renderGradesheetTable function was deleted as it is now in Gradesheet.jsx ---
+    // --- REMOVED renderGradesheetTable and renderRecordsTable ---
     
-    // ... (renderRecordsTable remains unchanged)
-    const renderRecordsTable = () => {
-        const isMidterm = currentView.includes('Midterm');
-        const examLabel = isMidterm ? 'Mid Exam' : 'Final Exam';
-        
-        const dynamicActCols = isMidterm ? actCols : actCols.map(c => ({...c, label: c.label.replace('ACT', 'LAB')}));
-        
-        const totalCols = 6 + quizCols.length + actCols.length;
-
-        return (
-            <table className="mp-table">
-                <thead>
-                    <tr>
-                        <th rowSpan="3" className="sticky-col col-no">No.</th>
-                        <th rowSpan="3" className="sticky-col col-id">Student ID</th>
-                        <th rowSpan="3" className="sticky-col col-name">Student Name</th>
-                        <th className="sticky-col col-grade header-category-green">CATEGORY</th>
-                        
-                        <th colSpan={quizCols.length} className="header-category-orange">Quiz (15%)</th>
-                        <th colSpan={dynamicActCols.length} className="header-category-orange">{isMidterm ? 'Activity (35%)' : 'Assignment (25%)'}</th>
-                        <th colSpan={REC_COLS.length} className="header-category-orange">{isMidterm ? 'Recitation (10%)' : 'Recitation (20%)'}</th>
-                        <th colSpan={EXAM_COLS.length} className="header-category-orange">Exam (40%)</th>
-                    </tr>
-
-                    <tr>
-                        <th className="sticky-col col-grade header-midterm-green">
-                            {isMidterm ? 'Midterm' : 'Finals'}<br/>Percentage
-                        </th>
-                        {quizCols.map(c => <th key={c.id}>{c.label}</th>)}
-                        {dynamicActCols.map(c => <th key={c.id}>{c.label}</th>)}
-                        {REC_COLS.map(c => <th key={c.id}>{c.label}</th>)}
-                        <th>{examLabel}</th>
-                    </tr>
-
-                    {/* ROW FOR EDITABLE MAX SCORES */}
-                    <tr>
-                        <th className="sticky-col col-grade bg-green-soft">100%</th>
-                        {/* Editable Quiz Max Scores */}
-                        {quizCols.map(c => (
-                            <th key={c.id}>
-                                <MaxScoreInput 
-                                    value={c.max} 
-                                    type="quiz" 
-                                    id={c.id} 
-                                    onChange={handleMaxScoreChange} 
-                                />
-                            </th>
-                        ))} 
-                        {/* Editable Activity/Lab Max Scores */}
-                        {actCols.map(c => (
-                            <th key={c.id}>
-                                <MaxScoreInput 
-                                    value={c.max} 
-                                    type="act" 
-                                    id={c.id} 
-                                    onChange={handleMaxScoreChange} 
-                                />
-                            </th>
-                        ))} 
-                        {/* Editable Recitation Max Score */}
-                        {REC_COLS.map(c => (
-                            <th key={c.id}>
-                                <MaxScoreInput 
-                                    value={recMax} 
-                                    type="rec" 
-                                    id={c.id}
-                                    onChange={handleMaxScoreChange} 
-                                />
-                            </th>
-                        ))}
-                        {/* Editable Exam Max Score */}
-                        {EXAM_COLS.map(c => (
-                            <th key={c.id}>
-                                <MaxScoreInput 
-                                    value={examMax} 
-                                    type="exam" 
-                                    id={c.id}
-                                    onChange={handleMaxScoreChange} 
-                                />
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                
-                <tbody>
-                    {filteredStudents.length === 0 ? (
-                        <tr><td colSpan={totalCols} style={{padding: '2rem', textAlign:'center'}}>No students found matching "{searchTerm}".</td></tr>
-                    ) : (
-                        filteredStudents.map((student, index) => {
-                            const scores = studentScores[student.id] || {};
-                            const termPercentage = calculateTermGrade(scores, isMidterm, quizCols, actCols, recMax, examMax).toFixed(2);
-                            
-                            return (
-                                <tr key={student.id}>
-                                    <td className="sticky-col col-no center-text">{index + 1}</td>
-                                    <td className="sticky-col col-id center-text">{student.id}</td>
-                                    <td className="sticky-col col-name" style={{fontWeight:'600', paddingLeft:'8px'}}>{student.name}</td>
-                                    <td className="sticky-col col-grade bg-green-soft">{termPercentage}</td>
-
-                                    {/* Quiz Scores (Shared IDs) */}
-                                    {quizCols.map(c => (
-                                        <td key={c.id}>
-                                            <input 
-                                                type="number" 
-                                                className="mp-table-input" 
-                                                value={scores[c.id] || ''} 
-                                                onChange={(e) => handleScoreChange(student.id, c.id, e.target.value)}
-                                                max={c.max} 
-                                                min="0"
-                                            />
-                                        </td>
-                                    ))}
-
-                                    {/* Activity/Lab Scores (Dynamic IDs) */}
-                                    {actCols.map(c => {
-                                        const assessmentId = isMidterm ? c.id : c.id.replace('act', 'lab');
-                                        
-                                        return (
-                                            <td key={c.id}>
-                                                <input 
-                                                    type="number" 
-                                                    className="mp-table-input" 
-                                                    value={scores[assessmentId] || ''} 
-                                                    onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
-                                                    max={c.max} 
-                                                    min="0"
-                                                />
-                                            </td>
-                                        );
-                                    })}
-
-                                    {/* Recitation Score (Dynamic IDs) */}
-                                    {REC_COLS.map(c => {
-                                        const assessmentId = isMidterm ? 'r1_mid' : 'r1_fin';
-                                        return (
-                                            <td key={c.id}>
-                                                <input 
-                                                    type="number" 
-                                                    className="mp-table-input" 
-                                                    value={scores[assessmentId] || ''} 
-                                                    onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
-                                                    max={recMax} 
-                                                    min="0"
-                                                />
-                                            </td>
-                                        );
-                                    })}
-
-                                    {/* Exam Score (Dynamic IDs) */}
-                                    {EXAM_COLS.map(c => {
-                                        const assessmentId = isMidterm ? 'exam_mid' : 'exam_fin';
-                                        return (
-                                            <td key={c.id}>
-                                                <input 
-                                                    type="number" 
-                                                    className="mp-table-input" 
-                                                    value={scores[assessmentId] || ''} 
-                                                    onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
-                                                    max={examMax} 
-                                                    min="0"
-                                                />
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            );
-                        })
-                    )}
-                </tbody>
-            </table>
-        );
-    };
-
+    // --- UPDATED: renderContent ---
     const renderContent = () => {
-        // --- UPDATED: Use the imported GradesheetView component ---
         if (currentView === 'Gradesheet') {
             return (
                 <GradesheetView
@@ -752,10 +560,27 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
             );
         }
         if (currentView === 'Attendance') return renderAttendanceTable();
-        return renderRecordsTable();
+        
+        // --- NEW LOGIC: Use the imported RecordsTableComponent ---
+        const isMidterm = currentView === 'Midterm Records';
+        
+        return (
+            <RecordsTableComponent
+                isMidterm={isMidterm}
+                students={filteredStudents}
+                studentScores={studentScores}
+                quizCols={quizCols}
+                actCols={actCols}
+                recMax={recMax}
+                examMax={examMax}
+                handleMaxScoreChange={handleMaxScoreChange}
+                handleScoreChange={handleScoreChange}
+                searchTerm={searchTerm}
+            />
+        );
     };
 
-    // ... (renderSideCards)
+    // ... (renderSideCards remains unchanged)
     const renderSideCards = () => {
         const totalQuizMax = quizCols.reduce((sum, c) => sum + c.max, 0); 
         const totalActLabMax = actCols.reduce((sum, c) => sum + c.max, 0); 
@@ -813,7 +638,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
 
             <main className="mp-main" style={{ marginLeft: sidebarWidth }}>
                 
-                {/* HEADER (UPDATED mp-header-center) */}
+                {/* HEADER */}
                 <div className="mp-header-top">
                     
                     {/* MODIFIED: mp-header-left now contains the back button next to the title */}

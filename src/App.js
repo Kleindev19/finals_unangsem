@@ -8,7 +8,7 @@ import LoginSignUp from './components/assets/Loginsignin/LoginSignUp.jsx';
 import ReportsLayout from './components/assets/Reports/ReportsLayout.jsx'; 
 import ProfileLayout from './components/assets/Profile/ProfileLayout.jsx'; 
 import ViewStuds from './components/assets/Dashboard/ViewStuds.jsx';
-import Gradesheet from './components/assets/Dashboard/GradeSheet.jsx';
+import Gradesheet from './components/assets/Dashboard/Gradesheet.jsx';
 import MultiPageGS from './components/assets/Dashboard/MultiPageGS.jsx'; 
 import VReports from './components/assets/Reports/VReports.jsx'; 
 import ViewRD from './components/assets/Reports/ViewRD.jsx'; 
