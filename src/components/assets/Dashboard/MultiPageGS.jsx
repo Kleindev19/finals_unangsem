@@ -15,19 +15,23 @@ const Search = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" wi
 const ChevronDown = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
 const Trash = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>);
 const RotateCcw = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>);
+// NEW ICON: Calendar
+const Calendar = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
+
 
 // --- INITIAL DATA STRUCTURES (Used for initial load only) ---
+// ADD 'date' FIELD TO INITIAL COLUMNS FOR CONSISTENCY
 const INITIAL_QUIZ_COLS = [
-    { id: 'q1', label: 'Q1', max: 20 },
-    { id: 'q2', label: 'Q2', max: 20 },
-    { id: 'q3', label: 'Q3', max: 20 },
-    { id: 'q4', label: 'Q4', max: 25 }, 
+    { id: 'q1', label: 'Q1', max: 20, date: '2025-10-10' },
+    { id: 'q2', label: 'Q2', max: 20, date: '2025-10-17' },
+    { id: 'q3', label: 'Q3', max: 20, date: '2025-10-24' },
+    { id: 'q4', label: 'Q4', max: 25, date: '2025-10-31' }, 
 ];
 const INITIAL_ACT_COLS = [
-    { id: 'act1', label: 'ACT 1', max: 30 },
-    { id: 'act2', label: 'ACT 2', max: 30 },
-    { id: 'act3', label: 'ACT 3', max: 50 },
-    { id: 'act4', label: 'ACT 4', max: 50 }, 
+    { id: 'act1', label: 'ACT 1', max: 30, date: '2025-10-01' },
+    { id: 'act2', label: 'ACT 2', max: 30, date: '2025-10-08' },
+    { id: 'act3', label: 'ACT 3', max: 50, date: '2025-10-15' },
+    { id: 'act4', label: 'ACT 4', max: 50, date: '2025-10-22' }, 
 ];
 const REC_COLS = [{ id: 'r1', label: 'R1' }]; 
 const EXAM_COLS = [{ id: 'exam', label: 'Major Exam' }]; 
@@ -51,7 +55,12 @@ const initializeCols = (key, initialData) => {
     const savedCols = localStorage.getItem(key);
     if (savedCols) {
         try {
-            return JSON.parse(savedCols);
+            // Ensure loaded columns have a 'date' property, default to empty string if not present
+            const parsedCols = JSON.parse(savedCols);
+            return parsedCols.map(col => ({
+                ...col,
+                date: col.date || '', // Add date property if missing
+            }));
         } catch (e) {
             console.error(`Could not parse saved columns for ${key}:`, e);
         }
@@ -68,24 +77,22 @@ const initializeMaxScore = (key, initialMax) => {
     return initialMax;
 };
 
-// --- NEW HELPER: Persistence Loader for Attendance (WITH DEBUG LOG) ---
+// --- NEW HELPER: Persistence Loader for Attendance ---
 const initializeAttendance = () => {
     const savedAttendanceJSON = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
     if (savedAttendanceJSON) {
         try {
             const data = JSON.parse(savedAttendanceJSON);
-            console.log("DEBUG (Attendance): Loaded attendance data from localStorage:", data); // ADDED DEBUG LOG: LOAD
             return data;
         } catch (e) {
             console.error("Could not parse saved attendance data:", e);
         }
     }
-    console.log("DEBUG (Attendance): No attendance data found in localStorage. Initializing empty state."); // ADDED DEBUG LOG: NO DATA FOUND
     return {};
 };
 
 
-// --- HELPER: Initialize Score State (Handles initial load from storage OR creating new placeholders) ---
+// --- HELPER: Initialize Score State ---
 const initializeScores = (students, currentQuizCols, currentActCols) => {
     const savedScoresJSON = localStorage.getItem(GRADES_STORAGE_KEY);
     let savedScores = {};
@@ -121,7 +128,7 @@ const initializeScores = (students, currentQuizCols, currentActCols) => {
 };
 
 
-// --- HELPER: Grade Calculation based on the user's formula (UPDATED to use dynamic cols and maxes) ---
+// --- HELPER: Grade Calculation based on the user's formula ---
 const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentActCols, recMax, examMax) => {
     // Recalculate MAX points based on current dynamic columns
     const MAX_QUIZ = currentQuizCols.reduce((sum, c) => sum + c.max, 0); 
@@ -236,6 +243,16 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     // STATE: TOGGLES FOR DROPDOWNS
     const [isRemoveMenuOpen, setIsRemoveMenuOpen] = useState(false);
     const [isRestoreMenuOpen, setIsRestoreMenuOpen] = useState(false); // NEW TOGGLE
+    
+    // NEW STATE: Toggle for the Add Assessment Dropdown
+    const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+    // NEW STATE: Form data for adding a new assessment
+    const [newAssessmentData, setNewAssessmentData] = useState({
+        type: 'Quiz',
+        maxScore: '', // Placeholder for number of items
+        date: '', // NEW: State for the selected date
+    });
+
 
     // STATES FOR STATIC ASSESSMENT MAX SCORES (Editable)
     const [recMax, setRecMax] = useState(() => initializeMaxScore(REC_MAX_KEY, 100));
@@ -244,7 +261,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     // STATE: Holds the editable scores
     const [studentScores, setStudentScores] = useState(() => initializeScores(students, quizCols, actCols));
     // STATE: Placeholder for Attendance Data
-    const [localAttendanceData, setLocalAttendanceData] = useState(() => initializeAttendance()); // MODIFIED: Use initializeAttendance
+    const [localAttendanceData, setLocalAttendanceData] = useState(() => initializeAttendance()); 
     
     // Effect to persist studentScores whenever it changes (CRUCIAL for grade persistence)
     useEffect(() => {
@@ -266,11 +283,10 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     useEffect(() => { try { localStorage.setItem(REC_MAX_KEY, String(recMax)); } catch (e) { console.error("Could not save recMax to localStorage:", e); } }, [recMax]);
     useEffect(() => { try { localStorage.setItem(EXAM_MAX_KEY, String(examMax)); } catch (e) { console.error("Could not save examMax to localStorage:", e); } }, [examMax]);
 
-    // --- NEW EFFECT: To persist attendance data whenever it changes (WITH DEBUG LOG) ---
+    // --- NEW EFFECT: To persist attendance data whenever it changes ---
     useEffect(() => {
         try {
             localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(localAttendanceData));
-            console.log("DEBUG (Attendance): Saved attendance data to localStorage."); // ADDED DEBUG LOG: SAVE
         } catch (e) {
             console.error("Could not save attendance data to localStorage:", e);
         }
@@ -338,14 +354,13 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     };
 
-    // Handler for Attendance cell changes (WITH DEBUG LOG)
+    // Handler for Attendance cell changes
     const handleAttendanceCellChange = (studentId, dateIndex, status) => {
         setLocalAttendanceData(prevData => {
             const currentTermDates = attendanceTerm === 'Midterm Attendance' ? MIDTERM_DATES : FINALS_DATES;
             const key = `${studentId}-${currentTermDates[dateIndex]}`;
             
             const newData = { ...prevData, [key]: status };
-            console.log(`DEBUG (Attendance): Updated attendance status for ${studentId} on ${currentTermDates[dateIndex]} to ${status}.`); // ADDED DEBUG LOG: CHANGE
             return newData;
         });
     };
@@ -359,14 +374,32 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     // --- End Filtering Logic ---
 
     // --- TOGGLE HANDLERS (for dropdown menus) ---
+    // Combined toggle handler for Add menu
+    const toggleAddMenu = useCallback(() => {
+        setIsAddMenuOpen(prev => !prev);
+        if (!isAddMenuOpen) {
+            // Reset form data when opening
+            setNewAssessmentData({ type: 'Quiz', maxScore: '', date: '' }); // RESET DATE TOO
+            // Close other menus
+            setIsRemoveMenuOpen(false);
+            setIsRestoreMenuOpen(false);
+        }
+    }, [isAddMenuOpen]);
+
     const toggleRemoveMenu = useCallback(() => {
         setIsRemoveMenuOpen(prev => !prev);
-        if (!isRemoveMenuOpen) setIsRestoreMenuOpen(false); // Close restore menu when opening remove
+        if (!isRemoveMenuOpen) {
+            setIsRestoreMenuOpen(false); // Close restore menu when opening remove
+            setIsAddMenuOpen(false); // Close add menu
+        }
     }, [isRemoveMenuOpen]);
 
     const toggleRestoreMenu = useCallback(() => {
         setIsRestoreMenuOpen(prev => !prev);
-        if (!isRestoreMenuOpen) setIsRemoveMenuOpen(false); // Close remove menu when opening restore
+        if (!isRestoreMenuOpen) {
+            setIsRemoveMenuOpen(false); // Close remove menu when opening restore
+            setIsAddMenuOpen(false); // Close add menu
+        }
     }, [isRestoreMenuOpen]);
 
 
@@ -428,31 +461,54 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         setIsRestoreMenuOpen(false); // Close menu after selection
     };
 
-    // --- NEW: Add Column Handlers (No change, just keeping for context) ---
-    const handleAddAssessment = (assessmentType) => {
-        let type;
-        if (currentView.includes('Midterm')) {
-            type = assessmentType === 'Quiz' ? 'quiz' : 'activity';
-        } else if (currentView.includes('Finals')) {
-            type = assessmentType === 'Quiz' ? 'quiz' : 'activity';
-        }
+    // --- MODIFIED: Add Column Handler (Uses the new form state, including date) ---
+    const handleAddAssessment = (event) => {
+        event.preventDefault(); // Prevent form submission if we wrap the button in a form
+        const { type, maxScore, date } = newAssessmentData;
+        const max = parseFloat(maxScore);
         
-        if (type === 'quiz') {
-            setQuizCols(prevCols => {
-                // Use timestamp for unique ID to avoid conflicts if user deletes/adds
+        if (isNaN(max) || max <= 0) {
+            alert("Please enter a valid number of items/max score greater than zero.");
+            return;
+        }
+
+        if (!date) {
+            alert("Please select a date for the assessment.");
+            return;
+        }
+
+        const assessmentType = type;
+        const isActivity = assessmentType === 'Activity' || assessmentType === 'Lab';
+        const collection = isActivity ? actCols : quizCols;
+        const setCollection = isActivity ? setActCols : setQuizCols;
+        const removedCollection = isActivity ? removedActCols : removedQuizCols;
+
+        // Determine the next index
+        const totalItems = collection.length + removedCollection.length;
+        const nextIndex = totalItems + 1;
+
+        if (!isActivity) {
+            // Quiz
+            setCollection(prevCols => {
                 const newId = `q${Date.now()}`;
-                const newIndex = prevCols.length + 1 + removedQuizCols.length; // Approximate number
-                return [...prevCols, { id: newId, label: `Q${newIndex}`, max: 20 }];
+                // ADD DATE HERE
+                return [...prevCols, { id: newId, label: `Q${nextIndex}`, max: max, date: date }];
             });
-        } else if (type === 'activity') {
-            setActCols(prevCols => {
+        } else {
+            // Activity / Lab
+            setCollection(prevCols => {
                 const newId = `act${Date.now()}`;
-                const newIndex = prevCols.length + 1 + removedActCols.length; // Approximate number
-                return [...prevCols, { id: newId, label: `ACT ${newIndex}`, max: 50 }]; 
+                const labelPrefix = currentView.includes('Midterm') ? 'ACT' : 'LAB';
+                // ADD DATE HERE
+                return [...prevCols, { id: newId, label: `${labelPrefix} ${nextIndex}`, max: max, date: date }]; 
             });
         }
+
+        // Close and reset
+        setIsAddMenuOpen(false);
+        setNewAssessmentData({ type: 'Quiz', maxScore: '', date: '' });
     };
-    
+
     // ... (handleExport function remains unchanged as it relies on the state being correct)
     const handleExport = () => {
         let csvContent = '';
@@ -547,8 +603,8 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     };
 
 
-    // --- RENDERERS (No change in rendering logic) ---
-    // ... (renderAttendanceTable remains unchanged)
+    // --- RENDERERS ---
+
     const renderAttendanceTable = () => {
         const isMidtermAtt = attendanceTerm === 'Midterm Attendance';
         const dates = isMidtermAtt ? MIDTERM_DATES : FINALS_DATES;
@@ -575,7 +631,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                             let absences = 0;
                             const studentAttendanceStatuses = dates.map((date, i) => {
                                 const key = `${student.id}-${date}`;
-                                const mockStatus = localAttendanceData[key] || 'P'; // Changed from Math.random() to always default to 'P' on first load
+                                const mockStatus = localAttendanceData[key] || 'P'; 
                                 if (mockStatus === 'A') absences++;
                                 return mockStatus;
                             });
@@ -609,7 +665,6 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         );
     };
 
-    // ... (renderGradesheetTable remains unchanged)
     const renderGradesheetTable = () => {
         return (
             <table className="mp-table mp-summary-table">
@@ -680,43 +735,53 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         );
     };
 
-    // ... (renderRecordsTable remains unchanged)
+    /**
+     * @SUMMARY: Renders the table for Midterm/Finals Records. 
+     * The Category row was removed and sticky columns were adjusted to rowSpan=2.
+     */
     const renderRecordsTable = () => {
         const isMidterm = currentView.includes('Midterm');
         const examLabel = isMidterm ? 'Mid Exam' : 'Final Exam';
         
         const dynamicActCols = isMidterm ? actCols : actCols.map(c => ({...c, label: c.label.replace('ACT', 'LAB')}));
         
-        const totalCols = 6 + quizCols.length + actCols.length;
+        // Calculate total columns for colspan in case of no students
+        const totalCols = 4 + quizCols.length + actCols.length + REC_COLS.length + EXAM_COLS.length; 
 
         return (
             <table className="mp-table">
                 <thead>
+                    {/* FIRST HEADER ROW (Labels) */}
                     <tr>
-                        <th rowSpan="3" className="sticky-col col-no">No.</th>
-                        <th rowSpan="3" className="sticky-col col-id">Student ID</th>
-                        <th rowSpan="3" className="sticky-col col-name">Student Name</th>
-                        <th className="sticky-col col-grade header-category-green">CATEGORY</th>
+                        {/* No., ID, Name - rowSpan="2" */}
+                        <th rowSpan="2" className="sticky-col col-no header-category-green">No.</th>
+                        <th rowSpan="2" className="sticky-col col-id header-category-green">Student ID</th>
+                        <th rowSpan="2" className="sticky-col col-name header-category-green">Student Name</th>
                         
-                        <th colSpan={quizCols.length} className="header-category-orange">Quiz (15%)</th>
-                        <th colSpan={dynamicActCols.length} className="header-category-orange">{isMidterm ? 'Activity (35%)' : 'Assignment (25%)'}</th>
-                        <th colSpan={REC_COLS.length} className="header-category-orange">{isMidterm ? 'Recitation (10%)' : 'Recitation (20%)'}</th>
-                        <th colSpan={EXAM_COLS.length} className="header-category-orange">Exam (40%)</th>
-                    </tr>
-
-                    <tr>
-                        <th className="sticky-col col-grade header-midterm-green">
+                        {/* Percentage Column - rowSpan="2" para hindi sumama sa scroll at masakop ang 100% label space */}
+                        <th rowSpan="2" className="sticky-col col-grade header-midterm-green">
                             {isMidterm ? 'Midterm' : 'Finals'}<br/>Percentage
                         </th>
-                        {quizCols.map(c => <th key={c.id}>{c.label}</th>)}
-                        {dynamicActCols.map(c => <th key={c.id}>{c.label}</th>)}
-                        {REC_COLS.map(c => <th key={c.id}>{c.label}</th>)}
-                        <th>{examLabel}</th>
+                        
+                        {/* Dynamic Column Headers (Hindi sticky) */}
+                        {quizCols.map(c => {
+                            // NEW: Add title attribute for tooltip (Quiz columns only)
+                            const tooltip = c.date ? `Date: ${new Date(c.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : c.label;
+                            return (
+                                <th key={c.id} className="header-category-orange" title={tooltip}>
+                                    {c.label}
+                                </th>
+                            );
+                        })}
+                        {dynamicActCols.map(c => <th key={c.id} className="header-category-orange">{c.label}</th>)}
+                        {REC_COLS.map(c => <th key={c.id} className="header-category-orange">{c.label}</th>)}
+                        <th className="header-category-orange">{examLabel}</th> 
                     </tr>
 
-                    {/* ROW FOR EDITABLE MAX SCORES */}
+                    {/* SECOND HEADER ROW (MAX SCORES) */}
                     <tr>
-                        <th className="sticky-col col-grade bg-green-soft">100%</th>
+                        {/* WALANG <th> DITO PARA SA STICKY COLUMNS dahil naka rowSpan="2" na sila */}
+                        
                         {/* Editable Quiz Max Scores */}
                         {quizCols.map(c => (
                             <th key={c.id}>
@@ -1004,27 +1069,79 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                 <div className="mp-toolbar">
                     <div className="mp-toolbar-left">
                         
-                        {/* 1. Show Add Assessment for Grade Views */}
+                        {/* 1. Show Add Assessment for Grade Views - CONSOLIDATED INTO DROPDOWN */}
                         {currentView !== 'Gradesheet' && currentView !== 'Attendance' && (
                             <>
-                                <button 
-                                    className="btn-add-assessment" 
-                                    onClick={() => handleAddAssessment('Quiz')}
-                                    title="Add New Quiz Column"
-                                >
-                                    <Plus size={18} /> Add Quiz
-                                </button>
-                                <button 
-                                    className="btn-add-assessment" 
-                                    onClick={() => handleAddAssessment('Activity')}
-                                    title={`Add New ${currentView.includes('Midterm') ? 'Activity' : 'Lab'} Column`}
-                                    style={{marginLeft: '8px'}}
-                                >
-                                    <Plus size={18} /> Add {currentView.includes('Midterm') ? 'Activity' : 'Lab'}
-                                </button>
+                                {/* --- NEW ADD ASSESSMENT DROPDOWN --- */}
+                                <div style={{position: 'relative', display: 'inline-block'}}>
+                                    <button 
+                                        className="btn-add-assessment" 
+                                        onClick={toggleAddMenu}
+                                        title="Add New Assessment Column"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+                                    >
+                                        <Plus size={18} /> Add Assessment <ChevronDown size={12} style={{strokeWidth: '3'}} />
+                                    </button>
 
-                                {/* --- REMOVE BUTTON WITH DROPDOWN --- */}
-                                <div style={{position: 'relative', display: 'inline-block', marginLeft: '8px'}}>
+                                    {/* ADD DROPDOWN MENU (MODIFIED) */}
+                                    {isAddMenuOpen && (
+                                        <div className="mp-add-dropdown">
+                                            <div className="mp-add-header">Add New Assessment</div>
+                                            <form onSubmit={handleAddAssessment}>
+                                                <div className="mp-form-group">
+                                                    <label htmlFor="assessmentType">Type:</label>
+                                                    <select 
+                                                        id="assessmentType"
+                                                        value={newAssessmentData.type}
+                                                        onChange={(e) => setNewAssessmentData({ ...newAssessmentData, type: e.target.value })}
+                                                        className="mp-dropdown-input"
+                                                    >
+                                                        <option value="Quiz">Quiz</option>
+                                                        <option value={currentView.includes('Midterm') ? 'Activity' : 'Lab'}>
+                                                            {currentView.includes('Midterm') ? 'Activity' : 'Lab'}
+                                                        </option>
+                                                    </select>
+                                                    {/* NEW: Dropdown Icon for visualization (next to the dropdown itself) */}
+                                                    <ChevronDown className="mp-selector-chevron" style={{right: '18px', top: '34px', width: '12px', height: '12px', strokeWidth: '3'}} />
+                                                </div>
+                                                
+                                                {/* NEW DATE INPUT FIELD */}
+                                                <div className="mp-form-group">
+                                                    <label htmlFor="assessmentDate">Date: <Calendar className="w-3 h-3 inline ml-1" style={{ width: '14px', height: '14px', marginBottom: '-2px'}}/></label>
+                                                    <input
+                                                        type="date"
+                                                        id="assessmentDate"
+                                                        value={newAssessmentData.date}
+                                                        onChange={(e) => setNewAssessmentData({ ...newAssessmentData, date: e.target.value })}
+                                                        required
+                                                        className="mp-dropdown-input"
+                                                    />
+                                                </div>
+
+                                                <div className="mp-form-group">
+                                                    <label htmlFor="maxScore">Items:</label>
+                                                    <input 
+                                                        type="number" 
+                                                        id="maxScore"
+                                                        placeholder="Number of Items"
+                                                        value={newAssessmentData.maxScore}
+                                                        onChange={(e) => setNewAssessmentData({ ...newAssessmentData, maxScore: e.target.value })}
+                                                        min="1"
+                                                        required
+                                                        className="mp-dropdown-input"
+                                                    />
+                                                </div>
+                                                <button type="submit" className="btn-add-column-submit">
+                                                    Add Column <Plus size={18} style={{marginLeft: '5px'}}/>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    )}
+                                </div>
+
+
+                                {/* --- REMOVE BUTTON WITH DROPDOWN (marginLeft set to 8px) --- */}
+                                <div style={{position: 'relative', display: 'inline-block', marginLeft: '8px'}}> 
                                     <button 
                                         className="btn-remove-assessment" 
                                         onClick={toggleRemoveMenu} // Use toggle handler
@@ -1083,7 +1200,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                     )}
                                 </div>
                                 
-                                {/* --- NEW RESTORE BUTTON WITH DROPDOWN --- */}
+                                {/* --- NEW RESTORE BUTTON WITH DROPDOWN (marginLeft set to 8px) --- */}
                                 <div style={{position: 'relative', display: 'inline-block', marginLeft: '8px'}}>
                                     <button 
                                         className="btn-restore-assessment" 
@@ -1218,6 +1335,80 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                     stroke-width: 2.5;
                     width: 20px; 
                     height: 20px;
+                }
+
+                /* --- NEW: Add Assessment Dropdown Styles --- */
+                .mp-add-dropdown {
+                    position: absolute;
+                    top: 100%; /* Position below the button */
+                    left: 0;
+                    z-index: 100;
+                    background: white;
+                    border: 1px solid #ccc;
+                    border-radius: 6px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    min-width: 200px;
+                    padding: 10px;
+                    margin-top: 5px;
+                }
+                
+                .mp-add-header {
+                    font-weight: 600;
+                    padding-bottom: 8px;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid #eee;
+                    font-size: 14px;
+                    color: #374151;
+                }
+
+                .mp-form-group {
+                    margin-bottom: 10px;
+                    position: relative; /* Para sa calendar icon at dropdown chevron */
+                }
+
+                .mp-form-group label {
+                    display: block;
+                    font-size: 12px;
+                    color: #6B7280;
+                    margin-bottom: 4px;
+                }
+
+                .mp-dropdown-input {
+                    width: 100%;
+                    padding: 8px;
+                    border: 1px solid #D1D5DB;
+                    border-radius: 4px;
+                    box-sizing: border-box;
+                    font-size: 14px;
+                    /* For date input: Hide default calendar icon on some browsers */
+                    -webkit-appearance: none; 
+                    -moz-appearance: textfield; /* Firefox default is fine */
+                }
+                
+                /* For date input to reserve space for the calendar icon if needed */
+                input[type="date"].mp-dropdown-input {
+                    padding-right: 10px; 
+                }
+
+                .btn-add-column-submit {
+                    width: 100%;
+                    padding: 8px;
+                    background-color: #1f2937; /* Darker blue/black for submit */
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 600;
+                    margin-top: 5px;
+                    transition: background-color 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .btn-add-column-submit:hover {
+                    background-color: #374151;
                 }
             `}</style>
         </div>

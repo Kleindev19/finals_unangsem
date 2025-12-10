@@ -71,7 +71,6 @@ const VReports = ({ onLogout, onPageChange, sectionData, atRiskStudents = [] }) 
                             <tr>
                                 <th>Student ID</th>
                                 <th>Name</th>
-                                <th className="center-text">GPA</th>
                                 <th className="center-text">Attendance</th>
                                 <th className="center-text">Missed Classes</th>
                                 <th className="center-text">Status</th>
