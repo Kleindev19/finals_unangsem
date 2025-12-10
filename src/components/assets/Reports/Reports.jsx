@@ -133,15 +133,15 @@ const Reports = ({
         <div className="reports-page-container">
             
             {/* Filter Card (omitted for brevity) */}
-            <div className="rep-filter-card">
+            <div className="    ">
                 <div className="rep-filter-group">
                     <label>Institute Filter</label>
                     <div className="rep-select-wrapper">
                         <select value={instituteFilter} onChange={(e) => setInstituteFilter(e.target.value)}>
                             <option value="All">All Institutes</option>
                             <option value="Institute of Computing Studies">ICS</option>
-                            <option value="Institute of Education">IED</option>
-                            <option value="Institute of Business">IBE</option>
+                            <option value="Institute of Teachers Education">ITE</option>
+                            <option value="Institute of Business Entrepreneurship">IBE</option>
                         </select>
                         <ChevronDown className="rep-chevron" />
                     </div>

@@ -1416,3 +1416,4 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
 };
 
 export default MultiPageGS;
+
