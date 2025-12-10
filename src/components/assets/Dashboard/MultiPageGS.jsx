@@ -4,10 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './MultiPageGS.css';
 import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 import { ActivityModal } from './ModalComponents';
-// ---------------------------------------------
-// UPDATED IMPORT: Import all necessary components and helpers from Gradesheet.jsx
-import GradesheetView, { GradesheetSideCardsExport, calculateTermGrade, RecordsTableComponent } from './Gradesheet';
-// ---------------------------------------------
 
 // --- ICONS ---
 const ArrowLeft = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>);
@@ -37,27 +33,20 @@ const INITIAL_ACT_COLS = [
     { id: 'act3', label: 'ACT 3', max: 50, date: '2025-10-15' },
     { id: 'act4', label: 'ACT 4', max: 50, date: '2025-10-22' }, 
 ];
-// REMOVED REC_COLS and EXAM_COLS constants (now in Gradesheet.jsx)
+const REC_COLS = [{ id: 'r1', label: 'R1' }]; 
+const EXAM_COLS = [{ id: 'exam', label: 'Major Exam' }]; 
 
 // --- MOCK DATES FOR ATTENDANCE ---
 const MIDTERM_DATES = ['Sept 4', 'Sept 11', 'Sept 18', 'Sept 25', 'Oct 2', 'Oct 9'];
 const FINALS_DATES = ['Nov 6', 'Nov 13', 'Nov 20', 'Nov 27', 'Dec 4', 'Dec 11'];
 
-// --- PERSISTENCE KEYS (UPDATED FOR TERM SEPARATION) ---
+// --- PERSISTENCE KEYS ---
 const GRADES_STORAGE_KEY = 'progressTracker_studentScores_v1';
 const ATTENDANCE_STORAGE_KEY = 'progressTracker_attendanceData_v1';
-
-// New Term-Specific Keys
-const MID_QUIZ_COLS_KEY = 'progressTracker_midQuizCols_v1';
-const FIN_QUIZ_COLS_KEY = 'progressTracker_finQuizCols_v1';
-const MID_ACT_COLS_KEY = 'progressTracker_midActCols_v1';
-const FIN_ACT_COLS_KEY = 'progressTracker_finActCols_v1';
-
-const MID_REMOVED_QUIZ_COLS_KEY = 'progressTracker_midRemovedQuizCols_v1'; 
-const FIN_REMOVED_QUIZ_COLS_KEY = 'progressTracker_finRemovedQuizCols_v1'; 
-const MID_REMOVED_ACT_COLS_KEY = 'progressTracker_midRemovedActCols_v1'; 
-const FIN_REMOVED_ACT_COLS_KEY = 'progressTracker_finRemovedActCols_v1'; 
-
+const QUIZ_COLS_KEY = 'progressTracker_quizCols_v1';
+const ACT_COLS_KEY = 'progressTracker_actCols_v1';
+const REMOVED_QUIZ_COLS_KEY = 'progressTracker_removedQuizCols_v1'; 
+const REMOVED_ACT_COLS_KEY = 'progressTracker_removedActCols_v1'; 
 const REC_MAX_KEY = 'progressTracker_recMax_v1';
 const EXAM_MAX_KEY = 'progressTracker_examMax_v1';
 
@@ -88,7 +77,7 @@ const initializeMaxScore = (key, initialMax) => {
     return initialMax;
 };
 
-// --- HELPER: Persistence Loader for Attendance ---
+// --- NEW HELPER: Persistence Loader for Attendance ---
 const initializeAttendance = () => {
     const savedAttendanceJSON = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
     if (savedAttendanceJSON) {
@@ -103,8 +92,8 @@ const initializeAttendance = () => {
 };
 
 
-// --- HELPER: Initialize Score State (UPDATED to handle term-specific keys) ---
-const initializeScores = (students, midQuizCols, finQuizCols, midActCols, finActCols) => {
+// --- HELPER: Initialize Score State ---
+const initializeScores = (students, currentQuizCols, currentActCols) => {
     const savedScoresJSON = localStorage.getItem(GRADES_STORAGE_KEY);
     let savedScores = {};
     if (savedScoresJSON) {
@@ -116,34 +105,88 @@ const initializeScores = (students, midQuizCols, finQuizCols, midActCols, finAct
     }
 
     const initialScores = {};
-    
-    // Define all dynamic assessment keys for both terms with term suffixes
-    const midQuizKeys = midQuizCols.map(c => c.id + '_mid');
-    const finQuizKeys = finQuizCols.map(c => c.id + '_fin');
-    const midActKeys = midActCols.map(c => c.id + '_mid');
-    const finActKeys = finActCols.map(c => c.id + '_fin');
-    
-    const allDynamicKeys = [...midQuizKeys, ...finQuizKeys, ...midActKeys, ...finActKeys];
-
+    const quizIds = currentQuizCols.map(c => c.id);
+    const actIds = currentActCols.map(c => c.id);
+    const labIds = actIds.map(id => id.replace('act', 'lab'));
 
     students.forEach(student => {
-        const studentData = savedScores[student.id] || {};
+        const studentData = savedScores[student.id] || {}; // Start with saved data
 
-        // Initialize dynamic scores with term-specific keys
-        allDynamicKeys.forEach(key => { if (studentData[key] === undefined) studentData[key] = ''; });
-
-        // Initialize static scores (already term-specific)
-        if (studentData['r1_mid'] === undefined) studentData['r1_mid'] = '';
-        if (studentData['exam_mid'] === undefined) studentData['exam_mid'] = '';
-        if (studentData['r1_fin'] === undefined) studentData['r1_fin'] = '';
-        if (studentData['exam_fin'] === undefined) studentData['exam_fin'] = '';
+        // Ensure all current columns have a key, defaulting to '' if not in saved data
+        quizIds.forEach(id => { if (studentData[id] === undefined) studentData[id] = ''; });
+        actIds.forEach(id => { if (studentData[id] === undefined) studentData[id] = ''; }); 
+        labIds.forEach(id => { if (studentData[id.replace('act', 'lab')] === undefined) studentData[id.replace('act', 'lab')] = ''; }); // Labs/Assignments
+        
+        if (studentData['r1_mid'] === undefined) studentData['r1_mid'] = ''; // Recitation Midterm
+        if (studentData['exam_mid'] === undefined) studentData['exam_mid'] = ''; // Exam Midterm
+        if (studentData['r1_fin'] === undefined) studentData['r1_fin'] = ''; // Recitation Finals
+        if (studentData['exam_fin'] === undefined) studentData['exam_fin'] = ''; // Exam Finals
 
         initialScores[student.id] = studentData;
     });
     return initialScores;
 };
 
-// --- AttendanceCell component remains unchanged ---
+
+// --- HELPER: Grade Calculation based on the user's formula ---
+const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentActCols, recMax, examMax) => {
+    // Recalculate MAX points based on current dynamic columns
+    const MAX_QUIZ = currentQuizCols.reduce((sum, c) => sum + c.max, 0); 
+    const MAX_ACT_LAB = currentActCols.reduce((sum, c) => sum + c.max, 0); 
+    
+    // Use dynamic max values for REC and EXAM
+    const MAX_REC = recMax; 
+    const MAX_EXAM = examMax; 
+
+    // Handle case where MAX is zero to prevent division by zero
+    const getPercentage = (score, max, percentage) => 
+        max > 0 ? (score / max) * percentage : 0;
+
+    const sumScores = (ids) => ids.reduce((sum, id) => sum + (parseFloat(scores[id]) || 0), 0);
+
+    // 1. QUIZ (15%)
+    const quizScore = sumScores(currentQuizCols.map(c => c.id));
+    const quizGrade = getPercentage(quizScore, MAX_QUIZ, 15);
+
+    let otherGrade = 0;
+    let examId, recId;
+
+    if (isMidterm) {
+        // MIDTERM: Activity (35%)
+        const actIds = currentActCols.map(c => c.id);
+        const actScore = sumScores(actIds);
+        otherGrade += getPercentage(actScore, MAX_ACT_LAB, 35); // Activity 35%
+        
+        recId = 'r1_mid';
+        examId = 'exam_mid';
+
+        // Recitation 10%
+        const recScore = parseFloat(scores[recId]) || 0;
+        otherGrade += getPercentage(recScore, MAX_REC, 10);
+        
+    } else {
+        // FINALS: Lab/Assignment (25%)
+        const labIds = currentActCols.map(c => c.id.replace('act', 'lab'));
+        const labScore = sumScores(labIds);
+        otherGrade += getPercentage(labScore, MAX_ACT_LAB, 25); // Lab/Assignment 25%
+
+        recId = 'r1_fin';
+        examId = 'exam_fin';
+
+        // Recitation 20%
+        const recScore = parseFloat(scores[recId]) || 0;
+        otherGrade += getPercentage(recScore, MAX_REC, 20);
+    }
+
+    // Exam 40%
+    const examScore = parseFloat(scores[examId]) || 0;
+    const examGrade = getPercentage(examScore, MAX_EXAM, 40);
+
+    const termGrade = quizGrade + otherGrade + examGrade;
+    return Math.min(100, Math.max(0, termGrade)); // Cap at 100%
+};
+
+
 const AttendanceCell = ({ status, onChange }) => {
     let className = 'mp-status-pill';
     let content = status;
@@ -167,7 +210,17 @@ const AttendanceCell = ({ status, onChange }) => {
     );
 };
 
-// REMOVED MaxScoreInput (now imported via RecordsTableComponent)
+// Component for the editable max score input field
+const MaxScoreInput = ({ value, type, id, onChange }) => (
+    <input 
+        type="number"
+        className="mp-table-input mp-max-score-input"
+        value={value === 0 ? '' : value} // Show empty string if value is 0
+        onChange={(e) => onChange(type, id, e.target.value)}
+        min="0"
+        style={{textAlign: 'center', width: '90%'}}
+    />
+);
 
 
 const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', title = 'Midterm Grade', students = [], sectionData }) => {
@@ -176,34 +229,41 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     const [currentView, setCurrentView] = useState(viewType);
     const [attendanceTerm, setAttendanceTerm] = useState('Midterm Attendance');
     
+    // NEW STATE: Search term for student filtering
     const [searchTerm, setSearchTerm] = useState('');
 
-    // UPDATED: Separate states for Midterm and Finals columns
-    const [midQuizCols, setMidQuizCols] = useState(() => initializeCols(MID_QUIZ_COLS_KEY, INITIAL_QUIZ_COLS));
-    const [finQuizCols, setFinQuizCols] = useState(() => initializeCols(FIN_QUIZ_COLS_KEY, INITIAL_QUIZ_COLS));
+    // STATES FOR DYNAMIC COLUMNS
+    const [quizCols, setQuizCols] = useState(() => initializeCols(QUIZ_COLS_KEY, INITIAL_QUIZ_COLS));
+    const [actCols, setActCols] = useState(() => initializeCols(ACT_COLS_KEY, INITIAL_ACT_COLS));
 
-    const [midActCols, setMidActCols] = useState(() => initializeCols(MID_ACT_COLS_KEY, INITIAL_ACT_COLS));
-    const [finActCols, setFinActCols] = useState(() => initializeCols(FIN_ACT_COLS_KEY, INITIAL_ACT_COLS));
+    // NEW STATES FOR REMOVED COLUMNS (for restore functionality)
+    const [removedQuizCols, setRemovedQuizCols] = useState(() => initializeCols(REMOVED_QUIZ_COLS_KEY, []));
+    const [removedActCols, setRemovedActCols] = useState(() => initializeCols(REMOVED_ACT_COLS_KEY, []));
 
-    // UPDATED: Separate states for removed columns
-    const [removedMidQuizCols, setRemovedMidQuizCols] = useState(() => initializeCols(MID_REMOVED_QUIZ_COLS_KEY, []));
-    const [removedFinQuizCols, setRemovedFinQuizCols] = useState(() => initializeCols(FIN_REMOVED_QUIZ_COLS_KEY, []));
-
-    const [removedMidActCols, setRemovedMidActCols] = useState(() => initializeCols(MID_REMOVED_ACT_COLS_KEY, []));
-    const [removedFinActCols, setRemovedFinActCols] = useState(() => initializeCols(FIN_REMOVED_ACT_COLS_KEY, []));
-    
+    // STATE: TOGGLES FOR DROPDOWNS
     const [isRemoveMenuOpen, setIsRemoveMenuOpen] = useState(false);
     const [isRestoreMenuOpen, setIsRestoreMenuOpen] = useState(false); // NEW TOGGLE
+    
+    // NEW STATE: Toggle for the Add Assessment Dropdown
+    const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+    // NEW STATE: Form data for adding a new assessment
+    const [newAssessmentData, setNewAssessmentData] = useState({
+        type: 'Quiz',
+        maxScore: '', // Placeholder for number of items
+        date: '', // NEW: State for the selected date
+    });
 
+
+    // STATES FOR STATIC ASSESSMENT MAX SCORES (Editable)
     const [recMax, setRecMax] = useState(() => initializeMaxScore(REC_MAX_KEY, 100));
     const [examMax, setExamMax] = useState(() => initializeMaxScore(EXAM_MAX_KEY, 60));
 
     // STATE: Holds the editable scores
     const [studentScores, setStudentScores] = useState(() => initializeScores(students, quizCols, actCols));
     // STATE: Placeholder for Attendance Data
-    const [localAttendanceData, setLocalAttendanceData] = useState(() => initializeAttendance());
+    const [localAttendanceData, setLocalAttendanceData] = useState(() => initializeAttendance()); 
     
-    // --- PERSISTENCE EFFECTS (UPDATED) ---
+    // Effect to persist studentScores whenever it changes (CRUCIAL for grade persistence)
     useEffect(() => {
         try {
             localStorage.setItem(GRADES_STORAGE_KEY, JSON.stringify(studentScores));
@@ -212,22 +272,18 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     }, [studentScores]);
 
-    useEffect(() => { try { localStorage.setItem(MID_QUIZ_COLS_KEY, JSON.stringify(midQuizCols)); } catch (e) { console.error("Could not save mid quiz columns to localStorage:", e); } }, [midQuizCols]);
-    useEffect(() => { try { localStorage.setItem(FIN_QUIZ_COLS_KEY, JSON.stringify(finQuizCols)); } catch (e) { console.error("Could not save fin quiz columns to localStorage:", e); } }, [finQuizCols]);
+    // Effects for column and max score persistence
+    useEffect(() => { try { localStorage.setItem(QUIZ_COLS_KEY, JSON.stringify(quizCols)); } catch (e) { console.error("Could not save quiz columns to localStorage:", e); } }, [quizCols]);
+    useEffect(() => { try { localStorage.setItem(ACT_COLS_KEY, JSON.stringify(actCols)); } catch (e) { console.error("Could not save activity columns to localStorage:", e); } }, [actCols]);
     
-    useEffect(() => { try { localStorage.setItem(MID_ACT_COLS_KEY, JSON.stringify(midActCols)); } catch (e) { console.error("Could not save mid activity columns to localStorage:", e); } }, [midActCols]);
-    useEffect(() => { try { localStorage.setItem(FIN_ACT_COLS_KEY, JSON.stringify(finActCols)); } catch (e) { console.error("Could not save fin activity columns to localStorage:", e); } }, [finActCols]);
+    // NEW: Effects for removed column persistence
+    useEffect(() => { try { localStorage.setItem(REMOVED_QUIZ_COLS_KEY, JSON.stringify(removedQuizCols)); } catch (e) { console.error("Could not save removed quiz columns to localStorage:", e); } }, [removedQuizCols]);
+    useEffect(() => { try { localStorage.setItem(REMOVED_ACT_COLS_KEY, JSON.stringify(removedActCols)); } catch (e) { console.error("Could not save removed activity columns to localStorage:", e); } }, [removedActCols]);
     
-    useEffect(() => { try { localStorage.setItem(MID_REMOVED_QUIZ_COLS_KEY, JSON.stringify(removedMidQuizCols)); } catch (e) { console.error("Could not save removed mid quiz columns to localStorage:", e); } }, [removedMidQuizCols]);
-    useEffect(() => { try { localStorage.setItem(FIN_REMOVED_QUIZ_COLS_KEY, JSON.stringify(removedFinQuizCols)); } catch (e) { console.error("Could not save removed fin quiz columns to localStorage:", e); } }, [removedFinQuizCols]);
-    
-    useEffect(() => { try { localStorage.setItem(MID_REMOVED_ACT_COLS_KEY, JSON.stringify(removedMidActCols)); } catch (e) { console.error("Could not save removed mid activity columns to localStorage:", e); } }, [removedMidActCols]);
-    useEffect(() => { try { localStorage.setItem(FIN_REMOVED_ACT_COLS_KEY, JSON.stringify(removedFinActCols)); } catch (e) { console.error("Could not save removed fin activity columns to localStorage:", e); } }, [removedFinActCols]);
-
     useEffect(() => { try { localStorage.setItem(REC_MAX_KEY, String(recMax)); } catch (e) { console.error("Could not save recMax to localStorage:", e); } }, [recMax]);
     useEffect(() => { try { localStorage.setItem(EXAM_MAX_KEY, String(examMax)); } catch (e) { console.error("Could not save examMax to localStorage:", e); } }, [examMax]);
 
-    // --- EFFECT: To persist attendance data whenever it changes ---
+    // --- NEW EFFECT: To persist attendance data whenever it changes ---
     useEffect(() => {
         try {
             localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(localAttendanceData));
@@ -236,33 +292,36 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     }, [localAttendanceData]);
 
-    // UPDATED: Recalculate studentScores initialization when ANY column state changes
+    // Initialize/Re-initialize scores if the students list OR columns change
     useEffect(() => {
         setStudentScores(prevScores => {
             return students.reduce((acc, student) => {
                 const studentData = prevScores[student.id] || {};
                 
-                // Use the new initializeScores signature
+                // Merge existing scores with placeholders for new columns
                 const mergedData = {
-                    ...initializeScores([student], midQuizCols, finQuizCols, midActCols, finActCols)[student.id],
-                    ...studentData
+                    ...initializeScores([student], quizCols, actCols)[student.id], // Placeholders for all columns
+                    ...studentData // Overwrite with existing student data
                 };
                 
                 acc[student.id] = mergedData;
                 return acc;
             }, {});
         });
-    }, [students, midQuizCols, finQuizCols, midActCols, finActCols]); // Added new dependencies
+    }, [students, quizCols, actCols]);
 
     useEffect(() => { if (viewType) setCurrentView(viewType); }, [viewType]);
 
+    // HANDLER: For student search input
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
     };
 
+    // Handler for student score input field changes
     const handleScoreChange = (studentId, assessmentId, value) => {
         const parsedValue = value === '' ? '' : parseFloat(value);
         
+        // Ensure the value is a non-negative number or empty string
         const numericValue = isNaN(parsedValue) || parsedValue < 0 ? '' : parsedValue;
 
         setStudentScores(prevScores => ({
@@ -274,20 +333,18 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }));
     };
     
-    // UPDATED: Determine which set of columns to update based on currentView
+    // HANDLER: For updating the max score of any column (Quiz, Act, Rec, Exam)
     const handleMaxScoreChange = (type, id, value) => {
         const parsedValue = value === '' ? 0 : parseFloat(value);
+        // Ensure the final value is a non-negative number
         const finalValue = Math.max(0, isNaN(parsedValue) ? 0 : parsedValue); 
-        const isMidterm = currentView.includes('Midterm'); // NEW
 
         if (type === 'quiz') {
-            const setCols = isMidterm ? setMidQuizCols : setFinQuizCols; // NEW
-            setCols(prevCols => prevCols.map(col => 
+            setQuizCols(prevCols => prevCols.map(col => 
                 col.id === id ? { ...col, max: finalValue } : col
             ));
         } else if (type === 'act') {
-            const setCols = isMidterm ? setMidActCols : setFinActCols; // NEW
-            setCols(prevCols => prevCols.map(col => 
+            setActCols(prevCols => prevCols.map(col => 
                 col.id === id ? { ...col, max: finalValue } : col
             ));
         } else if (type === 'rec') {
@@ -297,6 +354,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     };
 
+    // Handler for Attendance cell changes
     const handleAttendanceCellChange = (studentId, dateIndex, status) => {
         setLocalAttendanceData(prevData => {
             const currentTermDates = attendanceTerm === 'Midterm Attendance' ? MIDTERM_DATES : FINALS_DATES;
@@ -307,113 +365,142 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         });
     };
 
+    // --- Student Filtering Logic ---
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     const filteredStudents = students.filter(student => 
         student.name.toLowerCase().includes(lowerCaseSearchTerm) || 
         student.id.toLowerCase().includes(lowerCaseSearchTerm)
     );
+    // --- End Filtering Logic ---
 
     // --- TOGGLE HANDLERS (for dropdown menus) ---
+    // Combined toggle handler for Add menu
+    const toggleAddMenu = useCallback(() => {
+        setIsAddMenuOpen(prev => !prev);
+        if (!isAddMenuOpen) {
+            // Reset form data when opening
+            setNewAssessmentData({ type: 'Quiz', maxScore: '', date: '' }); // RESET DATE TOO
+            // Close other menus
+            setIsRemoveMenuOpen(false);
+            setIsRestoreMenuOpen(false);
+        }
+    }, [isAddMenuOpen]);
+
     const toggleRemoveMenu = useCallback(() => {
         setIsRemoveMenuOpen(prev => !prev);
-        if (!isRemoveMenuOpen) setIsRestoreMenuOpen(false); // Close restore menu when opening remove
+        if (!isRemoveMenuOpen) {
+            setIsRestoreMenuOpen(false); // Close restore menu when opening remove
+            setIsAddMenuOpen(false); // Close add menu
+        }
     }, [isRemoveMenuOpen]);
 
     const toggleRestoreMenu = useCallback(() => {
         setIsRestoreMenuOpen(prev => !prev);
-        if (!isRestoreMenuOpen) setIsRemoveMenuOpen(false); // Close remove menu when opening restore
+        if (!isRestoreMenuOpen) {
+            setIsRemoveMenuOpen(false); // Close remove menu when opening restore
+            setIsAddMenuOpen(false); // Close add menu
+        }
     }, [isRestoreMenuOpen]);
 
 
-    // --- Handle Remove Column (Moves to removed state) ---
+    // --- UPDATE: Handle Remove Column (Moves to removed state) ---
     const handleRemoveColumn = (type, id, label) => {
-        const isMidterm = currentView.includes('Midterm'); // NEW
-
         if (window.confirm(`Are you sure you want to remove ${label}? The scores in this column will be preserved for restoration.`)) {
             if (type === 'quiz') {
-                const setCols = isMidterm ? setMidQuizCols : setFinQuizCols; // NEW
-                const setRemovedCols = isMidterm ? setRemovedMidQuizCols : setRemovedFinQuizCols; // NEW
-                
-                setCols(prevCols => {
+                setQuizCols(prevCols => {
                     const colToRemove = prevCols.find(col => col.id === id);
                     if (colToRemove) {
-                        setRemovedCols(prevRemoved => [...prevRemoved, colToRemove]);
+                        setRemovedQuizCols(prevRemoved => [...prevRemoved, colToRemove]);
                     }
                     return prevCols.filter(col => col.id !== id);
                 });
             } else if (type === 'act') {
-                const setCols = isMidterm ? setMidActCols : setFinActCols; // NEW
-                const setRemovedCols = isMidterm ? setRemovedMidActCols : setRemovedFinActCols; // NEW
-
-                setCols(prevCols => {
+                setActCols(prevCols => {
                     const colToRemove = prevCols.find(col => col.id === id);
                     if (colToRemove) {
-                        setRemovedCols(prevRemoved => [...prevRemoved, colToRemove]);
+                        setRemovedActCols(prevRemoved => [...prevRemoved, colToRemove]);
                     }
                     return prevCols.filter(col => col.id !== id);
                 });
             }
-            setIsRemoveMenuOpen(false);
+            setIsRemoveMenuOpen(false); // Close menu after selection
         }
     };
 
-    // --- Handle Restore Column (Moves from removed state back to active state) ---
+    // --- NEW: Handle Restore Column (Moves from removed state back to active state) ---
     const handleRestoreColumn = (type, id) => {
-        const isMidterm = currentView.includes('Midterm'); // NEW
-
         if (type === 'quiz') {
-            const setRemovedCols = isMidterm ? setRemovedMidQuizCols : setRemovedFinQuizCols; // NEW
-            const setCols = isMidterm ? setMidQuizCols : setFinQuizCols; // NEW
-            
-            setRemovedCols(prevRemoved => {
+            setRemovedQuizCols(prevRemoved => {
                 const colToRestore = prevRemoved.find(col => col.id === id);
                 if (colToRestore) {
-                    setCols(prevCols => [...prevCols, colToRestore].sort((a, b) => {
+                    // Add back to quizCols, sort by label number
+                    setQuizCols(prevCols => [...prevCols, colToRestore].sort((a, b) => {
                         const numA = parseInt(a.label.match(/\d+/)?.[0] || Infinity);
                         const numB = parseInt(b.label.match(/\d+/)?.[0] || Infinity);
                         return numA - numB;
                     }));
                 }
+                // Remove from removed list
                 return prevRemoved.filter(col => col.id !== id);
             });
         } else if (type === 'act') {
-            const setRemovedCols = isMidterm ? setRemovedMidActCols : setRemovedFinActCols; // NEW
-            const setCols = isMidterm ? setMidActCols : setFinActCols; // NEW
-            
-            setRemovedCols(prevRemoved => {
+            setRemovedActCols(prevRemoved => {
                 const colToRestore = prevRemoved.find(col => col.id === id);
                 if (colToRestore) {
-                    setCols(prevCols => [...prevCols, colToRestore].sort((a, b) => {
+                    // Add back to actCols, sort by label number
+                    setActCols(prevCols => [...prevCols, colToRestore].sort((a, b) => {
                         const numA = parseInt(a.label.match(/\d+/)?.[0] || Infinity);
                         const numB = parseInt(b.label.match(/\d+/)?.[0] || Infinity);
                         return numA - numB;
                     }));
                 }
+                // Remove from removed list
                 return prevRemoved.filter(col => col.id !== id);
             });
         }
-        setIsRestoreMenuOpen(false);
+        setIsRestoreMenuOpen(false); // Close menu after selection
     };
 
-    // --- Add Column Handlers ---
-    const handleAddAssessment = (assessmentType) => {
-        let type;
-        if (currentView.includes('Midterm') || currentView.includes('Finals')) {
-            type = assessmentType === 'Quiz' ? 'quiz' : 'activity';
-        }
+    // --- MODIFIED: Add Column Handler (Uses the new form state, including date) ---
+    const handleAddAssessment = (event) => {
+        event.preventDefault(); // Prevent form submission if we wrap the button in a form
+        const { type, maxScore, date } = newAssessmentData;
+        const max = parseFloat(maxScore);
         
-        if (type === 'quiz') {
-            setQuizCols(prevCols => {
-                // Use timestamp for unique ID to avoid conflicts if user deletes/adds
+        if (isNaN(max) || max <= 0) {
+            alert("Please enter a valid number of items/max score greater than zero.");
+            return;
+        }
+
+        if (!date) {
+            alert("Please select a date for the assessment.");
+            return;
+        }
+
+        const assessmentType = type;
+        const isActivity = assessmentType === 'Activity' || assessmentType === 'Lab';
+        const collection = isActivity ? actCols : quizCols;
+        const setCollection = isActivity ? setActCols : setQuizCols;
+        const removedCollection = isActivity ? removedActCols : removedQuizCols;
+
+        // Determine the next index
+        const totalItems = collection.length + removedCollection.length;
+        const nextIndex = totalItems + 1;
+
+        if (!isActivity) {
+            // Quiz
+            setCollection(prevCols => {
                 const newId = `q${Date.now()}`;
-                const newIndex = prevCols.length + 1 + removedQuizCols.length; // Approximate number
-                return [...prevCols, { id: newId, label: `Q${newIndex}`, max: 20 }];
+                // ADD DATE HERE
+                return [...prevCols, { id: newId, label: `Q${nextIndex}`, max: max, date: date }];
             });
-        } else if (type === 'activity') {
-            setActCols(prevCols => {
+        } else {
+            // Activity / Lab
+            setCollection(prevCols => {
                 const newId = `act${Date.now()}`;
-                const newIndex = prevCols.length + 1 + removedActCols.length; // Approximate number
-                return [...prevCols, { id: newId, label: `ACT ${newIndex}`, max: 50 }]; 
+                const labelPrefix = currentView.includes('Midterm') ? 'ACT' : 'LAB';
+                // ADD DATE HERE
+                return [...prevCols, { id: newId, label: `${labelPrefix} ${nextIndex}`, max: max, date: date }]; 
             });
         }
 
@@ -421,27 +508,20 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         setIsAddMenuOpen(false);
         setNewAssessmentData({ type: 'Quiz', maxScore: '', date: '' });
     };
-    
-    // --- handleExport (Uses imported calculateTermGrade) ---
+
+    // ... (handleExport function remains unchanged as it relies on the state being correct)
     const handleExport = () => {
         let csvContent = '';
         let fileName = '';
         const studentsToExport = searchTerm ? filteredStudents : students; 
         const BOM = "\ufeff"; 
 
-        // Use the term-specific columns for Gradesheet calculation
-        const midQuiz = midQuizCols;
-        const midAct = midActCols;
-        const finQuiz = finQuizCols;
-        const finAct = finActCols;
-
         if (currentView === 'Gradesheet') {
-            // ... Gradesheet export logic
+            // ... Gradesheet export logic (unchanged)
             fileName = 'Summary_Gradesheet.csv';
             csvContent += "Student ID,Student Name,Midterm,40%,Final,60%,FINAL GRADE,EQVT GRADE,REMARKS\n";
             studentsToExport.forEach(student => {
                 const scores = studentScores[student.id] || {};
-                // Uses the imported calculateTermGrade
                 const midtermPercentage = calculateTermGrade(scores, true, quizCols, actCols, recMax, examMax); 
                 const finalsPercentage = calculateTermGrade(scores, false, quizCols, actCols, recMax, examMax);
                 const mid40 = (midtermPercentage * 0.40);
@@ -460,7 +540,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
             });
 
         } else if (currentView === 'Attendance') {
-            // ... Attendance export logic
+            // ... Attendance export logic (unchanged)
             fileName = `${attendanceTerm.replace(/\s/g, '_')}_Record.csv`;
             const dates = attendanceTerm === 'Midterm Attendance' ? MIDTERM_DATES : FINALS_DATES;
             
@@ -481,27 +561,17 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
             });
             
         } else { // Midterm/Finals Records
-            // ... Records export logic
+            // ... Records export logic (unchanged)
             const isMidterm = currentView.includes('Midterm');
             fileName = `${isMidterm ? 'Midterm' : 'Finals'}_Records.csv`;
             
-            // NEW: Select term-specific columns
-            const currentQuizCols = isMidterm ? midQuizCols : finQuizCols; 
-            const currentActCols = isMidterm ? midActCols : finActCols;
-
-            // Renaming Labs for Finals display only (IDs remain generic here)
-            const dynamicActCols = isMidterm ? currentActCols : currentActCols.map(c => ({...c, id: c.id, label: c.label.replace('ACT', 'LAB')}));
-            
+            const dynamicActCols = isMidterm ? actCols : actCols.map(c => ({...c, id: c.id.replace('act', 'lab'), label: c.label.replace('ACT', 'LAB')}));
             const recCol = { id: 'r1', label: 'R1', max: recMax };
             const examCol = { id: 'exam', label: 'Major Exam', max: examMax };
-            const gradeCols = currentQuizCols.concat(dynamicActCols).concat([recCol]).concat([examCol]);
+            const gradeCols = quizCols.concat(dynamicActCols).concat([recCol]).concat([examCol]);
             
             const assessmentIds = gradeCols.map(c => {
-                // Construct term-specific keys for dynamic assessments
-                if (c.id.startsWith('q') || c.id.startsWith('act')) {
-                    return c.id + (isMidterm ? '_mid' : '_fin');
-                }
-                // Static IDs
+                if (c.id.startsWith('act') || c.id.startsWith('lab')) return c.id;
                 if (c.id === 'r1') return isMidterm ? 'r1_mid' : 'r1_fin';
                 if (c.id === 'exam') return isMidterm ? 'exam_mid' : 'exam_fin';
                 return c.id; 
@@ -513,10 +583,8 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
 
             studentsToExport.forEach(student => {
                 const scores = studentScores[student.id] || {};
-                // Uses the imported calculateTermGrade
                 const termPercentage = calculateTermGrade(scores, isMidterm, quizCols, actCols, recMax, examMax).toFixed(2);
                 
-                // Lookup scores using the term-specific keys
                 const scoreRow = assessmentIds.map(id => scores[id] || 0).join(',');
                 
                 csvContent += `${student.id},"${student.name}",${termPercentage},${scoreRow}\n`;
@@ -536,7 +604,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
 
 
     // --- RENDERERS ---
-    // ... (renderAttendanceTable remains unchanged)
+
     const renderAttendanceTable = () => {
         const isMidtermAtt = attendanceTerm === 'Midterm Attendance';
         const dates = isMidtermAtt ? MIDTERM_DATES : FINALS_DATES;
@@ -545,17 +613,14 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
             <table className="mp-table">
                 <thead>
                     <tr>
-                        <th rowSpan="2" className="sticky-col col-no header-category-green">No.</th>
-                        <th rowSpan="2" className="sticky-col col-id header-category-green">Student ID</th>
-                        <th rowSpan="2" className="sticky-col col-name header-category-green">Student Name</th>
-                        <th colSpan={dates.length} className="header-category-orange">Dates</th>
-                        <th rowSpan="2" className="header-summary-green">Total Absences</th>
-                        <th rowSpan="2" className="header-summary-green">Status</th>
-                    </tr>
-                    <tr>
+                        <th className="sticky-col col-no header-category-green">No.</th>
+                        <th className="sticky-col col-id header-category-green">Student ID</th>
+                        <th className="sticky-col col-name header-category-green">Student Name</th>
                         {dates.map((date, i) => (
-                            <th key={i} className="header-category-orange mp-date-header">{date}</th>
+                            <th key={i} className="header-category-orange">{date}</th>
                         ))}
+                        <th className="header-summary-green">Total Absences</th>
+                        <th className="header-summary-green">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -566,7 +631,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                             let absences = 0;
                             const studentAttendanceStatuses = dates.map((date, i) => {
                                 const key = `${student.id}-${date}`;
-                                const mockStatus = localAttendanceData[key] || 'P';
+                                const mockStatus = localAttendanceData[key] || 'P'; 
                                 if (mockStatus === 'A') absences++;
                                 return mockStatus;
                             });
@@ -580,6 +645,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                     <td className="sticky-col col-id center-text">{student.id}</td>
                                     <td className="sticky-col col-name" style={{fontWeight:'600', paddingLeft:'8px'}}>{student.name}</td>
                                     
+                                    {/* Render Attendance Cells */}
                                     {studentAttendanceStatuses.map((status, i) => (
                                         <AttendanceCell 
                                             key={i} 
@@ -599,53 +665,269 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         );
     };
 
-    // --- REMOVED renderGradesheetTable and renderRecordsTable ---
-    
-    // --- UPDATED: renderContent ---
-    const renderContent = () => {
-        if (currentView === 'Gradesheet') {
-            return (
-                <GradesheetView
-                    students={filteredStudents}
-                    studentScores={studentScores}
-                    quizCols={quizCols}
-                    actCols={actCols}
-                    recMax={recMax}
-                    examMax={examMax}
-                />
-            );
-        }
-        if (currentView === 'Attendance') return renderAttendanceTable();
-        
-        // --- NEW LOGIC: Use the imported RecordsTableComponent ---
-        const isMidterm = currentView === 'Midterm Records';
-        
+    const renderGradesheetTable = () => {
         return (
-            <RecordsTableComponent
-                isMidterm={isMidterm}
-                students={filteredStudents}
-                studentScores={studentScores}
-                quizCols={quizCols}
-                actCols={actCols}
-                recMax={recMax}
-                examMax={examMax}
-                handleMaxScoreChange={handleMaxScoreChange}
-                handleScoreChange={handleScoreChange}
-                searchTerm={searchTerm}
-            />
+            <table className="mp-table mp-summary-table">
+                <thead>
+                    <tr>
+                        <th colSpan="2" className="header-beige-title">GRADE SHEET</th>
+                        <th colSpan="7" className="header-green-title">GRADE SHEET</th>
+                    </tr>
+                    <tr>
+                        <th className="sticky-col col-no header-beige">Student ID</th>
+                        <th className="sticky-col col-name header-beige">Student Name</th>
+                        <th className="header-green-col">Midterm</th>
+                        <th className="header-green-col">40%</th>
+                        <th className="header-green-col">Final</th>
+                        <th className="header-green-col">60%</th>
+                        <th className="header-green-col">FINAL GRADE</th>
+                        <th className="header-green-col">EQVT GRADE</th>
+                        <th className="header-green-col">REMARKS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {filteredStudents.length === 0 ? (
+                         <tr><td colSpan="9" style={{padding: '2rem', textAlign:'center'}}>No students found matching "{searchTerm}".</td></tr>
+                    ) : (
+                        filteredStudents.map((student, index) => {
+                            const scores = studentScores[student.id] || {};
+                            
+                            const midtermPercentage = calculateTermGrade(scores, true, quizCols, actCols, recMax, examMax);
+                            const finalsPercentage = calculateTermGrade(scores, false, quizCols, actCols, recMax, examMax);
+
+                            const mid40 = (midtermPercentage * 0.40);
+                            const fin60 = (finalsPercentage * 0.60);
+                            const finalGrade = (mid40 + fin60).toFixed(2);
+                            
+                            let eqvt = '5.00';
+                            let remarks = 'FAILED';
+                            let remarksClass = 'cell-failed';
+
+                            if (finalGrade >= 98) eqvt = '1.00';
+                            else if (finalGrade >= 96) eqvt = '1.25';
+                            else if (finalGrade >= 93) eqvt = '1.50';
+                            else if (finalGrade >= 75) eqvt = '2.00'; 
+                            
+                            if (finalGrade >= 75) {
+                                remarks = 'PASSED';
+                                remarksClass = 'cell-passed';
+                            }
+
+                            return (
+                                <tr key={student.id}>
+                                    <td className="sticky-col col-id header-beige-cell center-text">{student.id}</td>
+                                    <td className="sticky-col col-name header-beige-cell" style={{fontWeight:'600', paddingLeft:'8px', textAlign:'left'}}>{student.name}</td>
+                                    
+                                    <td className="center-text">{midtermPercentage.toFixed(2)}</td>
+                                    <td className="center-text header-green-cell">{mid40.toFixed(2)}</td>
+                                    <td className="center-text">{finalsPercentage.toFixed(2)}</td>
+                                    <td className="center-text header-green-cell">{fin60.toFixed(2)}</td>
+                                    
+                                    <td className="center-text" style={{fontWeight:'bold'}}>{finalGrade}</td>
+                                    <td className="center-text header-green-cell">{eqvt}</td>
+                                    <td className={`center-text ${remarksClass}`}>{remarks}</td>
+                                </tr>
+                            );
+                        })
+                    )}
+                </tbody>
+            </table>
         );
     };
 
-    
-    // UPDATED: Use term-specific columns for max score calculation
-    const renderSideCards = () => {
+    /**
+     * @SUMMARY: Renders the table for Midterm/Finals Records. 
+     * The Category row was removed and sticky columns were adjusted to rowSpan=2.
+     */
+    const renderRecordsTable = () => {
         const isMidterm = currentView.includes('Midterm');
-        const currentQuizCols = isMidterm ? midQuizCols : finQuizCols;
-        const currentActCols = isMidterm ? midActCols : finActCols;
-
-        const totalQuizMax = currentQuizCols.reduce((sum, c) => sum + c.max, 0); 
-        const totalActLabMax = currentActCols.reduce((sum, c) => sum + c.max, 0); 
+        const examLabel = isMidterm ? 'Mid Exam' : 'Final Exam';
         
+        const dynamicActCols = isMidterm ? actCols : actCols.map(c => ({...c, label: c.label.replace('ACT', 'LAB')}));
+        
+        // Calculate total columns for colspan in case of no students
+        const totalCols = 4 + quizCols.length + actCols.length + REC_COLS.length + EXAM_COLS.length; 
+
+        return (
+            <table className="mp-table">
+                <thead>
+                    {/* FIRST HEADER ROW (Labels) */}
+                    <tr>
+                        {/* No., ID, Name - rowSpan="2" */}
+                        <th rowSpan="2" className="sticky-col col-no header-category-green">No.</th>
+                        <th rowSpan="2" className="sticky-col col-id header-category-green">Student ID</th>
+                        <th rowSpan="2" className="sticky-col col-name header-category-green">Student Name</th>
+                        
+                        {/* Percentage Column - rowSpan="2" para hindi sumama sa scroll at masakop ang 100% label space */}
+                        <th rowSpan="2" className="sticky-col col-grade header-midterm-green">
+                            {isMidterm ? 'Midterm' : 'Finals'}<br/>Percentage
+                        </th>
+                        
+                        {/* Dynamic Column Headers (Hindi sticky) */}
+                        {quizCols.map(c => {
+                            // NEW: Add title attribute for tooltip (Quiz columns only)
+                            const tooltip = c.date ? `Date: ${new Date(c.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : c.label;
+                            return (
+                                <th key={c.id} className="header-category-orange" title={tooltip}>
+                                    {c.label}
+                                </th>
+                            );
+                        })}
+                        {dynamicActCols.map(c => <th key={c.id} className="header-category-orange">{c.label}</th>)}
+                        {REC_COLS.map(c => <th key={c.id} className="header-category-orange">{c.label}</th>)}
+                        <th className="header-category-orange">{examLabel}</th> 
+                    </tr>
+
+                    {/* SECOND HEADER ROW (MAX SCORES) */}
+                    <tr>
+                        {/* WALANG <th> DITO PARA SA STICKY COLUMNS dahil naka rowSpan="2" na sila */}
+                        
+                        {/* Editable Quiz Max Scores */}
+                        {quizCols.map(c => (
+                            <th key={c.id}>
+                                <MaxScoreInput 
+                                    value={c.max} 
+                                    type="quiz" 
+                                    id={c.id} 
+                                    onChange={handleMaxScoreChange} 
+                                />
+                            </th>
+                        ))} 
+                        {/* Editable Activity/Lab Max Scores */}
+                        {actCols.map(c => (
+                            <th key={c.id}>
+                                <MaxScoreInput 
+                                    value={c.max} 
+                                    type="act" 
+                                    id={c.id} 
+                                    onChange={handleMaxScoreChange} 
+                                />
+                            </th>
+                        ))} 
+                        {/* Editable Recitation Max Score */}
+                        {REC_COLS.map(c => (
+                            <th key={c.id}>
+                                <MaxScoreInput 
+                                    value={recMax} 
+                                    type="rec" 
+                                    id={c.id}
+                                    onChange={handleMaxScoreChange} 
+                                />
+                            </th>
+                        ))}
+                        {/* Editable Exam Max Score */}
+                        {EXAM_COLS.map(c => (
+                            <th key={c.id}>
+                                <MaxScoreInput 
+                                    value={examMax} 
+                                    type="exam" 
+                                    id={c.id}
+                                    onChange={handleMaxScoreChange} 
+                                />
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+                
+                <tbody>
+                    {filteredStudents.length === 0 ? (
+                        <tr><td colSpan={totalCols} style={{padding: '2rem', textAlign:'center'}}>No students found matching "{searchTerm}".</td></tr>
+                    ) : (
+                        filteredStudents.map((student, index) => {
+                            const scores = studentScores[student.id] || {};
+                            const termPercentage = calculateTermGrade(scores, isMidterm, quizCols, actCols, recMax, examMax).toFixed(2);
+                            
+                            return (
+                                <tr key={student.id}>
+                                    <td className="sticky-col col-no center-text">{index + 1}</td>
+                                    <td className="sticky-col col-id center-text">{student.id}</td>
+                                    <td className="sticky-col col-name" style={{fontWeight:'600', paddingLeft:'8px'}}>{student.name}</td>
+                                    <td className="sticky-col col-grade bg-green-soft">{termPercentage}</td>
+
+                                    {/* Quiz Scores (Shared IDs) */}
+                                    {quizCols.map(c => (
+                                        <td key={c.id}>
+                                            <input 
+                                                type="number" 
+                                                className="mp-table-input" 
+                                                value={scores[c.id] || ''} 
+                                                onChange={(e) => handleScoreChange(student.id, c.id, e.target.value)}
+                                                max={c.max} 
+                                                min="0"
+                                            />
+                                        </td>
+                                    ))}
+
+                                    {/* Activity/Lab Scores (Dynamic IDs) */}
+                                    {actCols.map(c => {
+                                        const assessmentId = isMidterm ? c.id : c.id.replace('act', 'lab');
+                                        
+                                        return (
+                                            <td key={c.id}>
+                                                <input 
+                                                    type="number" 
+                                                    className="mp-table-input" 
+                                                    value={scores[assessmentId] || ''} 
+                                                    onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
+                                                    max={c.max} 
+                                                    min="0"
+                                                />
+                                            </td>
+                                        );
+                                    })}
+
+                                    {/* Recitation Score (Dynamic IDs) */}
+                                    {REC_COLS.map(c => {
+                                        const assessmentId = isMidterm ? 'r1_mid' : 'r1_fin';
+                                        return (
+                                            <td key={c.id}>
+                                                <input 
+                                                    type="number" 
+                                                    className="mp-table-input" 
+                                                    value={scores[assessmentId] || ''} 
+                                                    onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
+                                                    max={recMax} 
+                                                    min="0"
+                                                />
+                                            </td>
+                                        );
+                                    })}
+
+                                    {/* Exam Score (Dynamic IDs) */}
+                                    {EXAM_COLS.map(c => {
+                                        const assessmentId = isMidterm ? 'exam_mid' : 'exam_fin';
+                                        return (
+                                            <td key={c.id}>
+                                                <input 
+                                                    type="number" 
+                                                    className="mp-table-input" 
+                                                    value={scores[assessmentId] || ''} 
+                                                    onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
+                                                    max={examMax} 
+                                                    min="0"
+                                                />
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            );
+                        })
+                    )}
+                </tbody>
+            </table>
+        );
+    };
+
+    const renderContent = () => {
+        if (currentView === 'Gradesheet') return renderGradesheetTable();
+        if (currentView === 'Attendance') return renderAttendanceTable();
+        return renderRecordsTable();
+    };
+
+    // ... (renderSideCards remains unchanged)
+    const renderSideCards = () => {
+        const totalQuizMax = quizCols.reduce((sum, c) => sum + c.max, 0); 
+        const totalActLabMax = actCols.reduce((sum, c) => sum + c.max, 0); 
         const totalRecMax = recMax; 
         const totalExamMax = examMax;
 
@@ -655,8 +937,33 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         if (currentView === 'Attendance') return null;
 
         if (isGradesheet) {
-            // --- UPDATED: Use the imported GradesheetSideCardsExport component ---
-            return <GradesheetSideCardsExport />;
+            return (
+                <div className="mp-cards-container">
+                    <div className="mp-percentage-card">
+                        <div className="mp-pc-header">COMPOSITION</div>
+                        <table className="mp-pc-table">
+                            <thead><tr><th>Term</th><th>Percentage</th></tr></thead>
+                            <tbody>
+                                <tr><td>Midterm</td><td>40</td></tr>
+                                <tr><td>Finals</td><td>60</td></tr>
+                                <tr className="mp-pc-total"><td>TOTAL</td><td>100</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="mp-percentage-card">
+                        <div className="mp-pc-header">FINALS</div>
+                        <table className="mp-pc-table scale-table">
+                            <thead><tr><th>Range %</th><th>Grade</th><th>Remarks</th></tr></thead>
+                            <tbody>
+                                <tr><td>98 - 100</td><td>1.00</td><td rowSpan="9" className="cell-passed-vertical">PASSED</td></tr>
+                                <tr><td>96 - 97</td><td>1.25</td></tr>
+                                <tr><td>93 - 95</td><td>1.50</td></tr>
+                                <tr><td>...</td><td>...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
         }
 
         if (isFinals) {
@@ -700,19 +1007,22 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
 
             <main className="mp-main" style={{ marginLeft: sidebarWidth }}>
                 
-                {/* HEADER */}
+                {/* HEADER (UPDATED mp-header-center) */}
                 <div className="mp-header-top">
                     
+                    {/* MODIFIED: mp-header-left now contains the back button next to the title */}
                     <div className="mp-header-left">
-                        <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}> {/* NEW FLEX WRAPPER */}
+                            {/* BACK BUTTON (ICON ONLY) */}
                             <button 
                                 className="mp-back-btn" 
                                 onClick={() => onPageChange('view-studs')}
                                 title="Go back to Student Records"
                             >
-                                <ArrowLeft size={20} />
+                                <ArrowLeft size={20} /> {/* ICON ONLY */}
                             </button>
                             
+                            {/* TITLE WRAPPER */}
                             <div style={{display: 'flex', flexDirection: 'column'}}>
                                 <h1 className="mp-top-title">
                                     {currentView === 'Gradesheet' ? 'SUMMARY GRADESHEET' : 
@@ -724,8 +1034,10 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                         </div>
                     </div>
 
+                    {/* MODIFIED: mp-header-center now only contains the Search bar */}
                     <div className="mp-header-center">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            {/* EXISTING SEARCH WRAPPER */}
                             <div className="mp-search-wrapper">
                                 <Search className="mp-search-icon" size={16} />
                                 <input 
@@ -753,10 +1065,11 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                     </div>
                 </div>
 
+                {/* TOOLBAR */}
                 <div className="mp-toolbar">
                     <div className="mp-toolbar-left">
                         
-                        {/* 1. Show Add Assessment for Grade Views */}
+                        {/* 1. Show Add Assessment for Grade Views - CONSOLIDATED INTO DROPDOWN */}
                         {currentView !== 'Gradesheet' && currentView !== 'Attendance' && (
                             <>
                                 {/* --- NEW ADD ASSESSMENT DROPDOWN --- */}
@@ -826,25 +1139,27 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                     )}
                                 </div>
 
-                                {/* --- REMOVE BUTTON WITH DROPDOWN --- */}
-                                <div style={{position: 'relative', display: 'inline-block', marginLeft: '8px'}}>
+
+                                {/* --- REMOVE BUTTON WITH DROPDOWN (marginLeft set to 8px) --- */}
+                                <div style={{position: 'relative', display: 'inline-block', marginLeft: '8px'}}> 
                                     <button 
                                         className="btn-remove-assessment" 
-                                        onClick={toggleRemoveMenu}
+                                        onClick={toggleRemoveMenu} // Use toggle handler
                                         title="Remove Assessment Column"
                                     >
                                         <Trash size={18} /> Remove
                                     </button>
 
+                                    {/* DROPDOWN MENU */}
                                     {isRemoveMenuOpen && (
                                         <div className="mp-remove-dropdown">
                                             <div className="mp-remove-header">Select Column to Remove</div>
                                             
-                                            {/* Show current term's quiz columns */}
-                                            {(currentView.includes('Midterm') ? midQuizCols : finQuizCols).length > 0 && (
+                                            {/* QUIZ SECTION */}
+                                            {quizCols.length > 0 && (
                                                 <>
                                                     <div className="mp-remove-category">Quizzes</div>
-                                                    {(currentView.includes('Midterm') ? midQuizCols : finQuizCols).map(col => (
+                                                    {quizCols.map(col => (
                                                         <button 
                                                             key={col.id} 
                                                             className="mp-remove-item"
@@ -856,11 +1171,11 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                                 </>
                                             )}
 
-                                            {/* Show current term's activity/lab columns */}
-                                            {(currentView.includes('Midterm') ? midActCols : finActCols).length > 0 && (
+                                            {/* ACT SECTION */}
+                                            {actCols.length > 0 && (
                                                 <>
                                                     <div className="mp-remove-category">{currentView.includes('Midterm') ? 'Activities' : 'Labs'}</div>
-                                                    {(currentView.includes('Midterm') ? midActCols : finActCols).map(col => {
+                                                    {actCols.map(col => {
                                                         const displayLabel = currentView.includes('Finals') 
                                                             ? col.label.replace('ACT', 'LAB') 
                                                             : col.label;
@@ -878,33 +1193,33 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                                 </>
                                             )}
 
-                                            {(currentView.includes('Midterm') ? midQuizCols : finQuizCols).length === 0 && 
-                                             (currentView.includes('Midterm') ? midActCols : finActCols).length === 0 && (
+                                            {quizCols.length === 0 && actCols.length === 0 && (
                                                 <div style={{padding: '10px', fontSize: '12px', color: '#666'}}>No columns to remove.</div>
                                             )}
                                         </div>
                                     )}
                                 </div>
                                 
-                                {/* --- NEW RESTORE BUTTON WITH DROPDOWN --- */}
+                                {/* --- NEW RESTORE BUTTON WITH DROPDOWN (marginLeft set to 8px) --- */}
                                 <div style={{position: 'relative', display: 'inline-block', marginLeft: '8px'}}>
                                     <button 
                                         className="btn-restore-assessment" 
-                                        onClick={toggleRestoreMenu}
+                                        onClick={toggleRestoreMenu} // Use toggle handler
                                         title="Restore Removed Column"
                                     >
                                         <RotateCcw size={18} /> Restore
                                     </button>
 
+                                    {/* DROPDOWN MENU */}
                                     {isRestoreMenuOpen && (
                                         <div className="mp-restore-dropdown">
                                             <div className="mp-restore-header">Select Column to Restore</div>
                                             
-                                            {/* Show current term's removed quiz columns */}
-                                            {(currentView.includes('Midterm') ? removedMidQuizCols : removedFinQuizCols).length > 0 && (
+                                            {/* QUIZ SECTION */}
+                                            {removedQuizCols.length > 0 && (
                                                 <>
                                                     <div className="mp-restore-category">Quizzes</div>
-                                                    {(currentView.includes('Midterm') ? removedMidQuizCols : removedFinQuizCols).map(col => (
+                                                    {removedQuizCols.map(col => (
                                                         <button 
                                                             key={col.id} 
                                                             className="mp-restore-item"
@@ -916,11 +1231,11 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                                 </>
                                             )}
 
-                                            {/* Show current term's removed activity/lab columns */}
-                                            {(currentView.includes('Midterm') ? removedMidActCols : removedFinActCols).length > 0 && (
+                                            {/* ACT/LAB SECTION */}
+                                            {removedActCols.length > 0 && (
                                                 <>
                                                     <div className="mp-restore-category">{currentView.includes('Midterm') ? 'Activities' : 'Labs'}</div>
-                                                    {(currentView.includes('Midterm') ? removedMidActCols : removedFinActCols).map(col => {
+                                                    {removedActCols.map(col => {
                                                         const displayLabel = currentView.includes('Finals') 
                                                             ? col.label.replace('ACT', 'LAB') 
                                                             : col.label;
@@ -938,8 +1253,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                                 </>
                                             )}
 
-                                            {(currentView.includes('Midterm') ? removedMidQuizCols : removedFinQuizCols).length === 0 && 
-                                             (currentView.includes('Midterm') ? removedMidActCols : removedFinActCols).length === 0 && (
+                                            {removedQuizCols.length === 0 && removedActCols.length === 0 && (
                                                 <div style={{padding: '10px', fontSize: '12px', color: '#666'}}>No columns available for restoration.</div>
                                             )}
                                         </div>
@@ -948,6 +1262,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                             </>
                         )}
                         
+                        {/* 2. Show Attendance Dropdown ONLY when Attendance is Selected */}
                         {currentView === 'Attendance' && (
                             <div className="mp-att-selector-wrapper">
                                 <span className="mp-label-small">Select Term:</span>
@@ -968,17 +1283,22 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
 
                     <div className="mp-toolbar-right">
                         <div className="mp-data-actions">
+                            {/* LINKED DOWNLOAD BUTTON TO handleExport */}
                             <button className="btn-utility" onClick={handleExport}><Download size={14}/> Download</button>
                         </div>
                         {renderSideCards()}
                     </div>
                 </div>
 
+                {/* TABLE CONTENT */}
                 <div className="mp-content-wrapper">
-                    {renderContent()}
+                    <div className="mp-table-container">
+                        {renderContent()}
+                    </div>
                 </div>
 
             </main>
+            {/* Keeping ActivityModal, though we are currently using direct buttons */}
             <ActivityModal isOpen={isActivityModalOpen} onClose={() => setIsActivityModalOpen(false)} title={currentView} />
             
             <style>{`

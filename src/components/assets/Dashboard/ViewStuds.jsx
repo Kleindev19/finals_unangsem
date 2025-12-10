@@ -4,25 +4,23 @@ import React, { useState, useEffect, useMemo } from 'react';
 import './ViewStuds.css';
 import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 
-// --- ICONS ---
-const SearchIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
-const BellIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.36 17a3 3 0 1 0 3.28 0"/></svg>);
-const HelpIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>);
-const ChevronDown = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
-const PlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>);
-const DownloadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>);
-const XIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
-const EditIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>);
-const UploadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>);
-const AlertCircle = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>);
-// --- ADDED BACK BUTTON ICON ---
-const ArrowLeft = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>);
+// --- ICONS (Adjusted to consistently use a size prop if provided) ---
+// Note: Added default size=24 to ensure icons work even if size prop isn't passed
+const SearchIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
+const BellIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.36 17a3 3 0 1 0 3.28 0"/></svg>);
+const HelpIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>);
+const ChevronDown = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
+const PlusIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>);
+const DownloadIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>);
+const XIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
+const EditIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>);
+const UploadIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>);
+const ArrowLeft = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>);
 
 const ATTENDANCE_DATES = ['Sept 15', 'Sept 16', 'Sept 18', 'Sept 19', 'Sept 22', 'Sept 23', 'Sep 24', 'Sept 25'];
 
 // --- SUB-COMPONENT: ATTENDANCE CELL ---
-const AttendanceCell = ({ status, onChange }) => {
-// ... (AttendanceCell logic remains the same)
+const AttendanceCell = React.memo(({ status, onChange }) => { // Using React.memo for performance
     let className = 'vs-status-pill';
     let content = status;
 
@@ -34,7 +32,7 @@ const AttendanceCell = ({ status, onChange }) => {
     return (
         <td className="vs-cell-relative">
             <div className={className}>
-                {status === 'SUSPENDED' || status === 'HOLIDAY' ? status : <>{content} <ChevronDown className="vs-chevron-mini"/></>}
+                {status === 'SUSPENDED' || status === 'HOLIDAY' ? status : <>{content} <ChevronDown className="vs-chevron-mini" size={12} /></>}
             </div>
             <select 
                 className="vs-cell-select"
@@ -50,11 +48,10 @@ const AttendanceCell = ({ status, onChange }) => {
             </select>
         </td>
     );
-};
+});
 
 // --- ADD STUDENT MODAL ---
 const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, professorUid }) => { 
-// ... (AddStudentFormModal logic remains the same)
     const [formData, setFormData] = useState({
         id: '', name: '', type: 'Regular', course: '', 
         section: sectionName || '', cell: '', email: '', address: ''
@@ -78,12 +75,12 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
         setIsSubmitting(true);
         
         try {
-            // Validate required fields
-            if (!formData.id || !formData.name || !formData.section) {
-                throw new Error('Student ID, Name, and Section are required');
+            // FIX: Added 'course' to required fields to match form structure
+            if (!formData.id || !formData.name || !formData.section || !formData.course) { 
+                throw new Error('Student ID, Name, Course, and Section are required');
             }
 
-            // Save to MongoDB (NOTE: This assumed backend call is kept for functionality)
+            // Save to MongoDB (NOTE: Assumed backend call)
             const response = await fetch('http://localhost:5000/api/students', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -96,6 +93,10 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
             const responseData = await response.json();
 
             if (!response.ok) {
+                 // FIX: Check for duplicate key or specific errors
+                 if (response.status === 409) {
+                     throw new Error(`Student with ID ${formData.id} already exists.`);
+                 }
                 throw new Error(responseData.message || 'Failed to add student');
             }
 
@@ -122,7 +123,7 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
     return (
         <div className="vs-modal-overlay">
             <div className="vs-modal-card">
-                <button className="vs-modal-close" onClick={onClose}><XIcon /></button>
+                <button className="vs-modal-close" onClick={onClose}><XIcon size={24} /></button>
                 <h2 className="vs-modal-title">Add Student Information</h2>
                 <form className="vs-modal-form" onSubmit={handleSubmit}>
                     <div className="vs-form-row">
@@ -158,6 +159,9 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
 
 // --- MAIN COMPONENT ---
 const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefreshStudents, professorUid }) => {
+    // Destructuring props for cleaner usage
+    const sectionName = sectionData?.name;
+    
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_COLLAPSED_WIDTH);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [viewOption, setViewOption] = useState('Student Information');
@@ -167,13 +171,33 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
 
     // Filter students for THIS section only
     const sectionStudents = useMemo(() => {
-        return students.filter(student => student.section === sectionData?.name);
-    }, [students, sectionData]);
+        return students.filter(student => student.section === sectionName);
+    }, [students, sectionName]);
+
+    // FIX 1: Robust State Initialization for Attendance
+    // This hook ensures attendanceData is initialized (or reset) every time the section changes.
+    useEffect(() => {
+        if (!sectionStudents.length) {
+            setAttendanceData({}); // Clear if no students
+            return;
+        }
+        
+        const initialAttendance = {};
+        sectionStudents.forEach(student => {
+            // Initialize with default attendance records (e.g., all 'A' for Absent)
+            // If the application fetched attendance records, this logic would combine the fetched data 
+            // with the default fill. For now, it defaults to all 'A'.
+            initialAttendance[student.id] = Array(ATTENDANCE_DATES.length).fill('A'); 
+        });
+        setAttendanceData(initialAttendance);
+    // Dependency array includes sectionName to trigger reset when a new section is loaded
+    }, [sectionName, sectionStudents.length]); 
+
 
     useEffect(() => {
         const handleBotAdd = (e) => {
             const newStudent = e.detail;
-            if (newStudent.section === sectionData?.name) {
+            if (newStudent.section === sectionName) {
                 // Refresh from database instead of local update
                 if (onRefreshStudents) {
                     onRefreshStudents();
@@ -183,7 +207,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
 
         window.addEventListener('CDM_STUDENT_ADDED', handleBotAdd);
         return () => window.removeEventListener('CDM_STUDENT_ADDED', handleBotAdd);
-    }, [sectionData, onRefreshStudents]); 
+    }, [sectionName, onRefreshStudents]); 
 
     const handleViewChange = (e) => {
         const selected = e.target.value;
@@ -199,20 +223,18 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
             if (selected === 'Finals') displayTitle = 'Finals Grade';
             if (selected === 'Assignment') displayTitle = 'Assignments';
             
-            // NOTE: The previous version passed the selected view as viewType,
-            // which is correctly handled by MultiPageGS.jsx
+            // Route to external gradesheet component for grade views
             onPageChange('multipage-gradesheet', { 
                 viewType: selected + ' Records', // e.g., 'Midterm Records'
                 title: displayTitle,
                 students: sectionStudents 
             });
         } else if (selected === 'Attendance') {
-             onPageChange('multipage-gradesheet', { 
-                viewType: 'Attendance', 
-                title: 'Attendance Record',
-                students: sectionStudents 
-            });
+             // FIX 2: Stop changing page for 'Attendance' if it's handled here by renderTable()
+             // Set the view option, but DO NOT call onPageChange.
+             // setViewOption(selected) already handles the table render.
         }
+        // If viewOption is 'Student Information', it remains in this component.
     };
 
     const handleStudentAdded = (savedStudent) => {
@@ -224,13 +246,19 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
     };
     
     const handleStatusChange = (studentId, dayIndex, newStatus) => {
-        const currentRecords = [...(attendanceData[studentId] || [])];
+        // Attendance data is now reliably initialized in useEffect
+        const currentRecords = [...(attendanceData[studentId] || [])]; 
         currentRecords[dayIndex] = newStatus;
         setAttendanceData(prev => ({ ...prev, [studentId]: currentRecords }));
     };
 
     const handleEditClick = (studentName) => {
         alert(`Edit feature for ${studentName} coming soon!`);
+    };
+    
+    // FIX: Combined the export menu toggle into a dedicated function for cleanliness
+    const toggleExportMenu = () => {
+         setIsExportMenuOpen(prev => !prev);
     };
 
     const exportToExcel = () => {
@@ -254,7 +282,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
         if (link.download !== undefined) {
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
-            link.setAttribute("download", `${sectionData?.name || 'Student'}_List.csv`);
+            link.setAttribute("download", `${sectionName || 'Student'}_List.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -272,7 +300,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
              return;
         }
 
-        window.print();
+        window.print(); 
     };
 
     const filteredStudents = sectionStudents.filter(student => {
@@ -350,7 +378,8 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                     </thead>
                     <tbody>
                         {sectionStudents.map((student) => { 
-                            const records = attendanceData[student.id] || []; 
+                            // Attendance records are guaranteed to be initialized by useEffect
+                            const records = attendanceData[student.id] || Array(ATTENDANCE_DATES.length).fill('A'); 
                             return (
                                 <tr key={student.id} className={student.isNew ? "vs-row-animate-new" : ""}>
                                     <td className="fixed-col vs-id-text">{student.id}</td>
@@ -380,7 +409,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
             <div className="view-studs-main" style={{ marginLeft: sidebarWidth }}>
                 <header className="vs-header">
                     <div className="vs-search-container">
-                        <SearchIcon className="vs-search-icon" />
+                        <SearchIcon className="vs-search-icon" size={20} />
                         <input 
                             type="text" 
                             placeholder="Search students" 
@@ -398,8 +427,8 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                     )}
 
                     <div className="vs-header-actions">
-                        <BellIcon className="vs-icon" />
-                        <HelpIcon className="vs-icon" />
+                        <BellIcon className="vs-icon" size={24} />
+                        <HelpIcon className="vs-icon" size={24} />
                     </div>
                 </header>
 
@@ -416,7 +445,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                 <div className="vs-content-card">
                     {viewOption === 'Student Information' && (
                         <div className="vs-card-header">
-                            <h1>{sectionData?.name || 'Section'}</h1>
+                            <h1>{sectionName || 'Section'}</h1>
                             <span className="vs-subtitle">{sectionData?.subtitle || 'Course Description'}</span>
                         </div>
                     )}
@@ -452,7 +481,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                                  <div className="vs-export-dropdown-wrapper">
                                      <button 
                                          className="vs-btn vs-btn-export" 
-                                         onClick={() => setIsExportMenuOpen(prev => !prev)}
+                                         onClick={toggleExportMenu} // Using the dedicated function
                                      >
                                          <DownloadIcon size={16} /> Export Full List <ChevronDown size={16} style={{marginLeft: '4px'}} />
                                      </button>
@@ -489,7 +518,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                 isOpen={isAddModalOpen} 
                 onClose={() => setIsAddModalOpen(false)} 
                 onStudentAdded={handleStudentAdded}
-                sectionName={sectionData?.name}
+                sectionName={sectionName}
                 professorUid={professorUid}
             />
             

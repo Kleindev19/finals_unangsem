@@ -27,14 +27,47 @@ const schoolData = {
     // Placeholder data for other institutes (can be expanded similarly)
     "Institute of Teachers Education": { 
         "1st Year": {
-             "Bachelor of Elementary Education": ["BEEd 1A", "BEEd 1B"],
-             "Bachelor of Secondary Education": ["BSEd 1A", "BSEd 1B"]
-        } 
+             "Bachelor of Elementary Education with a major in General Education": ["BEED - GEN 1A", "BEED - GEN 1B","BEED - GEN 1C", "BEED - GEN 1D",],
+             "Bachelor of Secondary Education Major in Science": ["BSEd - SCI 1A", "BSEd - SCI 1B", "BSEd - SC 1CI", "BSEd - SC 1D"],
+             "Bachelor of Elementary Education in Early Childhood Education": ["BEED - ECED 1A", "BEED - ECED 1B","BEED - ECED 1C", "BEED - ECED 1D",],
+             " Bachelor of Technology and Livelihood Education major in Information and Communication Technology": ["BTLEd - ICT 1A", "BTLEd - ICT 1B","BTLEd - ICT 1C", "BTLEd - ICT 1D",],
+        } ,
+        "2nd Year": {
+             "Bachelor of Elementary Education with a major in General Education": ["BEED - GEN 2A", "BEED - GEN 2B","BEED - GEN 2C", "BEED - GEN 2D",],
+             "Bachelor of Secondary Education Major in Science": ["BSEd - SCI 2A", "BSEd - SCI 2B", "BSEd - SC 2CI", "BSEd - SC 2D"],
+             "Bachelor of Elementary Education in Early Childhood Education": ["BEED - ECED 2A", "BEED - ECED 2B","BEED - ECED 2C", "BEED - ECED 2D",],
+             " Bachelor of Technology and Livelihood Education major in Information and Communication Technology": ["BTLEd - ICT 2A", "BTLEd - ICT 2B","BTLEd - ICT 2C", "BTLEd - ICT 2D",],
+        },
+         "3rd Year": {
+            "Bachelor of Elementary Education with a major in General Education": ["BEED - GEN 3A", "BEED - GEN 3B","BEED - GEN 3C", "BEED - GEN 3D",],
+             "Bachelor of Secondary Education Major in Science": ["BSEd - SCI 3A", "BSEd - SCI 3B", "BSEd - SC 3CI", "BSEd - SC 3D"],
+             "Bachelor of Elementary Education in Early Childhood Education": ["BEED - ECED 3A", "BEED - ECED 3B","BEED - ECED 3C", "BEED - ECED 3D",],
+             " Bachelor of Technology and Livelihood Education major in Information and Communication Technology": ["BTLEd - ICT 3A", "BTLEd - ICT 3B","BTLEd - ICT 3C", "BTLEd - ICT 3D",],
+        },
+         "4th Year": {
+           "Bachelor of Elementary Education with a major in General Education": ["BEED - GEN 4A", "BEED - GEN 4B","BEED - GEN 4C", "BEED - GEN 4D",],
+             "Bachelor of Secondary Education Major in Science": ["BSEd - SCI 4A", "BSEd - SCI 4B", "BSEd - SC 4CI", "BSEd - SC 4D"],
+             "Bachelor of Elementary Education in Early Childhood Education": ["BEED - ECED 4A", "BEED - ECED 4B","BEED - ECED 4C", "BEED - ECED 4D",],
+             " Bachelor of Technology and Livelihood Education major in Information and Communication Technology": ["BTLEd - ICT 4A", "BTLEd - ICT 4B","BTLEd - ICT 4C", "BTLEd - ICT 4D",],
+        },
     }, 
     "Institute of Business Entrepreneurship": { 
-        "1st Year": {
-            "Bachelor of Science in Entrepreneurship": ["BS Entrep 1A", "BS Entrep 1B"]
-        } 
+       "1st Year": {
+            "Bachelor of Science in Entrepreneurship": ["BSE 1A", "BSE 1B","BSE 1C","BSE 1D"],
+            "Bachelor of Science in Business Administration major in Human Resource Management": ["BSBA - HRM 1A","BSBA - HRM 1B","BSBA - HRM 1C","BSBA - HRM 1D"],
+        },
+        "2nd Year": {
+            "Bachelor of Science in Entrepreneurship": ["BSE 2A", "BSE 2B","BSE 2C","BSE 2D"],
+            "Bachelor of Science in Business Administration major in Human Resource Management": ["BSBA - HRM 2A","BSBA - HRM 2B","BSBA - HRM 2C","BSBA - HRM 2D"],
+        },
+         "3rd Year": {
+           "Bachelor of Science in Entrepreneurship": ["BSE 3A", "BSE 3B","BSE 3C","BSE 3D"],
+            "Bachelor of Science in Business Administration major in Human Resource Management": ["BSBA - HRM 3A","BSBA - HRM 3B","BSBA - HRM 3C","BSBA - HRM 3D"],
+        },
+         "4th Year": {
+            "Bachelor of Science in Entrepreneurship": ["BSE 4A", "BSE 4B","BSE 4C","BSE 4D"],
+            "Bachelor of Science in Business Administration major in Human Resource Management": ["BSBA - HRM 4A","BSBA - HRM 4B","BSBA - HRM 4C","BSBA - HRM 4D"],
+        },
     },
 };
 

@@ -43,31 +43,39 @@ const Reports = ({
             const detailedStudents = classStudents.map(student => {
                 // Get attendance record from App state
                 const record = attendanceData[student.id] || [];
-                // Count absences
-                const absences = record.filter(status => status === 'A').length;
+                // Count absences (including 'A' status and any other absence indicators)
+                const absences = record.filter(status => 
+                    status === 'A' || 
+                    status === 'Absent' || 
+                    status === 'absent'
+                ).length;
                 
                 // Mock GPA / Attendance % calculation
                 const totalRecorded = record.length || 1;
                 const presentCount = record.filter(s => s === 'P' || s === 'L').length;
                 const attendancePct = Math.round((presentCount / totalRecorded) * 100) || 100;
 
-                // 💡 NEW: Grade Calculation
+                // 💡 NEW: Grade Calculation with validation
                 const scores = studentScores[student.id] || {};
-                const midtermPercentage = calculateTermGrade(scores, true, midQuizCols, midActCols, recMax, examMax);
-                const finalsPercentage = calculateTermGrade(scores, false, finQuizCols, finActCols, recMax, examMax);
+                const midtermPercentage = calculateTermGrade(scores, true, midQuizCols, midActCols, recMax, examMax) || 0;
+                const finalsPercentage = calculateTermGrade(scores, false, finQuizCols, finActCols, recMax, examMax) || 0;
                 const finalGrade = (midtermPercentage * 0.40 + finalsPercentage * 0.60);
                 
+                // ✅ VALIDATION: Only mark as risk if we have actual grade data
+                const hasGradeData = Object.keys(scores).length > 0;
+                const validFinalGrade = !isNaN(finalGrade) && isFinite(finalGrade);
+                
                 // 💡 NEW: Unified Risk Calculation
-                // Risk criteria: 3 or more absences OR Final Grade < 75%
+                // Risk criteria: 3 or more absences OR (has grade data AND Final Grade < 75%)
                 const isAttendanceRisk = absences >= 3;
-                const isAcademicRisk = finalGrade < 75;
+                const isAcademicRisk = hasGradeData && validFinalGrade && finalGrade < 75;
                 const isAtRisk = isAttendanceRisk || isAcademicRisk;
                 
                 // Determine risk text
                 let riskLabel;
-                if (absences >= 7 || finalGrade < 60) {
+                if (absences >= 7 || (validFinalGrade && finalGrade < 60)) {
                     riskLabel = 'High Risk';
-                } else if (absences >= 5 || finalGrade < 70) {
+                } else if (absences >= 5 || (validFinalGrade && finalGrade < 70)) {
                     riskLabel = 'Medium Risk';
                 } else if (isAtRisk) {
                     riskLabel = 'Intervention Needed';
@@ -75,10 +83,22 @@ const Reports = ({
                     riskLabel = 'On Track';
                 }
 
+                // 🐛 DEBUG: Remove this after testing
+                console.log(`[${section.name}] ${student.name}:`);
+                console.log('  - Absences:', absences);
+                console.log('  - Has Grade Data:', hasGradeData);
+                console.log('  - Final Grade:', validFinalGrade ? finalGrade.toFixed(2) : 'N/A');
+                console.log('  - Is Attendance Risk:', isAttendanceRisk);
+                console.log('  - Is Academic Risk:', isAcademicRisk);
+                console.log('  - Is At Risk:', isAtRisk);
+                console.log('  - Risk Label:', riskLabel);
+                console.log('  - Attendance Record:', record);
+                console.log('---');
+
                 return {
                     ...student,
                     absences: absences,
-                    finalGrade: finalGrade.toFixed(2), // NEW: Use actual final grade
+                    finalGrade: validFinalGrade ? finalGrade.toFixed(2) : 'N/A', // Show N/A if no grade data
                     attendance: `${attendancePct}%`,
                     avatar: `https://ui-avatars.com/api/?name=${student.name}&background=random`,
                     isAtRisk: isAtRisk, // NEW: Unified Risk Flag
@@ -132,7 +152,7 @@ const Reports = ({
     return (
         <div className="reports-page-container">
             
-            {/* Filter Card (omitted for brevity) */}
+            {/* Filter Card */}
             <div className="rep-filter-card">
                 <div className="rep-filter-group">
                     <label>Institute Filter</label>
