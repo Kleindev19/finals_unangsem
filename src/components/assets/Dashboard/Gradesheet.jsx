@@ -7,7 +7,7 @@ import './MultiPageGS.css';
 const REC_COLS = [{ id: 'r1', label: 'R1' }]; 
 const EXAM_COLS = [{ id: 'exam', label: 'Major Exam' }]; 
 
-// --- HELPER: Grade Calculation (Exported for reuse if needed) ---
+// --- HELPER: Grade Calculation (UPDATED for term-specific score keys) ---
 export const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentActCols, recMax, examMax) => {
     // Recalculate MAX points based on current dynamic columns
     const MAX_QUIZ = currentQuizCols.reduce((sum, c) => sum + c.max, 0); 
@@ -21,10 +21,14 @@ export const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentAc
     const getPercentage = (score, max, percentage) => 
         max > 0 ? (score / max) * percentage : 0;
 
-    const sumScores = (ids) => ids.reduce((sum, id) => sum + (parseFloat(scores[id]) || 0), 0);
+    // NEW: Helper to sum scores with term-specific keys (e.g., 'q1' -> 'q1_mid' or 'q1_fin')
+    const sumScores = (cols) => cols.reduce((sum, col) => {
+        const termKey = col.id + (isMidterm ? '_mid' : '_fin');
+        return sum + (parseFloat(scores[termKey]) || 0);
+    }, 0);
 
-    // 1. QUIZ (15%)
-    const quizScore = sumScores(currentQuizCols.map(c => c.id));
+    // 1. QUIZ (15%) - Uses the new sumScores helper
+    const quizScore = sumScores(currentQuizCols);
     const quizGrade = getPercentage(quizScore, MAX_QUIZ, 15);
 
     let otherGrade = 0;
@@ -32,30 +36,24 @@ export const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentAc
 
     if (isMidterm) {
         // MIDTERM: Activity (35%)
-        const actIds = currentActCols.map(c => c.id);
-        const actScore = sumScores(actIds);
+        const actScore = sumScores(currentActCols);
         otherGrade += getPercentage(actScore, MAX_ACT_LAB, 35); // Activity 35%
         
         recId = 'r1_mid';
         examId = 'exam_mid';
-
-        // Recitation 10%
-        const recScore = parseFloat(scores[recId]) || 0;
-        otherGrade += getPercentage(recScore, MAX_REC, 10);
         
     } else {
         // FINALS: Lab/Assignment (25%)
-        const labIds = currentActCols.map(c => c.id.replace('act', 'lab'));
-        const labScore = sumScores(labIds);
+        const labScore = sumScores(currentActCols);
         otherGrade += getPercentage(labScore, MAX_ACT_LAB, 25); // Lab/Assignment 25%
 
         recId = 'r1_fin';
         examId = 'exam_fin';
-
-        // Recitation 20%
-        const recScore = parseFloat(scores[recId]) || 0;
-        otherGrade += getPercentage(recScore, MAX_REC, 20);
     }
+    
+    // Recitation
+    const recScore = parseFloat(scores[recId]) || 0;
+    otherGrade += getPercentage(recScore, MAX_REC, isMidterm ? 10 : 20);
 
     // Exam 40%
     const examScore = parseFloat(scores[examId]) || 0;
@@ -82,7 +80,7 @@ const GradesheetSideCards = () => {
                 </table>
             </div>
             <div className="mp-percentage-card">
-                <div className="mp-pc-header">FINALS</div>
+                <div className="mp-pc-header">GRADING SCALE</div>
                 <table className="mp-pc-table scale-table">
                     <thead><tr><th>Range %</th><th>Grade</th><th>Remarks</th></tr></thead>
                     <tbody>
@@ -97,14 +95,20 @@ const GradesheetSideCards = () => {
     );
 };
 
-// --- COMPONENT: Main Gradesheet Summary Table ---
+// --- COMPONENT: Main Gradesheet Summary Table (Updated Props) ---
 const GradesheetTable = ({ 
     students, 
     studentScores, 
-    quizCols, 
-    actCols, 
-    recMax, 
-    examMax 
+    // MIDTERM PROPS
+    midQuizCols, 
+    midActCols, 
+    midRecMax, 
+    midExamMax,
+    // FINALS PROPS
+    finQuizCols, 
+    finActCols, 
+    finRecMax, 
+    finExamMax,
 }) => {
     return (
         <table className="mp-table mp-summary-table">
@@ -132,8 +136,11 @@ const GradesheetTable = ({
                     students.map((student) => {
                         const scores = studentScores[student.id] || {};
                         
-                        const midtermPercentage = calculateTermGrade(scores, true, quizCols, actCols, recMax, examMax);
-                        const finalsPercentage = calculateTermGrade(scores, false, quizCols, actCols, recMax, examMax);
+                        // Use Midterm-specific columns for Midterm calculation
+                        const midtermPercentage = calculateTermGrade(scores, true, midQuizCols, midActCols, midRecMax, midExamMax);
+                        
+                        // Use Finals-specific columns for Finals calculation
+                        const finalsPercentage = calculateTermGrade(scores, false, finQuizCols, finActCols, finRecMax, finExamMax);
 
                         const mid40 = (midtermPercentage * 0.40);
                         const fin60 = (finalsPercentage * 0.60);
@@ -175,7 +182,7 @@ const GradesheetTable = ({
     );
 };
 
-// --- UTILITY COMPONENT: Max Score Input (Moved from MultiPageGS.jsx) ---
+// --- UTILITY COMPONENT: Max Score Input (This is required by RecordsTableComponent) ---
 const MaxScoreInput = ({ value, type, id, onChange }) => (
     <input 
         type="number"
@@ -187,22 +194,23 @@ const MaxScoreInput = ({ value, type, id, onChange }) => (
     />
 );
 
-// --- COMPONENT: Midterm/Finals Records Table (Moved/Refactored from MultiPageGS.jsx) ---
+// --- COMPONENT: Midterm/Finals Records Table (UPDATED to use term-specific score keys) ---
 export const RecordsTableComponent = ({ 
     isMidterm, 
     students, 
     studentScores, 
-    quizCols, 
-    actCols, 
-    recMax, 
-    examMax, 
-    handleMaxScoreChange, // Handler for Max Score
-    handleScoreChange,    // Handler for Student Score
+    quizCols,  
+    actCols,   
+    recMax,    
+    examMax,   
+    handleMaxScoreChange, 
+    handleScoreChange,    
     searchTerm 
 }) => {
-    const filteredStudents = students; // Students are already filtered by the parent component
+    const filteredStudents = students; 
     
     const examLabel = isMidterm ? 'Mid Exam' : 'Final Exam';
+    // Label change for Finals Activities to Labs for display only
     const dynamicActCols = isMidterm ? actCols : actCols.map(c => ({...c, label: c.label.replace('ACT', 'LAB')}));
     
     const totalCols = 6 + quizCols.length + actCols.length; 
@@ -235,7 +243,7 @@ export const RecordsTableComponent = ({
                 {/* ROW FOR EDITABLE MAX SCORES */}
                 <tr>
                     <th className="sticky-col col-grade bg-green-soft">100%</th>
-                    {/* Editable Quiz Max Scores */}
+                    {/* Editable Quiz Max Scores (Updates correct term's column state in MultiPageGS) */}
                     {quizCols.map(c => (
                         <th key={c.id}>
                             <MaxScoreInput 
@@ -246,7 +254,7 @@ export const RecordsTableComponent = ({
                             />
                         </th>
                     ))} 
-                    {/* Editable Activity/Lab Max Scores */}
+                    {/* Editable Activity/Lab Max Scores (Updates correct term's column state in MultiPageGS) */}
                     {actCols.map(c => (
                         <th key={c.id}>
                             <MaxScoreInput 
@@ -297,31 +305,17 @@ export const RecordsTableComponent = ({
                                 <td className="sticky-col col-name" style={{fontWeight:'600', paddingLeft:'8px'}}>{student.name}</td>
                                 <td className="sticky-col col-grade bg-green-soft">{termPercentage}</td>
 
-                                {/* Quiz Scores */}
-                                {quizCols.map(c => (
-                                    <td key={c.id}>
-                                        <input 
-                                            type="number" 
-                                            className="mp-table-input" 
-                                            value={scores[c.id] || ''} 
-                                            onChange={(e) => handleScoreChange(student.id, c.id, e.target.value)}
-                                            max={c.max} 
-                                            min="0"
-                                        />
-                                    </td>
-                                ))}
-
-                                {/* Activity/Lab Scores */}
-                                {actCols.map(c => {
-                                    const assessmentId = isMidterm ? c.id : c.id.replace('act', 'lab');
-                                    
+                                {/* Quiz Scores: Construct term-specific score key */}
+                                {quizCols.map(c => {
+                                    const assessmentId = c.id + (isMidterm ? '_mid' : '_fin'); // NEW LOGIC
+                                    console.log(`[DEBUG RENDER] Quiz Input for ${student.id} uses Assessment ID: ${assessmentId}`);
                                     return (
                                         <td key={c.id}>
                                             <input 
                                                 type="number" 
                                                 className="mp-table-input" 
-                                                value={scores[assessmentId] || ''} 
-                                                onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)}
+                                                value={scores[assessmentId] || ''} // Use term-specific key
+                                                onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)} // Pass term-specific key
                                                 max={c.max} 
                                                 min="0"
                                             />
@@ -329,7 +323,26 @@ export const RecordsTableComponent = ({
                                     );
                                 })}
 
-                                {/* Recitation Score */}
+                                {/* Activity/Lab Scores: Construct term-specific score key */}
+                                {actCols.map(c => {
+                                    const assessmentId = c.id + (isMidterm ? '_mid' : '_fin'); // NEW LOGIC
+                                    console.log(`[DEBUG RENDER] ${isMidterm ? 'Activity' : 'Lab'} Input for ${student.id} uses Assessment ID: ${assessmentId}`);
+
+                                    return (
+                                        <td key={c.id}>
+                                            <input 
+                                                type="number" 
+                                                className="mp-table-input" 
+                                                value={scores[assessmentId] || ''} // Use term-specific key
+                                                onChange={(e) => handleScoreChange(student.id, assessmentId, e.target.value)} // Pass term-specific key
+                                                max={c.max} 
+                                                min="0"
+                                            />
+                                        </td>
+                                    );
+                                })}
+
+                                {/* Recitation Score (Already term-specific) */}
                                 {REC_COLS.map(c => {
                                     const assessmentId = isMidterm ? 'r1_mid' : 'r1_fin';
                                     return (
@@ -346,7 +359,7 @@ export const RecordsTableComponent = ({
                                     );
                                 })}
 
-                                {/* Exam Score */}
+                                {/* Exam Score (Already term-specific) */}
                                 {EXAM_COLS.map(c => {
                                     const assessmentId = isMidterm ? 'exam_mid' : 'exam_fin';
                                     return (
@@ -372,11 +385,12 @@ export const RecordsTableComponent = ({
 };
 
 
-// --- NEW MAIN EXPORT COMPONENT (Default export for Gradesheet Summary) ---
+// --- MAIN EXPORT COMPONENT (Default export for Gradesheet Summary) ---
 const GradesheetView = (props) => {
     return (
         <div className="mp-table-container">
-            <GradesheetTable {...props} />
+            {/* All props passed from MultiPageGS are now spread to GradesheetTable */}
+            <GradesheetTable {...props} /> 
         </div>
     );
 }

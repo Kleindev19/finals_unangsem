@@ -4,16 +4,34 @@ import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import './Reports.css';
 
+// 💡 NEW: Import the grade calculation helper from Gradesheet.jsx
+import { calculateTermGrade } from '../Dashboard/Gradesheet';
+
 // --- ICONS ---
 const FileTextIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>);
 const UsersIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
 const ArrowRight = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>);
 const ChevronDown = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
 
-const Reports = ({ onPageChange, sections = [], students = [], attendanceData = {}, searchTerm = '' }) => { 
+// 💡 NEW PROPS: Added all grade-related state props from MultiPageGS.jsx
+const Reports = ({ 
+    onPageChange, 
+    sections = [], 
+    students = [], 
+    attendanceData = {}, 
+    searchTerm = '',
+    // Grade data required for risk calculation
+    studentScores = {}, 
+    midQuizCols = [],
+    midActCols = [],
+    finQuizCols = [],
+    finActCols = [],
+    recMax = 100, // Default to MultiPageGS initial state
+    examMax = 60 // Default to MultiPageGS initial state
+}) => { 
     const [instituteFilter, setInstituteFilter] = useState('All');
 
-    // --- LOGIC: MERGE SECTIONS + STUDENTS + ATTENDANCE ---
+    // --- LOGIC: MERGE SECTIONS + STUDENTS + ATTENDANCE + GRADES ---
     const reportData = useMemo(() => {
         if (!sections || sections.length === 0) return [];
 
@@ -33,21 +51,47 @@ const Reports = ({ onPageChange, sections = [], students = [], attendanceData = 
                 const presentCount = record.filter(s => s === 'P' || s === 'L').length;
                 const attendancePct = Math.round((presentCount / totalRecorded) * 100) || 100;
 
+                // 💡 NEW: Grade Calculation
+                const scores = studentScores[student.id] || {};
+                const midtermPercentage = calculateTermGrade(scores, true, midQuizCols, midActCols, recMax, examMax);
+                const finalsPercentage = calculateTermGrade(scores, false, finQuizCols, finActCols, recMax, examMax);
+                const finalGrade = (midtermPercentage * 0.40 + finalsPercentage * 0.60);
+                
+                // 💡 NEW: Unified Risk Calculation
+                // Risk criteria: 3 or more absences OR Final Grade < 75%
+                const isAttendanceRisk = absences >= 3;
+                const isAcademicRisk = finalGrade < 75;
+                const isAtRisk = isAttendanceRisk || isAcademicRisk;
+                
+                // Determine risk text
+                let riskLabel;
+                if (absences >= 7 || finalGrade < 60) {
+                    riskLabel = 'High Risk';
+                } else if (absences >= 5 || finalGrade < 70) {
+                    riskLabel = 'Medium Risk';
+                } else if (isAtRisk) {
+                    riskLabel = 'Intervention Needed';
+                } else {
+                    riskLabel = 'On Track';
+                }
+
                 return {
                     ...student,
                     absences: absences,
-                    gpa: 'N/A', // Placeholder as it's not in DB yet
+                    finalGrade: finalGrade.toFixed(2), // NEW: Use actual final grade
                     attendance: `${attendancePct}%`,
-                    avatar: `https://ui-avatars.com/api/?name=${student.name}&background=random`
+                    avatar: `https://ui-avatars.com/api/?name=${student.name}&background=random`,
+                    isAtRisk: isAtRisk, // NEW: Unified Risk Flag
+                    riskLabel: riskLabel, // NEW: Unified Risk Label
                 };
             });
 
-            // 3. Filter 'At Risk' students (3 or more absences)
-            const atRisk = detailedStudents.filter(s => s.absences >= 3);
+            // 3. Filter 'At Risk' students (Now based on the new isAtRisk flag)
+            const atRisk = detailedStudents.filter(s => s.isAtRisk);
 
             return {
                 ...section,
-                code: section.name, // Use name as code (e.g. BSIT 3A)
+                code: section.name, 
                 totalStudents: detailedStudents.length,
                 riskCount: atRisk.length,
                 atRiskStudents: atRisk, // Only the risky ones
@@ -61,7 +105,7 @@ const Reports = ({ onPageChange, sections = [], students = [], attendanceData = 
             return b.totalStudents - a.totalStudents;
         });
 
-    }, [sections, students, attendanceData]);
+    }, [sections, students, attendanceData, studentScores, midQuizCols, midActCols, finQuizCols, finActCols, recMax, examMax]);
 
 
     // --- FILTERING ---
@@ -69,7 +113,6 @@ const Reports = ({ onPageChange, sections = [], students = [], attendanceData = 
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                               (item.subtitle && item.subtitle.toLowerCase().includes(searchTerm.toLowerCase()));
         
-        // Assuming your Section object has an 'institute' field from Profile.jsx logic
         const matchesInstitute = instituteFilter === 'All' || (item.institute && item.institute === instituteFilter);
         
         return matchesSearch && matchesInstitute;
@@ -80,8 +123,8 @@ const Reports = ({ onPageChange, sections = [], students = [], attendanceData = 
             onPageChange('v-reports', { 
                 section: classData.name,
                 sectionData: classData, 
-                atRiskStudents: classData.atRiskStudents, // Pass derived risky list
-                allStudents: classData.allStudents // Pass full list
+                atRiskStudents: classData.atRiskStudents, 
+                allStudents: classData.allStudents 
             });
         }
     };
@@ -89,7 +132,7 @@ const Reports = ({ onPageChange, sections = [], students = [], attendanceData = 
     return (
         <div className="reports-page-container">
             
-            {/* Filter Card */}
+            {/* Filter Card (omitted for brevity) */}
             <div className="rep-filter-card">
                 <div className="rep-filter-group">
                     <label>Institute Filter</label>
@@ -187,5 +230,13 @@ Reports.propTypes = {
     sections: PropTypes.array,
     students: PropTypes.array,
     attendanceData: PropTypes.object,
-    searchTerm: PropTypes.string
+    searchTerm: PropTypes.string,
+    // 💡 NEW PROPS
+    studentScores: PropTypes.object,
+    midQuizCols: PropTypes.array,
+    midActCols: PropTypes.array,
+    finQuizCols: PropTypes.array,
+    finActCols: PropTypes.array,
+    recMax: PropTypes.number,
+    examMax: PropTypes.number,
 };
