@@ -15,10 +15,12 @@ const Search = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" wi
 const ChevronDown = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
 const Trash = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>);
 const RotateCcw = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>);
+// NEW ICON: Calendar
 const Calendar = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
 
 
 // --- INITIAL DATA STRUCTURES (Used for initial load only) ---
+// ADD 'date' FIELD TO INITIAL COLUMNS FOR CONSISTENCY
 const INITIAL_QUIZ_COLS = [
     { id: 'q1', label: 'Q1', max: 20, date: '2025-10-10' },
     { id: 'q2', label: 'Q2', max: 20, date: '2025-10-17' },
@@ -75,7 +77,7 @@ const initializeMaxScore = (key, initialMax) => {
     return initialMax;
 };
 
-// --- HELPER: Persistence Loader for Attendance ---
+// --- NEW HELPER: Persistence Loader for Attendance ---
 const initializeAttendance = () => {
     const savedAttendanceJSON = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
     if (savedAttendanceJSON) {
@@ -208,29 +210,15 @@ const AttendanceCell = ({ status, onChange }) => {
     );
 };
 
-// MODIFIED: Component for the max score input field
+// Component for the editable max score input field
 const MaxScoreInput = ({ value, type, id, onChange }) => (
     <input 
         type="number"
         className="mp-table-input mp-max-score-input"
         value={value === 0 ? '' : value} // Show empty string if value is 0
-        readOnly // ADDED: Set to readOnly
-        // MODIFIED: Use onDoubleClick to handle editing request with confirmation
-        onDoubleClick={() => {
-            const label = type === 'rec' ? 'Recitation' : type === 'exam' ? 'Exam' : id.toUpperCase();
-            const newValue = prompt(`Enter new maximum score for ${label} (Current: ${value}):`);
-            if (newValue !== null && newValue !== "") {
-                const parsedValue = parseFloat(newValue);
-                if (!isNaN(parsedValue) && parsedValue >= 0) {
-                    onChange(type, id, parsedValue);
-                } else {
-                    alert("Invalid input. Please enter a non-negative number.");
-                }
-            }
-        }}
+        onChange={(e) => onChange(type, id, e.target.value)}
         min="0"
-        // Style changes to reflect read-only state and suggest double-click interaction
-        style={{textAlign: 'center', width: '90%', cursor: 'pointer', backgroundColor: '#F9FAFB'}} 
+        style={{textAlign: 'center', width: '90%'}}
     />
 );
 
@@ -497,14 +485,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
 
         // Determine the next index
         const totalItems = collection.length + removedCollection.length;
-        // Search through both active and removed collections for the highest index number
-        const allCols = [...collection, ...removedCollection];
-        const maxNum = allCols.reduce((max, col) => {
-            const num = parseInt(col.label.match(/\d+/)?.[0]);
-            return isNaN(num) ? max : Math.max(max, num);
-        }, 0);
-        const nextIndex = maxNum + 1;
-
+        const nextIndex = totalItems + 1;
 
         if (!isActivity) {
             // Quiz
@@ -784,7 +765,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                         
                         {/* Dynamic Column Headers (Hindi sticky) */}
                         {quizCols.map(c => {
-                            // Quiz columns - existing logic with date tooltip
+                            // NEW: Add title attribute for tooltip (Quiz columns only)
                             const tooltip = c.date ? `Date: ${new Date(c.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : c.label;
                             return (
                                 <th key={c.id} className="header-category-orange" title={tooltip}>
@@ -792,16 +773,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                 </th>
                             );
                         })}
-                        {/* MODIFIED: dynamicActCols rendering with date tooltip */}
-                        {dynamicActCols.map(c => {
-                            // NEW: Add title attribute for tooltip (Activity/Lab columns)
-                            const tooltip = c.date ? `Date: ${new Date(c.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : c.label;
-                            return (
-                                <th key={c.id} className="header-category-orange" title={tooltip}>
-                                    {c.label}
-                                </th>
-                            );
-                        })}
+                        {dynamicActCols.map(c => <th key={c.id} className="header-category-orange">{c.label}</th>)}
                         {REC_COLS.map(c => <th key={c.id} className="header-category-orange">{c.label}</th>)}
                         <th className="header-category-orange">{examLabel}</th> 
                     </tr>
@@ -810,7 +782,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                     <tr>
                         {/* WALANG <th> DITO PARA SA STICKY COLUMNS dahil naka rowSpan="2" na sila */}
                         
-                        {/* Editable Quiz Max Scores (Now Double-Click to edit) */}
+                        {/* Editable Quiz Max Scores */}
                         {quizCols.map(c => (
                             <th key={c.id}>
                                 <MaxScoreInput 
@@ -821,7 +793,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                 />
                             </th>
                         ))} 
-                        {/* Editable Activity/Lab Max Scores (Now Double-Click to edit) */}
+                        {/* Editable Activity/Lab Max Scores */}
                         {actCols.map(c => (
                             <th key={c.id}>
                                 <MaxScoreInput 
@@ -832,7 +804,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                 />
                             </th>
                         ))} 
-                        {/* Editable Recitation Max Score (Now Double-Click to edit) */}
+                        {/* Editable Recitation Max Score */}
                         {REC_COLS.map(c => (
                             <th key={c.id}>
                                 <MaxScoreInput 
@@ -843,7 +815,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                 />
                             </th>
                         ))}
-                        {/* Editable Exam Max Score (Now Double-Click to edit) */}
+                        {/* Editable Exam Max Score */}
                         {EXAM_COLS.map(c => (
                             <th key={c.id}>
                                 <MaxScoreInput 
@@ -1363,18 +1335,6 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                     stroke-width: 2.5;
                     width: 20px; 
                     height: 20px;
-                }
-
-                /* --- NEW: Max Score Input Styles --- */
-                /* Style adjustment for readOnly Max Score Input to signal double-click */
-                .mp-max-score-input {
-                    cursor: pointer !important; /* Visual hint for double-click */
-                    background-color: #F9FAFB !important; /* Light background */
-                    border: 1px solid #E5E7EB !important;
-                }
-                
-                .mp-max-score-input:hover {
-                    background-color: #E5E7EB !important;
                 }
 
                 /* --- NEW: Add Assessment Dropdown Styles --- */

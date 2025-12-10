@@ -78,20 +78,7 @@
     font-size: 0.9rem; color: #374151;
 }
 
-.vr-dropdown-box {
-    background-color: white;
-    border: 1px solid #E5E7EB;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: #374151;
-    font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
+/* 💡 REMOVED: .vr-dropdown-box is no longer used for the filter */
 
 /* --- TABLE STYLES --- */
 .vr-table-container { width: 100%; overflow-x: auto; }
@@ -130,7 +117,10 @@
 }
 .vr-status-high { background-color: #FEE2E2; color: #991B1B; }
 .vr-status-medium { background-color: #FFEDD5; color: #9A3412; }
-.vr-status-low { background-color: #FEF9C3; color: #854D0E; }
+/* Using a safe green for 'On Track' */
+.vr-status-green { background-color: #D1FAE5; color: #065F46; } 
+.vr-status-low { background-color: #FEF9C3; color: #854D0E; } /* Retained for fallback */
+
 
 .vr-actions { display: flex; justify-content: center; gap: 1rem; }
 .vr-btn-contact {
@@ -143,3 +133,32 @@
     font-weight: 600; cursor: pointer; font-size: 0.85rem;
 }
 .vr-btn-view:hover { text-decoration: underline; }
+
+/* 💡 NEW: Styles for the filter dropdown (Adopted from MultiPageGS.css) */
+.mp-view-selector-wrapper { 
+    position: relative; 
+    width: 220px; /* Adjusted width slightly for better fit */
+    height: 40px; 
+}
+.mp-view-selector {
+    appearance: none; 
+    width: 100%; 
+    height: 100%; 
+    padding: 0 2rem 0 1rem;
+    border: 1px solid #E5E7EB; 
+    border-radius: 8px; 
+    background-color: white;
+    font-size: 0.85rem; 
+    color: #374151; 
+    font-weight: 600; 
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.mp-selector-chevron { 
+    position: absolute; 
+    right: 12px; 
+    top: 50%; 
+    transform: translateY(-50%); 
+    pointer-events: none; 
+    color: #6B7280; 
+}

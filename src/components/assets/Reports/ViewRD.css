@@ -28,8 +28,9 @@
 }
 .vrd-header-avatar {
     width: 70px; height: 70px; border-radius: 50%;
-    border: 3px solid #EF4444; /* High Risk Red Border */
+    border: 3px solid #EF4444; /* Default High Risk Red Border */
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    object-fit: cover;
 }
 .vrd-student-name { margin: 0; font-size: 1.8rem; color: #1F2937; line-height: 1.2; }
 .vrd-student-meta { margin: 0; color: #6B7280; font-size: 0.95rem; }
@@ -49,25 +50,32 @@
     border-radius: 16px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     border: 1px solid #E5E7EB;
+    /* Flexbox to align icon and text */
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.vrd-metric-top {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 0.5rem;
-}
+/* Icon styling */
+.vrd-metric-icon { stroke-width: 2; }
+.vrd-green-icon { color: #10B981; }
+.vrd-yellow-icon { color: #F59E0B; }
+.vrd-red-icon { color: #EF4444; }
 
-.vrd-icon-sq {
-    width: 40px; height: 40px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
+.vrd-metric-val { 
+    font-size: 1.8rem; 
+    font-weight: 800; 
+    color: #1F2937; 
+    line-height: 1; 
+    display: block; 
 }
-.vrd-icon-sq.green { background: #DCFCE7; color: #166534; }
-.vrd-icon-sq.yellow { background: #FEF3C7; color: #B45309; }
-.vrd-icon-sq.red { background: #FEE2E2; color: #991B1B; }
-.vrd-icon-sq.purple { background: #EDE9FE; color: #5B21B6; }
-
-.vrd-metric-num { font-size: 1.8rem; font-weight: 800; color: #1F2937; line-height: 1; }
-.vrd-metric-title { margin: 0; font-weight: 700; color: #374151; font-size: 0.95rem; }
-.vrd-metric-sub { font-size: 0.75rem; color: #6B7280; display: block; margin-top: 2px; }
+.vrd-metric-lbl { 
+    margin: 0; 
+    font-weight: 600; 
+    color: #6B7280; 
+    font-size: 0.85rem; 
+    display: block;
+}
 
 /* 3. SECTION CARDS */
 .vrd-section-card {
@@ -82,37 +90,120 @@
 .vrd-sect-title { margin: 0 0 0.3rem 0; font-size: 1.1rem; color: #1F2937; font-weight: 700; }
 .vrd-sect-sub { margin: 0 0 1.5rem 0; font-size: 0.85rem; color: #6B7280; }
 
-/* Course Row */
+/* Course Row (Combined details and stats) */
+.vrd-course-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px dashed #E5E7EB;
+}
+@media (max-width: 768px) {
+    .vrd-course-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+}
+
 .vrd-course-info h4 { margin: 0; font-size: 1.2rem; color: #111827; }
 .vrd-course-info p { margin: 0; font-size: 0.9rem; color: #4B5563; }
-.vrd-prof-name { display: block; font-size: 0.8rem; color: #9CA3AF; margin-top: 4px; }
+.vrd-course-stats {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4B5563;
+}
+.vrd-divider { color: #E5E7EB; margin: 0 10px; }
 
-.vrd-progress-container { margin-top: 1.5rem; }
-.vrd-prog-labels { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
-.vrd-badge-green { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 4px; }
 
-.vrd-prog-track {
-    width: 100%; height: 12px; background: #E5E7EB; border-radius: 6px; position: relative;
-}
-.vrd-prog-fill {
-    height: 100%; background: #10B981; border-radius: 6px;
-}
-/* AI Marker */
-.vrd-ai-marker {
-    position: absolute; top: -4px; width: 4px; height: 20px; background: #1F2937;
-    z-index: 2; border-radius: 2px;
-}
-.vrd-ai-tooltip {
-    position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
-    background: #1F2937; color: white; padding: 2px 6px; border-radius: 4px;
-    font-size: 0.7rem; white-space: nowrap;
+/* --- DETAILED ATTENDANCE SECTION --- */
+.vrd-attendance-card {
+    padding: 1.5rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    background-color: #F9FAFB;
 }
 
-.vrd-stat-footer {
-    display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #F3F4F6;
-    font-size: 0.85rem; color: #4B5563;
+.vrd-attendance-summary {
+    display: flex;
+    justify-content: space-around;
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
 }
-.vrd-divider { color: #E5E7EB; }
+
+.vrd-summary-item { text-align: center; }
+
+.vrd-summary-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+    display: block;
+}
+.vrd-summary-label {
+    font-size: 0.8rem;
+    color: #6B7280;
+    font-weight: 600;
+}
+
+/* Status text colors for summary */
+.vrd-green-text { color: #10B981; }
+.vrd-yellow-text { color: #F59E0B; }
+.vrd-red-text { color: #EF4444; }
+
+/* Attendance Grid */
+.vrd-attendance-grid-container {
+    padding: 1rem 0;
+}
+.vrd-grid-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: #1F2937;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.vrd-attendance-grid {
+    display: grid;
+    /* Responsive grid: 10 columns base, scales down */
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); 
+    gap: 8px;
+}
+
+.vrd-attendance-cell {
+    width: 40px; 
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: white;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+.vrd-attendance-cell:hover {
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Colors for cells */
+.atd-present { background-color: #10B981; } /* Green */
+.atd-late { background-color: #F59E0B; }    /* Amber/Yellow */
+.atd-absent { background-color: #EF4444; }   /* Red */
+.atd-unknown { background-color: #9CA3AF; }  /* Gray */
+
+.vrd-cell-day {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+}
+
 
 /* 4. BOTTOM GRID (Radar + Analytics) */
 .vrd-bottom-grid {
@@ -137,8 +228,39 @@
     font-size: 0.8rem; font-weight: 700; display: inline-block;
 }
 
-.vrd-ai-recos ul { padding-left: 1.2rem; margin: 0; }
-.vrd-ai-recos li { font-size: 0.85rem; margin-bottom: 0.5rem; color: #374151; }
+/* AI Recommendations Blockquote */
+.vrd-ai-recommendations { flex: 2; }
+.vrd-ai-recommendations blockquote {
+    padding: 1rem;
+    border-left: 4px solid; /* Dynamic color set by inline style */
+    background: #F9FAFB;
+    border-radius: 8px;
+    font-style: italic;
+    color: #4B5563;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+
+/* Grade Component Breakdown List */
+.vrd-breakdown-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 1rem;
+}
+
+.vrd-breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    color: #374151;
+    font-weight: 600;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #E5E7EB;
+}
+.vrd-breakdown-item strong { color: #1F2937; }
+
 
 /* Bar Chart */
 .vrd-bar-chart {
@@ -150,17 +272,3 @@
 .vrd-bar-track { width: 100%; height: 100%; display: flex; align-items: flex-end; }
 .vrd-bar-fill { width: 100%; border-radius: 4px 4px 0 0; }
 .vrd-bar-lbl { margin-top: 8px; font-size: 0.8rem; font-weight: 600; color: #6B7280; }
-
-.vrd-instructor-notes {
-    background: #F9FAFB; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;
-    border-left: 4px solid #9CA3AF;
-}
-.vrd-instructor-notes h4 { margin: 0 0 0.5rem 0; font-size: 0.9rem; }
-.vrd-instructor-notes p { margin: 0; font-size: 0.85rem; font-style: italic; color: #4B5563; }
-
-.vrd-warning-btn {
-    width: 100%; background: #DC2626; color: white; border: none; padding: 0.8rem;
-    border-radius: 8px; font-weight: 700; cursor: pointer;
-    box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
-}
-.vrd-warning-btn:hover { background: #B91C1C; }
