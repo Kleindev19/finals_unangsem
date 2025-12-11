@@ -1,8 +1,10 @@
 // src/components/assets/Dashboard/Dashboard.jsx
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Sidebar, SIDEBAR_DEFAULT_WIDTH } from './Sidebar.jsx';
 import AboutUsModal from './AboutUsModal.jsx'; 
+// Import NotificationModal
+import { NotificationModal } from './ModalComponents.jsx';
 
 
 import MarryAnnNedia from './Marry Ann Nedia.jpg'; // Line 26: Move this up
@@ -58,18 +60,20 @@ const getInitials = (name) => {
     return name[0]?.toUpperCase() || 'U';
 };
 
+const getTimeBasedGreeting = (userName) => {
+    const hour = new Date().getHours();
+    let greeting;
+    if (hour < 12) greeting = 'Good Morning';
+    else if (hour < 18) greeting = 'Good Afternoon';
+    else greeting = 'Good Evening';
+    return `${greeting}, ${userName}`;
+};
+
 const GreetingSection = ({ profileData, isOnline }) => {
     const [text, setText] = useState('');
     const userName = profileData?.displayName || profileData?.fullName || 'Professor';
     
-    const getTimeBasedGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return 'Good Morning';
-        if (hour < 18) return 'Good Afternoon';
-        return 'Good Evening';
-    };
-
-    const fullText = `${getTimeBasedGreeting()}, ${userName}`; 
+    const fullText = getTimeBasedGreeting(userName); 
     
     const fallbackAvatar = `https://ui-avatars.com/api/?name=${getInitials(userName)}&background=38761d&color=fff&size=128&bold=true`;
     const avatarSrc = profileData?.photoURL || fallbackAvatar;
@@ -160,7 +164,7 @@ const MetricCard = ({ data }) => (
 
 
 // --- DASHBOARD COMPONENT ---
-const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggleVoice, sections = [], students = [], isOnline }) => {
+const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggleVoice, sections = [], students = [], isOnline, voiceControlRef, hasSpokenGreeting, setHasSpokenGreeting }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDesktopMode, setIsDesktopMode] = useState(window.innerWidth >= 1024);
     const [sidebarWidth, setSidebarWidth] = useState(isDesktopMode ? SIDEBAR_DEFAULT_WIDTH : 0);
@@ -168,6 +172,28 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
     const [filterYear, setFilterYear] = useState('');
     const [filterCourse, setFilterCourse] = useState('');
     const [isAboutUsOpen, setIsAboutUsOpen] = useState(false);
+    // NEW STATE for Notification Modal
+    const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+    
+    // Get the full greeting text for immediate use and voice command
+    const userName = profileData?.displayName || profileData?.fullName || 'Professor';
+    const fullGreetingText = getTimeBasedGreeting(userName);
+
+
+    // ✅ FIX: Speak the welcome message ONLY if the flag is FALSE
+    useEffect(() => {
+        if (!hasSpokenGreeting && voiceControlRef.current && fullGreetingText) {
+            
+            // Set a timeout to ensure the voice system is initialized before speaking
+            setTimeout(() => {
+                const spokenGreeting = `Welcome back, ${userName}. ${fullGreetingText.split(', ')[0]}`;
+                voiceControlRef.current.speak(spokenGreeting);
+                // Set the flag to true immediately after speaking is triggered
+                setHasSpokenGreeting(true);
+            }, 1000); 
+        }
+    }, [hasSpokenGreeting, voiceControlRef, fullGreetingText, setHasSpokenGreeting, userName]); // Dependency includes the flag and its setter
+
 
     useEffect(() => {
         const handleResize = () => {
@@ -222,6 +248,11 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
     
     const handleOpenAboutUs = () => setIsAboutUsOpen(true);
     const handleCloseAboutUs = () => setIsAboutUsOpen(false);
+    
+    // Handler to open the Notification Modal
+    const handleOpenNotifications = () => {
+        setIsNotificationModalOpen(true);
+    };
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#FDFDF5', fontFamily: 'Inter, sans-serif' }}>
@@ -253,7 +284,11 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
                             <Mic style={{ width: '1.5rem', height: '1.5rem', color: isVoiceActive ? 'inherit' : '#4B5563' }} />
                         </button>
 
-                        <Bell style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} />
+                        {/* Bell Icon connected to Notification Modal */}
+                        <Bell 
+                            style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} 
+                            onClick={handleOpenNotifications}
+                        />
                         
                         <HelpIcon 
                             style={{ width: '1.5rem', height: '1.5rem', color: '#4B5563', cursor: 'pointer' }} 
@@ -289,6 +324,12 @@ const Dashboard = ({ onLogout, onPageChange, profileData, isVoiceActive, onToggl
             
             {/* About Us Modal */}
             {isAboutUsOpen && <AboutUsModal onClose={handleCloseAboutUs} teamMembers={INITIAL_TEAM_MEMBERS} />}
+
+            {/* Render Notification Modal */}
+            <NotificationModal 
+                isOpen={isNotificationModalOpen} 
+                onClose={() => setIsNotificationModalOpen(false)} 
+            />
         </div>
     );
 };

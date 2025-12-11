@@ -298,6 +298,7 @@ app.post('/api/students', async (req, res) => {
         if (!req.body.id || !req.body.name || !req.body.professorUid) {
             return res.status(400).json({ message: "Missing required fields" });
         }
+        // Check for existing student ID under the specific professor's UID
         const existingStudent = await Student.findOne({ id: req.body.id, professorUid: req.body.professorUid });
         if (existingStudent) return res.status(400).json({ message: `Student ID ${req.body.id} already exists` });
         
@@ -361,7 +362,49 @@ app.delete('/api/students/:id', async (req, res) => {
 });
 
 // ==========================================
-// 4. NEW: KEY PERSISTENCE ROUTES (FILE MANAGEMENT)
+// 4. NEW: STUDENT SHARING ROUTES (The Share Fix)
+// ==========================================
+
+// GET: Fetches a student roster based on Professor UID and Section name.
+// Used by a receiving professor when they paste a share link.
+app.get('/api/share/students/:professorUid/:section', async (req, res) => {
+    const { professorUid, section } = req.params;
+
+    // Decode URL-encoded section name
+    const decodedSection = decodeURIComponent(section);
+    
+    if (!professorUid || !decodedSection) {
+        return res.status(400).json({ message: "Invalid share link parameters." });
+    }
+
+    try {
+        // Query the database for students belonging to the specified professor and section
+        const students = await Student.find({ 
+            professorUid: professorUid, 
+            section: { $regex: new RegExp(`^${decodedSection}$`, 'i') } // Case-insensitive exact match
+        }).select('id name type course section email cell address').sort({ name: 1 }); // Select only essential fields
+
+        if (students.length === 0) {
+            return res.status(404).json({ message: "No students found for this class section, or the link is expired/invalid." });
+        }
+
+        // Success: Return the clean roster data
+        res.json({
+            success: true,
+            roster: students,
+            sectionName: decodedSection,
+            professorId: professorUid
+        });
+
+    } catch (error) {
+        console.error("❌ Share Link Fetch Error:", error);
+        res.status(500).json({ message: "Failed to retrieve shared roster." });
+    }
+});
+
+
+// ==========================================
+// 5. KEY PERSISTENCE ROUTES (FILE MANAGEMENT)
 // ==========================================
 
 // GET: Load Encrypted Key from JSON file

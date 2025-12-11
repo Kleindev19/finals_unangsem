@@ -96,6 +96,12 @@ const initializeAttendance = () => {
     return {};
 };
 
+// --- HELPER: Dispatch Sync Event ---
+const dispatchDataSync = () => {
+    console.log("[DATA SYNC] Dispatching global CDM_DATA_SYNC event.");
+    window.dispatchEvent(new Event('CDM_DATA_SYNC'));
+};
+
 
 // --- HELPER: Initialize Score State ---
 const initializeScores = (students, currentQuizCols, currentActCols) => {
@@ -238,7 +244,7 @@ const MaxScoreInput = ({ value, type, id, onChange }) => (
 );
 
 
-const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', title = 'Midterm Grade', students = [], sectionData }) => {
+const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', title = 'Midterm Grade', students = [], sectionData, onStudentDropped }) => {
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_COLLAPSED_WIDTH);
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
     const [currentView, setCurrentView] = useState(viewType);
@@ -299,10 +305,15 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     useEffect(() => { try { localStorage.setItem(REC_MAX_KEY, String(recMax)); } catch (e) { console.error("Could not save recMax to localStorage:", e); } }, [recMax]);
     useEffect(() => { try { localStorage.setItem(EXAM_MAX_KEY, String(examMax)); } catch (e) { console.error("Could not save examMax to localStorage:", e); } }, [examMax]);
 
-    // --- NEW EFFECT: To persist attendance data whenever it changes ---
+    // --- NEW EFFECT: To persist attendance data whenever it changes and trigger sync ---
     useEffect(() => {
         try {
             localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(localAttendanceData));
+            
+            // 🚨 FIX: Dispatch the sync event after attendance data is successfully persisted.
+            // This signals App.js and ReportsLayout to refresh their data based on the new attendance.
+            dispatchDataSync(); 
+            
         } catch (e) {
             console.error("Could not save attendance data to localStorage:", e);
         }
@@ -370,13 +381,35 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         }
     };
 
-    // Handler for Attendance cell changes
+    // Handler for Attendance cell changes (MODIFIED TO INCLUDE DROP CHECK)
     const handleAttendanceCellChange = (studentId, dateIndex, status) => {
         setLocalAttendanceData(prevData => {
             const currentTermDates = attendanceTerm === 'Midterm Attendance' ? MIDTERM_DATES : FINALS_DATES;
             const key = `${studentId}-${currentTermDates[dateIndex]}`;
             
             const newData = { ...prevData, [key]: status };
+            
+            // --- Dropped Student Check (Integrate existing drop logic) ---
+            const currentStudent = students.find(s => s.id === studentId);
+            if (currentStudent) {
+                // Count total absences across BOTH terms
+                const totalAbsences = Object.keys(newData).reduce((count, dataKey) => {
+                    const status = newData[dataKey];
+                    const isForThisStudent = dataKey.startsWith(studentId);
+                    
+                    if (isForThisStudent && status === 'A') {
+                        return count + 1;
+                    }
+                    return count;
+                }, 0);
+                
+                // If student has 3 or more absences AND we have the drop handler
+                if (totalAbsences >= 3 && onStudentDropped) {
+                    onStudentDropped({ id: studentId, name: currentStudent.name });
+                }
+            }
+            // --- End Dropped Student Check ---
+
             return newData;
         });
     };
@@ -693,9 +726,17 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                     return status;
                 }).join(',');
 
-                const status = absences >= 3 ? 'Dropped' : 'Active';
+                // Status calculation must reflect the state in image_72674f
+                const allAbsences = Object.keys(localAttendanceData).reduce((count, key) => {
+                    if (key.startsWith(student.id) && localAttendanceData[key] === 'A') {
+                        return count + 1;
+                    }
+                    return count;
+                }, 0);
+
+                const status = allAbsences >= 5 ? 'Dropped' : 'Active'; // Based on Image 4 showing 5 absences = Dropped
                 
-                csvContent += `${student.id},"${student.name}",${attendanceRow},${absences},"${status}"\n`;
+                csvContent += `${student.id},"${student.name}",${attendanceRow},${allAbsences},"${status}"\n`;
             });
             
         } else { // Midterm/Finals Records
@@ -774,7 +815,15 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                 return mockStatus;
                             });
 
-                            const status = absences >= 3 ? 'Dropped' : 'Active';
+                            // Calculate ALL absences across both terms
+                            const allAbsences = Object.keys(localAttendanceData).reduce((count, key) => {
+                                if (key.startsWith(student.id) && localAttendanceData[key] === 'A') {
+                                    return count + 1;
+                                }
+                                return count;
+                            }, 0);
+
+                            const status = allAbsences >= 5 ? 'Dropped' : 'Active'; // Based on Image 4 showing 5 absences = Dropped
                             const statusClass = status === 'Dropped' ? 'cell-failed' : 'cell-passed';
 
                             return (
@@ -792,7 +841,7 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                                         />
                                     ))}
 
-                                    <td className="center-text font-bold">{absences}</td>
+                                    <td className="center-text font-bold">{allAbsences}</td>
                                     <td className={`center-text ${statusClass}`}>{status}</td>
                                 </tr>
                             );
@@ -1153,12 +1202,12 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                         <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}> {/* NEW FLEX WRAPPER */}
                             {/* BACK BUTTON (ICON ONLY) */}
                            <button 
-    className="mp-back-btn" 
-    onClick={() => onPageChange('view-studs', { sectionData: sectionData })}
-    title="Go back to Student Records"
->
-    <ArrowLeft size={20} />
-</button>
+                                className="mp-back-btn" 
+                                onClick={() => onPageChange('view-studs', { sectionData: sectionData })}
+                                title="Go back to Student Records"
+                            >
+                                <ArrowLeft size={20} />
+                            </button>
                             
                             {/* TITLE WRAPPER */}
                             <div style={{display: 'flex', flexDirection: 'column'}}>

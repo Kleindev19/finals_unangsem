@@ -26,12 +26,44 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange, studen
     const speak = (text) => {
         if (!window.speechSynthesis) return;
         window.speechSynthesis.cancel();
+        
         const utterance = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        // Prefer a natural sounding voice
-        const preferredVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Zira") || v.name.includes("Samantha"));
-        if (preferredVoice) utterance.voice = preferredVoice;
-        window.speechSynthesis.speak(utterance);
+        
+        // --- START NEW VOICE PREFERENCE LOGIC ---
+        const userPreferredVoiceName = localStorage.getItem('ttsVoiceName');
+        const userPreferredLanguage = localStorage.getItem('ttsLanguage') || 'en-US'; 
+        
+        utterance.lang = userPreferredLanguage;
+
+        const loadVoicesAndSpeak = () => {
+            const voices = window.speechSynthesis.getVoices();
+            
+            // 1. Try to find the user's preferred voice by name
+            const selectedVoice = voices.find(v => v.name === userPreferredVoiceName);
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            } else {
+                // 2. Fallback logic (uses language preference, then searches for smart defaults)
+                const preferredVoice = voices.find(v => 
+                    v.lang === userPreferredLanguage || 
+                    v.name.includes("Google") || 
+                    v.name.includes("Zira") || 
+                    v.name.includes("Samantha")
+                );
+                if (preferredVoice) utterance.voice = preferredVoice;
+            }
+            
+            window.speechSynthesis.speak(utterance);
+        };
+
+        // Standard way to handle voices loaded asynchronously
+        if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.onvoiceschanged = loadVoicesAndSpeak;
+        } else {
+            loadVoicesAndSpeak(); // Try immediate execution
+        }
+        // --- END NEW VOICE PREFERENCE LOGIC ---
     };
 
     useImperativeHandle(ref, () => ({ speak: (text) => speak(text) }));
@@ -75,7 +107,11 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange, studen
         };
 
         recognitionRef.current = recognition;
-        return () => { if (recognitionRef.current) recognitionRef.current.abort(); };
+        
+        // ✅ FIX 1: Access .current before calling abort()
+        return () => { 
+            if (recognitionRef.current) recognitionRef.current.abort(); 
+        };
     }, []); 
 
     useEffect(() => {
@@ -84,7 +120,8 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange, studen
         if (isVoiceActive) {
             try { recognition.start(); speak("Online."); } catch (e) {}
         } else {
-            recognition.stop();
+            // FIX 2: Ensure .current is used here too
+            if (recognitionRef.current) recognitionRef.current.stop();
             setVoiceText('');
             setVoiceStatus('');
             setIsFading(false);
@@ -193,6 +230,7 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange, studen
             setTimeout(() => {
                 if (!success) {
                     onToggle(false); 
+                    // FIX 3: Ensure .current is used here too
                     if (recognitionRef.current) recognitionRef.current.stop();
                 }
                 setVoiceText('');

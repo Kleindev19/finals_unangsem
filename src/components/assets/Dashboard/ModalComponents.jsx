@@ -4,7 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './ModalComponents.css';
 
-// --- ICONS ---
+// --- ICONS (Defined only ONCE at the top) ---
 const XIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -37,6 +37,29 @@ const GitIcon = () => (
         <path d="M18 9a9 9 0 0 1-9 9"></path>
     </svg>
 );
+
+// NEW ICON: MessageSquare for general updates (Now placed here)
+const MessageSquare = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+);
+
+// NEW ICON: CheckCircle for success/progress (Now placed here)
+const CheckCircle = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+);
+
+// NEW ICON: UserX for risk/intervention (Now placed here)
+const UserX = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="17" y1="17" x2="22" y2="22"/><line x1="22" y1="17" x2="17" y2="22"/>
+    </svg>
+);
+
 
 // --- 1. ADD COLUMN MODAL ---
 export const AddColumnModal = ({ isOpen, onClose }) => {
@@ -249,9 +272,9 @@ export const CreditsModal = ({ isOpen, onClose }) => {
 
     // REPLACE WITH YOUR TEAM
     const TEAM_MEMBERS = [
-        { name: "Klein Dev", role: "Lead Developer", emoji: "👨‍💻" },
+        { name: "Klein Dev", role: "Lead Developer", emoji: "💻" },
         { name: "John Doe", role: "UI/UX Designer", emoji: "🎨" },
-        { name: "Jane Smith", role: "Backend Engineer", emoji: "🚀" },
+        { name: "Jane Smith", role: "Backend Engineer", emoji: "⚙️" },
         { name: "Alex Ray", role: "Data Analyst", emoji: "📊" },
     ];
 
@@ -284,10 +307,89 @@ export const CreditsModal = ({ isOpen, onClose }) => {
                 </div>
 
                 <div style={{ fontSize: '0.8rem', color: '#9CA3AF', fontStyle: 'italic' }}>
-                    "Code is like humor. When you have to explain it, it’s bad."
+                    "Code is like humor. When you have to explain it, it's bad."
                 </div>
             </div>
         </div>,
         document.body
     );
 };
+
+
+/** MOCK NOTIFICATION DATA **/
+const MOCK_NOTIFICATIONS = [
+    { id: 1, type: 'progress', title: 'Q1 Scores Updated', message: 'Midterm Quiz 1 scores have been fully entered for BSIT 3A.', time: '2 minutes ago', icon: CheckCircle, color: '#10B981' },
+    { id: 2, type: 'risk', title: 'Student Intervention Alert', message: 'Sarah K. has reached 3 absences in BSCS 1B.', time: '1 hour ago', icon: UserX, color: '#DC2626' },
+    { id: 3, type: 'update', title: 'System Maintenance', message: 'A scheduled update is planned for 1 AM tomorrow.', time: '5 hours ago', icon: MessageSquare, color: '#F97316' },
+    { id: 4, type: 'risk', title: 'Grade Warning: Low Grade', message: 'Mark T. has a calculated Midterm Grade of 68% in BSIT 3A.', time: 'Yesterday', icon: UserX, color: '#DC2626' },
+];
+
+const NotificationItem = ({ notif, onMarkRead }) => {
+    const IconComponent = notif.icon;
+    // Simple check to mark items with 'ago' in time as 'new'
+    const isNew = notif.time.includes('ago'); 
+
+    return (
+        <div className="notif-item" style={{opacity: isNew ? 1 : 0.7, borderLeftColor: notif.color}}>
+            <div className="notif-icon-box" style={{backgroundColor: `${notif.color}15`, color: notif.color}}>
+                <IconComponent />
+            </div>
+            <div className="notif-content">
+                <div className="notif-header">
+                    <span className="notif-title">{notif.title}</span>
+                    <span className="notif-time">{notif.time}</span>
+                </div>
+                <p className="notif-message">{notif.message}</p>
+            </div>
+            {isNew && <button className="notif-mark-read" onClick={() => onMarkRead(notif.id)}>Mark Read</button>}
+        </div>
+    );
+}
+
+
+// --- 7. NOTIFICATION MODAL (NEW) ---
+export const NotificationModal = ({ isOpen, onClose }) => {
+    // Use React.useState to manage the notifications list state
+    const [notifications, setNotifications] = React.useState(MOCK_NOTIFICATIONS);
+
+    if (!isOpen) return null;
+
+    const handleMarkRead = (id) => {
+        // Filter out the notification with the given ID
+        setNotifications(prev => prev.filter(n => n.id !== id));
+    };
+    
+    // Calculate unread count based on the 'ago' flag (simple mock logic)
+    const unreadCount = notifications.filter(n => n.time.includes('ago')).length;
+
+    return ReactDOM.createPortal(
+        <div className="modal-overlay">
+            <div className="modal-card notif-modal-card">
+                <button className="modal-close" onClick={onClose}><XIcon /></button>
+                <h2 className="modal-title" style={{textAlign: 'left', borderBottom: '1px solid #E5E7EB', paddingBottom: '1rem', marginBottom: '1.5rem'}}>
+                    Notifications 
+                    {unreadCount > 0 && <span className="notif-badge">{unreadCount} New</span>}
+                </h2>
+                
+                <div className="notif-list">
+                    {notifications.length === 0 ? (
+                        <p style={{textAlign: 'center', color: '#6B7280', padding: '2rem 0'}}>You are all caught up!</p>
+                    ) : (
+                        notifications.map(notif => (
+                            <NotificationItem 
+                                key={notif.id} 
+                                notif={notif} 
+                                onMarkRead={handleMarkRead}
+                            />
+                        ))
+                    )}
+                </div>
+
+                <button className="modal-action-btn" onClick={onClose} style={{marginTop: '2rem'}}>
+                    Close
+                </button>
+            </div>
+        </div>,
+        document.body
+    );
+}

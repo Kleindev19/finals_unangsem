@@ -17,6 +17,34 @@ import { Sidebar, SIDEBAR_DEFAULT_WIDTH } from '../Dashboard/Sidebar';
 import { runAIAnalysis } from '../../../Apps'; 
 import { calculateTermGrade } from '../Dashboard/Gradesheet'; 
 
+// --- HELPER: MOCK PROFESSOR DATA LOADER ---
+const useMockProfessorData = () => {
+    // 💡 NOTE: In a real app, this data would come from context/Redux/API.
+    // We are mocking a persistent professor profile saved in localStorage.
+    const mockData = useMemo(() => {
+        // Assume professor data is saved upon login/profile update
+        const savedProf = localStorage.getItem('professorProfile');
+        if (savedProf) {
+            try {
+                return JSON.parse(savedProf);
+            } catch (e) {
+                // Fallback if local storage data is corrupted
+            }
+        }
+
+        // Default/Mock Professor Data
+        return {
+            name: "Dr. Evelyn Reed",
+            email: "evelyn.reed@cdm.edu.ph",
+            title: "Course Instructor",
+            avatarUrl: `https://ui-avatars.com/api/?name=Dr+Evelyn+Reed&background=4f46e5&color=fff&size=128`, 
+            // NOTE: Replace this mock URL with the actual URL from the professor's account picture.
+        };
+    }, []);
+    return mockData;
+}
+
+
 // --- HELPER: CALCULATE CLASS AVERAGE ---
 const calculateClassAverage = (allScores, colId, maxScore) => {
     const studentIds = Object.keys(allScores);
@@ -33,8 +61,8 @@ const calculateClassAverage = (allScores, colId, maxScore) => {
     return count === 0 ? 0 : maxScore > 0 ? ((total / count) / maxScore) * 100 : 0;
 };
 
-// --- INTERNAL COMPONENT: CONTACT INTERFACE ---
-const ContactInterface = ({ student, onBack, scores, quizCols, actCols }) => {
+// --- INTERNAL COMPONENT: CONTACT INTERFACE (UPDATED) ---
+const ContactInterface = ({ student, onBack, scores, quizCols, actCols, professor }) => { // 🚨 ADDED PROFESSOR PROP
     const [generating, setGenerating] = useState(false);
     const [sending, setSending] = useState(false);
     const [subject, setSubject] = useState('');
@@ -49,7 +77,7 @@ const ContactInterface = ({ student, onBack, scores, quizCols, actCols }) => {
     const handleGenerate = async () => {
         setGenerating(true);
         const prompt = `
-            Draft a professional intervention email to ${student.name}.
+            Draft a professional intervention email to ${student.name} from their instructor, ${professor.name}.
             Context: Missing: ${pendings.join(', ')}. Status: At Risk.
             Goal: Supportive but firm. Ask to submit by Friday.
             Output JSON: { "subject": "...", "body": "..." }
@@ -57,9 +85,22 @@ const ContactInterface = ({ student, onBack, scores, quizCols, actCols }) => {
         try {
             const res = await runAIAnalysis(prompt);
             if (res.success) {
-                const data = JSON.parse(res.text.replace(/```json|```/g, '').trim());
-                setSubject(data.subject);
-                setEmailBody(data.body);
+                const aiResponseText = res.text.replace(/```json|```/g, '').trim();
+                let parsed = null;
+                
+                try {
+                    parsed = JSON.parse(aiResponseText);
+                } catch (e) {
+                    const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        try { parsed = JSON.parse(jsonMatch[0]); } catch(e2) {}
+                    }
+                }
+                
+                if (parsed) {
+                    setSubject(parsed.subject);
+                    setEmailBody(parsed.body);
+                }
             }
         } catch (e) {}
         setGenerating(false);
@@ -67,10 +108,11 @@ const ContactInterface = ({ student, onBack, scores, quizCols, actCols }) => {
 
     const handleSend = async () => {
         setSending(true);
+        // NOTE: The 'from' address in the actual email will be handled by the backend mail server configuration.
         await fetch('http://localhost:5000/api/send-email', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ to: student.email, studentName: student.name, subject, html: emailBody })
+            body: JSON.stringify({ to: student.email, studentName: student.name, subject, html: emailBody, fromName: professor.name }) // Passing professor name for context/template
         });
         alert("Email sent successfully!");
         onBack();
@@ -90,8 +132,8 @@ const ContactInterface = ({ student, onBack, scores, quizCols, actCols }) => {
                     <ArrowLeft size={18}/> Back to Dashboard
                 </button>
                 <div className="vrd-contact-title">
-                    <Mail className="text-indigo" size={20}/>
-                    <h2>Communication Hub</h2>
+                    {/* 🚨 UPDATED: Display Professor Name */}
+                    <h2>Messaging from {professor.name}</h2> 
                 </div>
             </div>
 
@@ -99,7 +141,8 @@ const ContactInterface = ({ student, onBack, scores, quizCols, actCols }) => {
                 {/* Left Panel: Context */}
                 <div className="vrd-context-panel">
                     <div className="vrd-panel-header">
-                        <img src={student.avatar || `https://ui-avatars.com/api/?name=${student.name}`} className="vrd-mini-avatar" alt="Avatar"/>
+                        {/* Student Avatar (Unchanged) */}
+                        <img src={student.avatar || `https://ui-avatars.com/api/?name=${student.name}`} className="vrd-mini-avatar" alt="Student Avatar"/>
                         <div>
                             <h3>{student.name}</h3>
                             <span>{student.id}</span>
@@ -118,9 +161,18 @@ const ContactInterface = ({ student, onBack, scores, quizCols, actCols }) => {
                         {generating ? <Loader2 className="spin" size={18}/> : <Sparkles size={18}/>}
                         Generate AI Draft
                     </button>
+
+                    {/* 🚨 NEW: Professor Sender Info */}
+                    <div style={{ padding: '10px', marginTop: 'auto', borderTop: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <img src={professor.avatarUrl} className="vrd-mini-avatar" style={{width: '36px', height: '36px'}} alt="Professor Avatar"/>
+                        <div>
+                            <span style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem' }}>Sending as {professor.name}</span>
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>{professor.title}</span>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right Panel: Editor */}
+                {/* Right Panel: Editor (unchanged) */}
                 <div className="vrd-editor-panel">
                     <div className="vrd-input-group">
                         <label>Subject Line</label>
@@ -157,7 +209,10 @@ const ViewRD = ({ onLogout, onPageChange, student: studentProp }) => {
     const [simulatedFinalScore, setSimulatedFinalScore] = useState(90);
     const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'contact'
 
-    // Data Loading
+    // 🚨 NEW: Load Professor Data
+    const professor = useMockProfessorData();
+
+    // Data Loading (unchanged)
     const student = useMemo(() => {
         if (studentProp && studentProp.id) return studentProp;
         const saved = localStorage.getItem('selectedStudentForView');
@@ -173,7 +228,7 @@ const ViewRD = ({ onLogout, onPageChange, student: studentProp }) => {
 
     const studentScores = storedScores[student.id] || {};
 
-    // Calculations
+    // Calculations (unchanged)
     const midGrade = calculateTermGrade(studentScores, true, quizCols, actCols, recMax, examMax);
     const finGrade = calculateTermGrade(studentScores, false, quizCols, actCols, recMax, examMax);
     const isFinalsActive = finGrade > 0;
@@ -187,7 +242,7 @@ const ViewRD = ({ onLogout, onPageChange, student: studentProp }) => {
     const attPct = Math.round(((attendanceRecord.length - finalAbsences - (lates * 0.5)) / attendanceRecord.length) * 100);
     const finalAttPct = (attPct === 100 && student.attendancePercentage && student.attendancePercentage !== '100%') ? parseInt(student.attendancePercentage) : attPct;
 
-    // Chart Data
+    // Chart Data (unchanged)
     const trendData = useMemo(() => {
         const data = [];
         quizCols.forEach((col, i) => {
@@ -213,7 +268,7 @@ const ViewRD = ({ onLogout, onPageChange, student: studentProp }) => {
         { subject: 'Recitation', A: 80, fullMark: 100 }, 
     ];
 
-    // Risk & AI
+    // Risk & AI (unchanged)
     const determineRisk = () => {
         if (finalAbsences >= 5 || currentGrade < 75) return 'High';
         if (finalAbsences >= 3 || currentGrade < 80) return 'Medium';
@@ -232,10 +287,25 @@ const ViewRD = ({ onLogout, onPageChange, student: studentProp }) => {
         try {
             const res = await runAIAnalysis(prompt);
             if(res.success) {
-                const parsed = JSON.parse(res.text.replace(/```json|```/g, '').trim());
-                setAiData({ ...parsed, lastAnalyzed: new Date() });
+                const aiResponseText = res.text.replace(/```json|```/g, '').trim();
+                let parsed = null;
+                
+                try {
+                    parsed = JSON.parse(aiResponseText);
+                } catch (e) {
+                    const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        try { parsed = JSON.parse(jsonMatch[0]); } catch(e2) {}
+                    }
+                }
+                
+                if (parsed) {
+                    setAiData({ ...parsed, lastAnalyzed: new Date() });
+                }
             }
-        } catch(e) { console.error(e); }
+        } catch(e) { 
+            console.error(e);
+        }
         setAnalyzing(false);
     };
 
@@ -255,6 +325,7 @@ const ViewRD = ({ onLogout, onPageChange, student: studentProp }) => {
                             scores={studentScores}
                             quizCols={quizCols}
                             actCols={actCols}
+                            professor={professor} // 🚨 PASS PROFESSOR DATA
                         />
                     ) : (
                         <motion.div 

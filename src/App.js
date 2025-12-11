@@ -1,6 +1,6 @@
 // src/App.js
 
-import React, { useState, useEffect, useRef } from 'react'; 
+import React, { useState, useEffect, useRef, useCallback } from 'react'; 
 import Dashboard from './components/assets/Dashboard/Dashboard.jsx'; 
 import LoginSignUp from './components/assets/Loginsignin/LoginSignUp.jsx';
 import ReportsLayout from './components/assets/Reports/ReportsLayout.jsx'; 
@@ -78,10 +78,12 @@ function App() {
     const [profileData, setProfileData] = useState(null); 
     const [isDataReady, setIsDataReady] = useState(false); 
     
-    // --- GLOBAL VOICE STATE ---
+    // --- GLOBAL VOICE STATE & REF ---
     const [isVoiceActive, setIsVoiceActive] = useState(false);
-    // Ref to access the VoiceControl's speak function
     const voiceRef = useRef(null);
+
+    // ✅ NEW STATE: Flag to ensure the welcome message is only played once per session
+    const [hasSpokenGreeting, setHasSpokenGreeting] = useState(false); 
 
     const handleGlobalSpeak = (text) => {
         if (voiceRef.current) {
@@ -123,6 +125,74 @@ function App() {
     // 🚨 NEW STATE: Dropped Student Alert 🚨
     const [droppedStudentAlert, setDroppedStudentAlert] = useState(null); 
 
+    // --- FETCH STUDENTS FROM DATABASE ---
+    const fetchStudentsFromDB = async (professorUid) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/students/${professorUid}/All Sections`);
+            if (!response.ok) throw new Error('Failed to fetch students');
+            const data = await response.json();
+            setStudents(data);
+            return data; // Return fetched students for immediate use
+        } catch (error) {
+            if (isOnline) setStudents([]); 
+            return [];
+        }
+    };
+
+    // ✅ REUSABLE HELPER: Load attendance from localStorage and transform it for Reports
+    const loadAndTransformAttendance = useCallback((currentStudents) => {
+        try {
+            const ATTENDANCE_STORAGE_KEY = 'progressTracker_attendanceData_v1';
+            const savedAttendance = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
+            
+            if (savedAttendance) {
+                const parsed = JSON.parse(savedAttendance);
+                const transformed = {};
+                const MIDTERM_DATES = ['Sept 4', 'Sept 11', 'Sept 18', 'Sept 25', 'Oct 2', 'Oct 9'];
+                const FINALS_DATES = ['Nov 6', 'Nov 13', 'Nov 20', 'Nov 27', 'Dec 4', 'Dec 11'];
+                const allDates = [...MIDTERM_DATES, ...FINALS_DATES];
+                
+                currentStudents.forEach(student => {
+                    const studentRecord = [];
+                    allDates.forEach(date => {
+                        const key = `${student.id}-${date}`;
+                        const status = parsed[key] || 'P';
+                        studentRecord.push(status);
+                    });
+                    transformed[student.id] = studentRecord;
+                });
+                
+                setAttendanceData(transformed);
+                console.log('✅ Attendance data loaded and transformed');
+            }
+        } catch (error) {
+            console.error('Error loading attendance from localStorage:', error);
+        }
+    }, []); // No dependencies needed inside useCallback
+
+    // -------------------------------------------------------------------------
+    // 1. CENTRALIZED DATA REFRESH HANDLER (The core fix)
+    // -------------------------------------------------------------------------
+
+    const handleGlobalDataRefresh = useCallback(async () => {
+        console.log("🔄 Global Data Refresh Initiated...");
+        
+        // Ensure we have a profile ID to fetch data
+        if (!profileData?.id && !profileData?.uid) return;
+
+        // 1. Fetch Students from DB (Update State)
+        const updatedStudents = await fetchStudentsFromDB(profileData.id || profileData.uid);
+
+        // 2. Re-calculate Attendance Data based on new student list
+        loadAndTransformAttendance(updatedStudents);
+
+        // 3. Notify local components (like ReportsLayout/Reports.jsx) to re-read localStorage
+        window.dispatchEvent(new Event('CDM_DATA_SYNC'));
+        
+        console.log("✅ Global Data Refresh Complete. View updates triggered.");
+
+    }, [profileData, loadAndTransformAttendance]); // Depend on profileData
+
     // Track at-risk students whenever attendance changes
     useEffect(() => {
         const atRiskMap = {};
@@ -162,50 +232,48 @@ function App() {
     // 🚨 NEW HANDLER: For student dropped alert 🚨
     const handleStudentDropped = (studentDetails) => {
         setDroppedStudentAlert(studentDetails);
+        
+        // 🚨 IMPORTANT: Trigger a global data refresh after a student is dropped
+        handleGlobalDataRefresh();
     };
 
-    // --- AUTO-SYNC LISTENER ---
+    // --- AUTO-SYNC LISTENER (Now calls the refresh handler) ---
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
-            triggerAutoSync(); // Call sync when internet returns
+            triggerAutoSync(); 
         };
         const handleOffline = () => setIsOnline(false);
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
 
+        // 🚨 NEW: Global listener for CDM_DATA_SYNC event
+        window.addEventListener('CDM_DATA_SYNC', handleGlobalDataRefresh);
+
+
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
+            // 🚨 Cleanup the new global listener
+            window.removeEventListener('CDM_DATA_SYNC', handleGlobalDataRefresh);
         };
-    }, []);
+    }, [handleGlobalDataRefresh]); // Dependency added
 
     const triggerAutoSync = async () => {
         setIsSyncing(true);
         try {
             const res = await fetch('http://localhost:5000/api/sync-now', { method: 'POST' });
             await res.json();
+            // After successful external sync, immediately refresh local data to capture changes
+            handleGlobalDataRefresh(); 
         } catch (e) {
             console.error("Sync Failed:", e);
         } finally {
-            // Keep the blue badge for 2 seconds so the user sees it
             setTimeout(() => setIsSyncing(false), 2000);
         }
     };
 
-    // --- FETCH STUDENTS FROM DATABASE ---
-    const fetchStudentsFromDB = async (professorUid) => {
-        try {
-            const response = await fetch(`http://localhost:5000/api/students/${professorUid}/All Sections`);
-            if (!response.ok) throw new Error('Failed to fetch students');
-            const data = await response.json();
-            setStudents(data);
-        } catch (error) {
-            // Don't clear students on error if we are offline, keep current state if possible
-            if (isOnline) setStudents([]); 
-        }
-    };
 
     // --- SAVE SECTIONS TO LOCALSTORAGE WHENEVER IT CHANGES ---
     useEffect(() => {
@@ -216,44 +284,12 @@ function App() {
         }
     }, [sections]);
 
-    // ✅ NEW: Load attendance from localStorage and transform it for Reports
+    // ✅ OLD: Load attendance from localStorage and transform it for Reports (REMOVED - now inside loadAndTransformAttendance called by handleGlobalDataRefresh)
     useEffect(() => {
-        const loadAttendanceFromStorage = () => {
-            try {
-                const ATTENDANCE_STORAGE_KEY = 'progressTracker_attendanceData_v1';
-                const savedAttendance = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
-                if (savedAttendance) {
-                    const parsed = JSON.parse(savedAttendance);
-                    
-                    // Transform from MultiPageGS format {studentId-date: status} 
-                    // to App.js format {studentId: [status, status, ...]}
-                    const transformed = {};
-                    const MIDTERM_DATES = ['Sept 4', 'Sept 11', 'Sept 18', 'Sept 25', 'Oct 2', 'Oct 9'];
-                    const FINALS_DATES = ['Nov 6', 'Nov 13', 'Nov 20', 'Nov 27', 'Dec 4', 'Dec 11'];
-                    const allDates = [...MIDTERM_DATES, ...FINALS_DATES];
-                    
-                    students.forEach(student => {
-                        const studentRecord = [];
-                        allDates.forEach(date => {
-                            const key = `${student.id}-${date}`;
-                            const status = parsed[key] || 'P';
-                            studentRecord.push(status);
-                        });
-                        transformed[student.id] = studentRecord;
-                    });
-                    
-                    setAttendanceData(transformed);
-                    console.log('✅ Attendance data loaded and transformed');
-                }
-            } catch (error) {
-                console.error('Error loading attendance from localStorage:', error);
-            }
-        };
-
-        if (students.length > 0) {
-            loadAttendanceFromStorage();
+        if (students.length > 0 && profileData) {
+            loadAndTransformAttendance(students);
         }
-    }, [students]); // Run when students are loaded
+    }, [students, profileData, loadAndTransformAttendance]); // Run when students/profile are loaded
 
 
     // -------------------------------------------------------------------------
@@ -265,7 +301,8 @@ function App() {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
                 setIsLoggedIn(true);
-                setShowLanding(false); // Hide landing page if user is already logged in
+                setShowLanding(false); 
+                setHasSpokenGreeting(false); 
                 try {
                     const response = await fetch('http://localhost:5000/api/user-sync', {
                         method: 'POST',
@@ -279,11 +316,20 @@ function App() {
                     });
                     if (!response.ok) throw new Error('Failed to sync');
                     const mongoProfile = await response.json();
-                    setProfileData({ ...mongoProfile, id: mongoProfile.uid, displayName: mongoProfile.displayName, photoURL: mongoProfile.photoURL || firebaseUser.photoURL });
                     
-                    // --- FETCH STUDENTS FROM DATABASE ---
-                    await fetchStudentsFromDB(firebaseUser.uid);
+                    // Set Profile Data
+                    const userProfile = { 
+                        ...mongoProfile, 
+                        id: mongoProfile.uid, 
+                        displayName: mongoProfile.displayName, 
+                        photoURL: mongoProfile.photoURL || firebaseUser.photoURL 
+                    };
+                    setProfileData(userProfile);
                     
+                    // --- FETCH STUDENTS & ATTENDANCE ON LOGIN ---
+                    const initialStudents = await fetchStudentsFromDB(userProfile.id);
+                    loadAndTransformAttendance(initialStudents);
+
                     setIsDataReady(true);
                 } catch (error) {
                     console.warn("⚠️ Offline Mode Detected during login.");
@@ -304,7 +350,7 @@ function App() {
             setIsLoadingAuth(false);
         });
         return () => unsubscribe();
-    }, []);
+    }, [loadAndTransformAttendance]); // Added dependency
 
     const handleLogout = async () => {
         try { 
@@ -313,7 +359,8 @@ function App() {
             setIsLoggedIn(false); 
             setIsVoiceActive(false);
             setStudents([]);
-            setShowLanding(true); // Return to Landing Page on Logout
+            setHasSpokenGreeting(false); 
+            setShowLanding(true); 
         } catch (error) {
             console.error('Logout error:', error);
         }
@@ -323,28 +370,31 @@ function App() {
         setCurrentPage(page); 
         setPageParams(params);
         
-        // When navigating to multipage-gradesheet, save the section context
         if (page === 'multipage-gradesheet' && params.sectionData) {
             const sectionName = params.sectionData.name || params.sectionData.code || params.sectionData.title || params.title || 'Unknown Section';
             setCurrentSectionContext(sectionName);
         }
         
-        // When navigating to v-reports, save which section to display
         if (page === 'v-reports' && params.section) {
             setSelectedSection(params.section);
         }
     };
     
-    // --- REFRESH STUDENTS FUNCTION (for ViewStuds to call after adding) ---
+    // --- REFRESH STUDENTS FUNCTION (now calls global handler) ---
     const refreshStudents = () => {
-        if (profileData?.id || profileData?.uid) {
-            fetchStudentsFromDB(profileData.id || profileData.uid);
-        }
+        handleGlobalDataRefresh();
     };
 
     const renderMainContent = () => {
         if (isLoadingAuth || !profileData || !isDataReady) return <LoadingAnimation isDataReady={isDataReady} />;
 
+        // --- COMMON PROPS ---
+        const commonVoiceProps = {
+            isVoiceActive: isVoiceActive,
+            onToggleVoice: toggleVoice
+        };
+        
+        // --- DASHBOARD PROPS ---
         const dashboardProps = {
             onLogout: handleLogout,
             onPageChange: handlePageChange,
@@ -352,9 +402,10 @@ function App() {
             sections: sections,
             students: students,
             isOnline: isOnline,
-            // VOICE PROPS
-            isVoiceActive: isVoiceActive,
-            onToggleVoice: toggleVoice
+            voiceControlRef: voiceRef,
+            hasSpokenGreeting: hasSpokenGreeting, 
+            setHasSpokenGreeting: setHasSpokenGreeting, 
+            ...commonVoiceProps
         };
 
         const profileProps = {
@@ -363,9 +414,7 @@ function App() {
             profileData: profileData,
             sections: sections, 
             onUpdateSections: setSections,
-            // VOICE PROPS
-            isVoiceActive: isVoiceActive,
-            onToggleVoice: toggleVoice
+            ...commonVoiceProps
         };
 
         const reportsProps = {
@@ -374,9 +423,7 @@ function App() {
             sections: sections, 
             students: students,
             attendanceData: attendanceData,
-            // VOICE PROPS
-            isVoiceActive: isVoiceActive,
-            onToggleVoice: toggleVoice
+            ...commonVoiceProps
         };
 
         switch (currentPage) {
@@ -389,8 +436,8 @@ function App() {
                     onPageChange={handlePageChange} 
                     onAttendanceUpdate={handleAttendanceUpdate}
                     students={students} 
-                    onStudentDropped={handleStudentDropped} // 🚨 ADDED PROP
-                    {...pageParams} // Passes title, viewType, etc.
+                    onStudentDropped={handleStudentDropped} 
+                    {...pageParams} 
                 />;
             
             case 'view-studs': 
@@ -416,7 +463,6 @@ function App() {
                 />;
             
             case 'view-rd': 
-                // FIXED: Ipinapasa ang targetStudentId na galing sa ViewStuds.jsx
                 return <ViewRD 
                     onLogout={handleLogout} 
                     onPageChange={handlePageChange}
@@ -425,8 +471,6 @@ function App() {
             
             case 'profile': 
                 return <ProfileLayout {...profileProps} />; 
-            
-            // The case 'tributes' is now REMOVED
             
             case 'dashboard': 
             default: 
@@ -449,7 +493,7 @@ function App() {
                      isVoiceActive={isVoiceActive} 
                      onToggle={setIsVoiceActive} 
                      onPageChange={handlePageChange}
-                     students={students}  // ✅ FIXED: Passed the students prop!
+                     students={students}  
                    />
                    
                    {renderMainContent()}

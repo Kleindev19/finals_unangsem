@@ -20,14 +20,14 @@ const Reports = ({
     students = [], 
     attendanceData = {}, 
     searchTerm = '',
-    // Grade data required for risk calculation
+    // Grade data required for risk calculation (Passed from ReportsLayout)
     studentScores = {}, 
     midQuizCols = [],
     midActCols = [],
     finQuizCols = [],
     finActCols = [],
-    recMax = 100, // Default to MultiPageGS initial state
-    examMax = 60 // Default to MultiPageGS initial state
+    recMax = 100,
+    examMax = 60
 }) => { 
     const [instituteFilter, setInstituteFilter] = useState('All');
 
@@ -55,7 +55,7 @@ const Reports = ({
                 const presentCount = record.filter(s => s === 'P' || s === 'L').length;
                 const attendancePct = Math.round((presentCount / totalRecorded) * 100) || 100;
 
-                // 庁 NEW: Grade Calculation with validation
+                // 庁 NEW: Grade Calculation with validation (Uses passed props!)
                 const scores = studentScores[student.id] || {};
                 const midtermPercentage = calculateTermGrade(scores, true, midQuizCols, midActCols, recMax, examMax) || 0;
                 const finalsPercentage = calculateTermGrade(scores, false, finQuizCols, finActCols, recMax, examMax) || 0;
@@ -125,7 +125,18 @@ const Reports = ({
             return b.totalStudents - a.totalStudents;
         });
 
-    }, [sections, students, attendanceData, studentScores, midQuizCols, midActCols, finQuizCols, finActCols, recMax, examMax]);
+    }, [
+        sections, 
+        students, 
+        attendanceData, 
+        studentScores, 
+        midQuizCols, 
+        midActCols, 
+        finQuizCols, 
+        finActCols, 
+        recMax, 
+        examMax // 🚨 ADDED DEPENDENCIES (The fix)
+    ]);
 
 
     // --- FILTERING ---

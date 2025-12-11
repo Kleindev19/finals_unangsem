@@ -145,3 +145,97 @@
 .modal-btn-secondary:hover {
     background-color: #F3F4F6;
 }
+
+/* --- Notification Modal Specific Styles (NEW) --- */
+.notif-modal-card {
+    width: 480px; /* Slightly wider than standard modal */
+    background-color: white !important;
+    padding: 1.5rem 2.5rem;
+    border: 1px solid #E5E7EB;
+}
+
+.notif-badge {
+    background-color: #3B82F6;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.notif-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px; /* Space for scrollbar */
+}
+
+.notif-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #F3F4F6;
+    align-items: flex-start;
+    position: relative;
+    border-left: 4px solid transparent; /* Used for color highlight */
+    transition: background-color 0.2s;
+}
+
+.notif-item:hover {
+    background-color: #F9FAFB;
+}
+
+.notif-icon-box {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.notif-content {
+    flex-grow: 1;
+}
+
+.notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.notif-title {
+    font-weight: 700;
+    color: #1F2937;
+    font-size: 0.95rem;
+}
+
+.notif-time {
+    font-size: 0.75rem;
+    color: #9CA3AF;
+}
+
+.notif-message {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #4B5563;
+    line-height: 1.4;
+}
+
+.notif-mark-read {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #3B82F6;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 5px;
+}

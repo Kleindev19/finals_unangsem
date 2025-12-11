@@ -87,6 +87,12 @@ const ClipboardIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/
 const CheckIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>);
 // --- NEW ICON FOR TIMER ---
 const ClockIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>);
+// --- NEW ICON FOR VOICE/SPEECH ---
+const Volume2Icon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a4.99 4.99 0 0 1 0 7.07"/></svg>);
+// --- NEW ICON FOR PASTE/LINK INPUT ---
+const LinkIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>);
+// --- NEW ICON FOR DROP DOWN ARROW ---
+const ChevronDown = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
 
 
 const getInitials = (fullName) => {
@@ -129,13 +135,29 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
     const [availableSections, setAvailableSections] = useState([]);
     const institutes = Object.keys(schoolData);
 
-    // --- SHARE LINK STATE ---
+    // --- SHARE LINK STATE (MODIFIED) ---
     const [isCopied, setIsCopied] = useState(false);
-    // Generate a fake "AI" link based on ID.
-    const generatedShareLink = `https://portal.university.edu/faculty-share/ai-connect/${id ? id.toLowerCase().replace(/\s/g, '') : 'user'}-${Math.random().toString(36).substring(2, 8)}`;
+    // NEW: State for selected section to share
+    const [selectedSectionToShare, setSelectedSectionToShare] = useState(''); 
+    // NEW: Input for receiving a link
+    const [pasteLinkInput, setPasteLinkInput] = useState(''); 
+    // NEW: {type: 'success'|'error'|'info', msg: ''}
+    const [importStatus, setImportStatus] = useState(null); 
 
-    // --- NEW: AUTO LOGOUT TIMER STATE ---
+    // Generate Dynamic Link based on selected section and professor UID
+    const professorUid = profileData.id || profileData.uid;
+    const sectionToEncode = selectedSectionToShare ? encodeURIComponent(selectedSectionToShare) : '';
+    
+    // 🚨 UPDATED: Dynamic Link Generation
+    const generatedShareLink = sectionToEncode 
+        ? `https://portal.cdm.edu.ph/faculty-share/ai-connect/${professorUid}/${sectionToEncode}` 
+        : `Select a class to generate sharing link.`;
+
+    // --- SECURITY & AI SETTINGS STATE ---
     const [autoLogoutMinutes, setAutoLogoutMinutes] = useState('5'); // Default 5 mins
+    const [availableVoices, setAvailableVoices] = useState([]); // Array of SpeechSynthesisVoice objects
+    const [selectedVoice, setSelectedVoice] = useState(''); // Stores the voice name
+    const [selectedLanguage, setSelectedLanguage] = useState('en-US'); // Stores the language code
 
     // --- EFFECTS ---
     useEffect(() => {
@@ -146,11 +168,44 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
             setRole(profileData.role || 'Professor');
         }
         
-        // --- LOAD SETTINGS: Load the saved timer preference from localStorage ---
+        // --- LOAD SAVED SETTINGS FROM localStorage ---
         const storedTimer = localStorage.getItem('autoLogoutMinutes');
         if (storedTimer) {
             setAutoLogoutMinutes(storedTimer);
         }
+        
+        const savedVoiceName = localStorage.getItem('ttsVoiceName'); //
+        const savedLangCode = localStorage.getItem('ttsLanguage'); //
+        if (savedLangCode) setSelectedLanguage(savedLangCode); //
+
+
+        // --- LOAD AVAILABLE VOICES (Web Speech API) ---
+        const loadVoices = () => {
+            if (!window.speechSynthesis) return;
+            const voices = window.speechSynthesis.getVoices();
+            setAvailableVoices(voices);
+
+            if (savedVoiceName && voices.some(v => v.name === savedVoiceName)) {
+                setSelectedVoice(savedVoiceName); // Load saved voice if it exists
+            } else if (voices.length > 0) {
+                 // Set a smart default if none saved/found
+                const defaultVoice = voices.find(v => v.name.includes("Google") || v.lang.startsWith("en-"));
+                if (defaultVoice) setSelectedVoice(defaultVoice.name);
+            }
+            
+            // Cleanup the voiceschanged listener after successful load
+            window.speechSynthesis.onvoiceschanged = null;
+        };
+        
+        if (window.speechSynthesis) {
+            if (window.speechSynthesis.getVoices().length > 0) {
+                loadVoices();
+            } else {
+                window.speechSynthesis.onvoiceschanged = loadVoices;
+            }
+        }
+        // End of Load Voices
+        
     }, [profileData]);
 
     // --- CASCADING EFFECTS ---
@@ -195,28 +250,114 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
 
     // --- HANDLERS ---
 
-    // NEW HANDLER FOR COPY LINK
+    // 🚨 NEW HANDLER FOR COPY LINK
     const handleCopyLink = () => {
+        if (!selectedSectionToShare) {
+            alert("Please select a class section first to generate the unique link.");
+            return;
+        }
         navigator.clipboard.writeText(generatedShareLink).then(() => {
             setIsCopied(true);
-            // Reset copy status after 2.5 seconds
-            setTimeout(() => {
-                setIsCopied(false);
-            }, 2500);
+            setTimeout(() => { setIsCopied(false); }, 2500);
         });
     };
+
+    // 🚨 NEW HANDLER: Paste Link and Import Students
+    const handlePasteLink = async () => {
+        setImportStatus(null);
+        if (!pasteLinkInput || !pasteLinkInput.includes('faculty-share/ai-connect/')) {
+            setImportStatus({ type: 'error', msg: "Invalid share link format. Must contain 'faculty-share/ai-connect/'" });
+            return;
+        }
+
+        // 1. Extract UID and Section from the pasted link
+        const match = pasteLinkInput.match(/ai-connect\/([^/]+)\/([^/]+)/);
+        if (!match || match.length < 3) {
+            setImportStatus({ type: 'error', msg: "Could not parse Professor ID and Section from link." });
+            return;
+        }
+
+        const sourceProfessorUid = match[1];
+        const sourceSectionName = decodeURIComponent(match[2]);
+        
+        // 2. Fetch Roster from the new backend endpoint
+        setImportStatus({ type: 'info', msg: `Fetching roster for ${sourceSectionName}...` });
+        try {
+            // Note: The section name is already encoded in the link (match[2])
+            const fetchRes = await fetch(`http://localhost:5000/api/share/students/${sourceProfessorUid}/${match[2]}`);
+            const data = await fetchRes.json();
+            
+            if (!fetchRes.ok || !data.success) {
+                setImportStatus({ type: 'error', msg: data.message || "Failed to fetch shared roster. Invalid link or class empty." });
+                return;
+            }
+            
+            // 3. Import Logic: Associate fetched students with the current professor
+            let importedCount = 0;
+            let existingCount = 0;
+            const currentProfessorUid = profileData.id || profileData.uid;
+
+            for (const student of data.roster) {
+                // Ensure student is saved under *this* professor's UID
+                const importStudentData = {
+                    // Copy existing student data fields
+                    id: student.id,
+                    name: student.name,
+                    type: student.type,
+                    course: student.course,
+                    section: student.section,
+                    email: student.email,
+                    cell: student.cell,
+                    address: student.address,
+                    // Assign to the CURRENT professor
+                    professorUid: currentProfessorUid,
+                    // Scores/Analytics are intentionally excluded here to keep the import clean
+                };
+                
+                // Call existing API endpoint to save/upsert the student
+                // NOTE: We rely on the backend's /api/students POST to handle the 'already exists' check
+                const saveRes = await fetch('http://localhost:5000/api/students', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(importStudentData)
+                });
+                
+                if (saveRes.ok) {
+                    importedCount++;
+                } else if (saveRes.status === 400) {
+                    // Assuming 400 means 'already exists' based on server.js logic
+                    existingCount++;
+                }
+            }
+            
+            // 4. Final Status Update
+            const total = data.roster.length;
+            const successMsg = `Success! Imported ${importedCount} of ${total} students from ${sourceSectionName}. (${existingCount} students already exist under your account.)`;
+            setImportStatus({ type: 'success', msg: successMsg });
+            
+            // 5. Trigger Global Refresh in App.js to update student lists across the app
+            window.dispatchEvent(new Event('CDM_DATA_SYNC'));
+            
+        } catch (error) {
+            console.error("Import Error:", error);
+            setImportStatus({ type: 'error', msg: "A network error occurred during import." });
+        }
+    };
+
 
     // --- UPDATED: HANDLE SAVE PROFILE & SETTINGS ---
     const handleUpdateProfile = (e) => {
         e.preventDefault();
         
-        // 1. Save the new timer setting to localStorage
+        // 1. Save all settings to localStorage
         localStorage.setItem('autoLogoutMinutes', autoLogoutMinutes);
+        localStorage.setItem('ttsVoiceName', selectedVoice); // Save selected voice name
+        localStorage.setItem('ttsLanguage', selectedLanguage); // Save selected language code
         
         // 2. Dispatch Custom Event so App.js (SecurityController) updates immediately
         window.dispatchEvent(new Event('CDM_SETTINGS_UPDATE')); 
         
-        alert(`Settings Saved!\n\nSecurity Timer set to: ${autoLogoutMinutes} minutes.`);
+        alert(`Settings Saved!\n\nSecurity Timer set to: ${autoLogoutMinutes} minutes.\nAI Voice: ${selectedVoice}\nLanguage: ${selectedLanguage}.`);
     };
 
     const handleOpenAdd = () => {
@@ -358,11 +499,11 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                 </div>
             </div>
 
-            {/* 2. PERSONAL INFO & SETTINGS CARD */}
+            {/* 2. PERSONAL INFO & SECURITY SETTINGS CARD (Combined into one form for a single Save button) */}
             <div className="pro-settings-card">
                 <div className="pro-card-header">
-                    <h3>Personal Information & Security</h3>
-                    <p>Update your photo, personal details, and security preferences.</p>
+                    <h3>Personal Information</h3>
+                    <p>Update your photo and personal contact details.</p>
                 </div>
 
                 <form className="pro-form" onSubmit={handleUpdateProfile}>
@@ -376,8 +517,23 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                             <label>Email Address</label>
                             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                         </div>
+                    </div>
+                    
+                    <div className="pro-form-grid" style={{marginTop: '2rem'}}>
+                        <div className="pro-form-group">
+                            <label>System ID (Read Only)</label>
+                            <input type="text" value={id} disabled className="pro-input-disabled" />
+                        </div>
+                    </div>
 
-                        {/* --- NEW SECURITY SECTION: AUTO-LOGOUT TIMER --- */}
+                    <hr style={{margin: '2.5rem 0', borderColor: '#E5E7EB'}}/>
+                    
+                    {/* --- SECURITY & AI VOICE SETTINGS SUB-SECTION --- */}
+                    <h3 style={{fontSize: '1.25rem', color: '#1F2937', fontWeight: '700', marginBottom: '1.5rem'}}>Security & AI Settings</h3>
+
+                    <div className="pro-form-grid">
+                        
+                        {/* 1. AUTO-LOGOUT TIMER */}
                         <div className="pro-form-group">
                              <label style={{display:'flex', alignItems:'center', gap:'6px', color:'#DC2626'}}>
                                  <ClockIcon style={{width:'16px', height:'16px'}}/> Auto-Logout Timer
@@ -385,16 +541,7 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                              <select 
                                 value={autoLogoutMinutes} 
                                 onChange={(e) => setAutoLogoutMinutes(e.target.value)}
-                                style={{
-                                    padding: '0.75rem 1rem',
-                                    border: '1px solid #E5E7EB',
-                                    borderRadius: '8px',
-                                    fontSize: '0.95rem',
-                                    color: '#1F2937',
-                                    backgroundColor: '#fff',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                }}
+                                className="pro-input-select"
                             >
                                 <option value="1">1 Minute (For Testing)</option>
                                 <option value="5">5 Minutes (Recommended)</option>
@@ -403,20 +550,58 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                                 <option value="60">1 Hour</option>
                              </select>
                              <span style={{fontSize:'0.8rem', color:'#6B7280', marginTop:'4px', fontStyle:'italic'}}>
-                                 For security, you will be automatically logged out after this period of inactivity.
+                                 You will be automatically logged out after this period of inactivity.
                              </span>
                         </div>
-                        {/* ----------------------------------------------- */}
-
+                        
+                        {/* 2. VOICE SELECTION (New) */}
                         <div className="pro-form-group">
-                            <label>System ID (Read Only)</label>
-                            <input type="text" value={id} disabled className="pro-input-disabled" />
+                            <label style={{display:'flex', alignItems:'center', gap:'6px', color:'#38761d'}}>
+                                <Volume2Icon style={{width:'16px', height:'16px'}}/> Select AI Voice
+                            </label>
+                            <select 
+                                value={selectedVoice} 
+                                onChange={(e) => setSelectedVoice(e.target.value)}
+                                className="pro-input-select"
+                                disabled={availableVoices.length === 0}
+                                required
+                            >
+                                <option value="" disabled>
+                                    {availableVoices.length > 0 ? 'Select a voice...' : 'Loading voices...'}
+                                </option>
+                                {availableVoices.map((voice, index) => (
+                                    <option key={index} value={voice.name} style={{color: voice.default ? '#166534' : 'inherit'}}>
+                                        {voice.name} ({voice.lang}) {voice.default ? ' [Default]' : ''}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
+                        
+                        {/* 3. LANGUAGE SELECTION (New) */}
+                        <div className="pro-form-group">
+                            <label style={{display:'flex', alignItems:'center', gap:'6px', color:'#38761d'}}>
+                                Language
+                            </label>
+                            <select 
+                                value={selectedLanguage} 
+                                onChange={(e) => setSelectedLanguage(e.target.value)}
+                                className="pro-input-select"
+                                required
+                            >
+                                <option value="en-US">English (US)</option>
+                                <option value="en-GB">English (UK)</option>
+                                <option value="fil-PH">Filipino (Philippines)</option>
+                                {/* Add more languages if supported by your app's localization */}
+                            </select>
+                        </div>
+
                     </div>
+                    {/* --- END SECURITY & AI VOICE SETTINGS SUB-SECTION --- */}
+
 
                     <div className="pro-form-actions">
                         <button type="button" className="pro-btn-cancel">Cancel</button>
-                        <button type="submit" className="pro-btn-save">Save Settings</button>
+                        <button type="submit" className="pro-btn-save">Save All Settings</button>
                     </div>
                 </form>
             </div>
@@ -428,8 +613,7 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                     <button onClick={handleOpenAdd} style={{ background: '#38761d', color: 'white', border: 'none', borderRadius: '50%', width: '36px', height: '36px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} title="Add New Section"><PlusIcon /></button>
                 </div>
 
-                {/* --- NEW "AI" SHAREABLE LINK SECTION --- */}
-                {/* This container uses the new special CSS class */}
+                {/* --- AI SMART-SHARE FACULTY LINK SECTION (UPDATED) --- */}
                 <div className="pro-ai-share-container">
                     <div className="pro-ai-content-wrapper">
                         <div className="pro-ai-header">
@@ -437,23 +621,86 @@ const Profile = ({ profileData, sections, onUpdateSections }) => {
                             <h4>AI Smart-Share Faculty Link</h4>
                         </div>
                         <p className="pro-ai-desc">
-                            Share this unique, secure link with other professors to grant temporary read access to your active student rosters across all sections.
+                            Select a class below to generate a unique, secure link. Share this link with colleagues so they can directly import your **live student roster** for that specific section.
                         </p>
-                        <div className="pro-link-box">
-                            <input 
-                                type="text" 
-                                className="pro-link-input"
-                                value={generatedShareLink} 
-                                readOnly 
-                                onClick={(e) => e.target.select()} // Auto-select on click
-                            />
-                            <button 
-                                className={`pro-btn-copy ${isCopied ? 'copied' : ''}`} 
-                                onClick={handleCopyLink}
-                            >
-                                {isCopied ? <><CheckIcon /> Copied!</> : <><ClipboardIcon /> Copy Link</>}
-                            </button>
+                        
+                        {/* --- 3A. GENERATE/COPY LINK --- */}
+                        <div className="pro-link-group-share" style={{ marginBottom: '1.5rem', borderBottom: '1px dashed #D1D5DB', paddingBottom: '1.5rem' }}>
+                            <label style={{fontWeight: '700', fontSize: '0.9rem', color: '#374151', display: 'block', marginBottom: '0.5rem'}}>1. Generate & Copy Link for Sharing</label>
+                            
+                            {/* Section Selector */}
+                            <div className="pro-share-selector-wrapper" style={{ position: 'relative', marginBottom: '1rem', width: '100%', maxWidth: '350px' }}>
+                                <select 
+                                    className="pro-input-select" 
+                                    value={selectedSectionToShare} 
+                                    onChange={(e) => setSelectedSectionToShare(e.target.value)}
+                                    style={{ paddingRight: '2rem' }}
+                                >
+                                    <option value="" disabled>-- Select Class Section to Share --</option>
+                                    {sections.map(s => (
+                                        <option key={s.name} value={s.name}>
+                                            {s.name} ({s.subtitle})
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6B7280' }}/>
+                            </div>
+                            
+                            {/* Link Box */}
+                            <div className="pro-link-box">
+                                <input 
+                                    type="text" 
+                                    className="pro-link-input"
+                                    value={generatedShareLink} 
+                                    readOnly 
+                                    onClick={(e) => e.target.select()} 
+                                    style={{ color: selectedSectionToShare ? '#1F2937' : '#9CA3AF' }}
+                                />
+                                <button 
+                                    className={`pro-btn-copy ${isCopied ? 'copied' : ''}`} 
+                                    onClick={handleCopyLink}
+                                    disabled={!selectedSectionToShare}
+                                >
+                                    {isCopied ? <><CheckIcon /> Copied!</> : <><ClipboardIcon /> Copy Link</>}
+                                </button>
+                            </div>
                         </div>
+
+                        {/* --- 3B. PASTE/RECEIVE LINK --- */}
+                        <div className="pro-link-group-paste">
+                            <label style={{fontWeight: '700', fontSize: '0.9rem', color: '#374151', display: 'block', marginBottom: '0.5rem'}}>2. Paste Link to Import Roster</label>
+                            
+                            <div className="pro-link-box">
+                                <input 
+                                    type="text" 
+                                    placeholder="Paste shared faculty link here..."
+                                    className="pro-link-input"
+                                    value={pasteLinkInput} 
+                                    onChange={(e) => setPasteLinkInput(e.target.value)}
+                                />
+                                <button 
+                                    className="pro-btn-copy" 
+                                    onClick={handlePasteLink}
+                                    disabled={!pasteLinkInput}
+                                    style={{ backgroundColor: '#6366f1', color: 'white', border: 'none', padding: '0.8rem 1.5rem' }}
+                                >
+                                    <LinkIcon /> Import Roster
+                                </button>
+                            </div>
+
+                            {/* Import Status Message */}
+                            {importStatus && (
+                                <p style={{ 
+                                    marginTop: '1rem', 
+                                    fontSize: '0.9rem', 
+                                    fontWeight: '600',
+                                    color: importStatus.type === 'error' ? '#EF4444' : importStatus.type === 'success' ? '#10B981' : '#F59E0B'
+                                }}>
+                                    {importStatus.msg}
+                                </p>
+                            )}
+                        </div>
+
                     </div>
                 </div>
                 {/* --------------------------------------- */}
