@@ -2,19 +2,25 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { decrypt } = require('./security'); // SECURITY MODULE
+const fs = require('fs'); 
+const path = require('path'); 
+const { decrypt } = require('./security'); 
 const nodemailer = require('nodemailer'); 
 require('dotenv').config(); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// --- CONFIG ---
+// 🛑 FIX APPLIED: Renamed the key persistence file path
+const KEY_FILE_PATH = path.join(__dirname, 'neural_network_node.json'); 
+
 // --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json());
 
 // ==========================================
-// 1. SCHEMAS & MODELS
+// 1. SCHEMAS & MODELS (No Change)
 // ==========================================
 
 // --- USER SCHEMA (Professor) ---
@@ -69,7 +75,7 @@ const studentSchema = new mongoose.Schema({
 const Student = mongoose.model('Student', studentSchema);
 
 // ==========================================
-// 2. SECURE CONFIGURATION & CONNECTION
+// 2. SECURE CONFIGURATION & CONNECTION (No Change)
 // ==========================================
 
 // A. DECRYPT EMAIL CREDENTIALS (SECURE MODE)
@@ -147,7 +153,7 @@ connectDB();
 
 
 // ==========================================
-// 3. API ROUTES
+// 3. API ROUTES (Existing Routes)
 // ==========================================
 
 // --- EMAIL ENDPOINT (SECURE) ---
@@ -351,6 +357,51 @@ app.delete('/api/students/:id', async (req, res) => {
         res.json({ message: 'Student deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: "Error deleting student" });
+    }
+});
+
+// ==========================================
+// 4. NEW: KEY PERSISTENCE ROUTES (FILE MANAGEMENT)
+// ==========================================
+
+// GET: Load Encrypted Key from JSON file
+app.get('/api/keys', (req, res) => {
+    try {
+        if (fs.existsSync(KEY_FILE_PATH)) {
+            const data = fs.readFileSync(KEY_FILE_PATH, 'utf8');
+            const keyData = JSON.parse(data);
+            console.log("🔐 [KEY] Loaded encrypted cipher from JSON file.");
+            // Send back the cipher object { key_cipher: "..." }
+            return res.json(keyData); 
+        } else {
+            // File does not exist, return an empty object (no key found)
+            console.log("🔓 [KEY] Key file not found. Returning empty object.");
+            return res.json({});
+        }
+    } catch (error) {
+        console.error("❌ [KEY ERROR] Error reading key file:", error.message);
+        res.status(500).json({ error: "Failed to read key file." });
+    }
+});
+
+// POST: Save Encrypted Key to JSON file
+app.post('/api/keys', (req, res) => {
+    const { key_cipher, timestamp } = req.body;
+    
+    if (!key_cipher) {
+        return res.status(400).json({ message: "Missing encrypted key cipher." });
+    }
+
+    try {
+        const keyData = { key_cipher, timestamp };
+        // Write data to the JSON file, creating it if it doesn't exist
+        fs.writeFileSync(KEY_FILE_PATH, JSON.stringify(keyData, null, 2), 'utf8');
+        console.log(`✅ [KEY] Successfully wrote encrypted cipher to ${path.basename(KEY_FILE_PATH)}.`);
+        res.json({ success: true, message: "Key saved successfully to file." });
+
+    } catch (error) {
+        console.error("❌ [KEY ERROR] Error writing key file:", error);
+        res.status(500).json({ error: "Failed to write key file." });
     }
 });
 

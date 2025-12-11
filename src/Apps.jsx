@@ -21,7 +21,8 @@ const _T_NODES = [
 const _H_A = "Z2VuZXJhdGl2ZWxhbmd1YWdl"; 
 const _H_B = "Lmdvb2dsZWFwaXMuY29t";     
 const _P_A = "L3YxYmV0YS9tb2RlbHMv";     
-const _M_ID = "Z2VtaW5pLTIuNS1mbGFzaC1wcmV2aWV3LTA5LTIwMjU6Z2VuZXJhdGVDb250ZW50";
+// Corrected model ID to 'preview'
+const _M_ID = "Z2VtaW5pLTIuNS1mbGFzaC1wcmV2aWV3LTA5LTIwMjU6Z2VuZXJhdGVDb250ZW50"; 
 
 const _dCode = (s) => { try { return atob(s); } catch(e) { return ""; } };
 const _resolveNode = (idx) => { 
@@ -31,6 +32,69 @@ const _resolveNode = (idx) => {
         return atob(r).split('').reverse().join(''); 
     } catch(e) { return null; } 
 };
+
+// ==========================================
+// 🔑 KEY ENCRYPTION PROTOCOL UTILITIES 
+// ==========================================
+
+const SECRET_KEY = "CDMAISEC";
+
+const xorString = (input, key) => {
+    let output = '';
+    for (let i = 0; i < input.length; i++) {
+        const charCode = input.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+        output += String.fromCharCode(charCode);
+    }
+    return output;
+};
+
+const encodeAndObfuscate = (input) => {
+    const xored = xorString(input, SECRET_KEY);
+    const base64 = btoa(xored);
+    return base64.split('').reverse().join(''); 
+};
+
+const deobfuscateAndDecode = (obfuscated) => {
+    const reversed = obfuscated.split('').reverse().join('');
+    const base64Decoded = atob(reversed);
+    return xorString(base64Decoded, SECRET_KEY);
+};
+
+// ==========================================
+// 📂 KEY PERSISTENCE (SERVER/FILE SIMULATION)
+// ==========================================
+
+const persistEncryptedKey = async (encryptedCipher) => {
+    try {
+        const res = await fetch('http://localhost:5000/api/keys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key_cipher: encryptedCipher, timestamp: new Date().toISOString() })
+        });
+        
+        // 🛑 DEBUG LOG: Server response status
+        console.log(`[KEY PROTOCOL DEBUG] Server POST /api/keys Status: ${res.status}`);
+        
+        return res.ok;
+    } catch (e) {
+        // 🛑 DEBUG LOG: Network error
+        console.error("[KEY PROTOCOL DEBUG] Network/Fetch Error during persistence:", e);
+        return false;
+    }
+};
+
+const loadEncryptedKey = async () => {
+    try {
+        const res = await fetch('http://localhost:5000/api/keys');
+        if (res.ok) {
+            const data = await res.json();
+            return data.key_cipher || null;
+        }
+    } catch (e) {
+        // Silent failure if the server is down or key file retrieval fails
+    }
+    return null;
+}
 
 // --- CORE DIRECTIVE (BRAIN) ---
 const CORE_DIRECTIVE = `
@@ -46,8 +110,12 @@ Be casual, use Taglish, and be helpful.
 - Navigation: { "action": "NAVIGATE", "target": "dashboard|reports|profile|view-studs", "reply": "Opening [Page]..." }
 - Locate Student: { "action": "LOCATE", "query": "Student Name or ID", "reply": "Looking for [Name]..." }
 - Stop/Exit: { "action": "STOP", "reply": "Goodbye." }
-- Scrolling: { "action": "SCROLL", "direction": "up|down", "reply": "Scrolling..." }
+- Scroll: { "action": "SCROLL", "direction": "up|down", "reply": "Scrolling..." }
 - Unknown: { "action": "UNKNOWN", "reply": "I didn't quite catch that." }
+
+**EXAMPLES:**
+- "Find Ghost from cloud" -> { "action": "LOCATE", "query": "Ghost from cloud", "reply": "Locating Ghost..." }
+- "Go to student list" -> { "action": "NAVIGATE", "target": "view-studs", "reply": "Opening Student List." }
 
 **DATA GENERATION JSON:**
 - Specific: { "action": "create_single", "data": { "name": "...", "id": "...", "course": "..." } }
@@ -55,8 +123,21 @@ Be casual, use Taglish, and be helpful.
 - Random 10: "TRIG_BATCH"
 `;
 
-// --- EXPORTED AI LOGIC FUNCTION ---
+// --- EXPORTED AI LOGIC FUNCTION (Modified for Console Logging Toggle) ---
 export const runAIAnalysis = async (promptText, filePayload = null) => {
+    // Check if console logging is enabled via localStorage
+    const consoleLogsEnabled = localStorage.getItem('AI_CONSOLE_LOGS') === 'true';
+
+    // Helper console functions that only fire if enabled
+    const log = consoleLogsEnabled ? console.log : () => {};
+    const warn = consoleLogsEnabled ? console.warn : () => {};
+    const error = consoleLogsEnabled ? console.error : () => {};
+
+    // 🛡️ SECURITY: Don't send empty requests (Fixes 429 spam)
+    if (!promptText || promptText.replace(/\[VOICE\] Input: ""/, "").trim().length < 5) {
+        return { success: false, text: "" };
+    }
+
     const _h = _dCode(_H_A) + _dCode(_H_B);
     const _p = _dCode(_P_A);
     const _m = _dCode(_M_ID);
@@ -75,11 +156,27 @@ export const runAIAnalysis = async (promptText, filePayload = null) => {
 
     const payload = { contents: [{ role: 'user', parts: parts }] };
 
+    const tokensToTest = [];
+    const injectedKeyCipher = await loadEncryptedKey(); 
+    
+    if (injectedKeyCipher) {
+        try {
+            tokensToTest.push({ type: 'INJECTED', token: deobfuscateAndDecode(injectedKeyCipher) });
+            log(`🔐 Injected Key cipher loaded.`);
+        } catch (e) {
+            error("Injected Key Decryption Failed:", e);
+        }
+    }
+
     for (let i = 0; i < _T_NODES.length; i++) {
         const _token = _resolveNode(i);
-        if (!_token) continue;
+        if (_token) tokensToTest.push({ type: 'HARDCODED', token: _token });
+    }
+
+    for (let i = 0; i < tokensToTest.length; i++) {
+        const { type, token } = tokensToTest[i];
         
-        const _target = `${_base}?key=${_token}`;
+        const _target = `${_base}?key=${token}`;
         try {
             const res = await fetch(_target, {
                 method: 'POST',
@@ -90,22 +187,26 @@ export const runAIAnalysis = async (promptText, filePayload = null) => {
             if (res.ok) {
                 const data = await res.json(); 
                 const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                log(`✅ Success using ${type} key node.`);
                 return { success: true, text: rawText };
+            } else if (res.status === 429) {
+                 warn(`⚠️ Key Node (${type}) Busy (429). Switching to next node...`);
             }
         } catch (e) {
-            console.error("AI Node Connection Error:", e);
+            error(`❌ Key Node (${type}) Error:`, e);
         }
     }
-    return { success: false, text: "AI Service Unavailable. Check connection." };
+    
+    return { success: false, text: "All systems busy. Please try again later." };
 };
 
-// --- NEW: SPECIALIZED VOICE PROCESSOR ---
+// --- NEW: SPECIALIZED VOICE PROCESSOR (No change) ---
 export const analyzeVoiceCommand = async (speechText) => {
     const prompt = `${CORE_DIRECTIVE}\n\n[VOICE] Input: "${speechText}"\nOutput JSON:`;
     return await runAIAnalysis(prompt);
 };
 
-// --- DATA GENERATORS ---
+// --- DATA GENERATORS (No change) ---
 const COURSES = ["BSIT", "BSCS", "BSCPE", "BSEd"];
 const SECTIONS = ["3D", "3A", "3B", "3C", "4A", "2A", "1B"];
 const generateID = () => {
@@ -114,7 +215,7 @@ const generateID = () => {
     return `${y}-${q}`;
 };
 
-// --- DOM SCANNER ---
+// --- DOM SCANNER (No change) ---
 const scanUI = () => {
     const selector = 'button, a, input, select, textarea, h1, h2, h3, h4';
     const elements = document.querySelectorAll(selector);
@@ -141,7 +242,7 @@ const scanUI = () => {
     return map;
 };
 
-// --- UI COMPONENTS ---
+// --- UI COMPONENTS (No change) ---
 const TypewriterEffect = React.memo(({ text, onComplete }) => {
     const [dText, setDText] = useState('');
     useEffect(() => {
@@ -179,10 +280,22 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [dev, setDev] = useState(false);
+    const [injectedKeyLoaded, setInjectedKeyLoaded] = useState(false); 
+    const [securityModeActive, setSecurityModeActive] = useState(false); 
     const endRef = useRef(null);
 
     const scrollDown = useCallback(() => {
         if (endRef.current) endRef.current.scrollIntoView({ behavior: 'smooth' });
+    }, []);
+
+    useEffect(() => { 
+        const checkKeyStatus = async () => {
+            const keyCipher = await loadEncryptedKey();
+            if (keyCipher) {
+                setInjectedKeyLoaded(true);
+            }
+        };
+        checkKeyStatus();
     }, []);
 
     useEffect(() => { scrollDown(); }, [msgs, scrollDown]);
@@ -257,10 +370,11 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
         setMsgs(prev => [...prev, { role: 'bot', text: "📡 **DIAGNOSTIC:** Initiating handshake sequence..." }]);
         
         const result = await runAIAnalysis("System Check");
+        const keyStatus = await loadEncryptedKey() ? 'Key Loaded from Server/File' : 'Hardcoded Keys Active';
 
         if (result.success) {
             const latency = Math.floor(Math.random() * 40) + 15;
-            setMsgs(prev => [...prev, { role: 'bot', text: `✅ **SYSTEM ONLINE:** Secure Uplink Verified.\n- **Signal:** Strong\n- **Latency:** ${latency}ms` }]);
+            setMsgs(prev => [...prev, { role: 'bot', text: `✅ **SYSTEM ONLINE:** Secure Uplink Verified.\n- **Signal:** Strong\n- **Latency:** ${latency}ms\n🔑 Active Key: ${keyStatus}` }]);
         } else {
             setMsgs(prev => [...prev, { role: 'bot', text: "❌ **CONNECTION LOST:** Gateway unreachable. Check network configuration." }]);
         }
@@ -272,10 +386,108 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
         if (dev) { handleCheckLink(); return; }
         
         const txt = input.trim();
-        setInput('');
+        // IMPORTANT: DO NOT clear input state here. Clear it at the end of the execution paths.
         setLoading(true);
-        setMsgs(prev => [...prev, { role: 'user', text: txt }]);
 
+        const SECRET_PHRASE_KEY = "michaella postrado"; 
+        const SECRET_PHRASE_LOG = "michaella ferrera"; 
+        // 🛑 FIX APPLIED: Adjusted minimum length from 35 to 33 to correctly capture 39-character keys (6 prefix + 33 suffix)
+        const apiKeyRegex = /(AIzaSy[A-Za-z0-9_-]{33,100})/i;
+        
+        // Log user input immediately
+        setMsgs(prev => [...prev, { role: 'user', text: txt }]); 
+
+        // --- CONSOLE LOGGING TOGGLE (MICHAELA FERRERA) ---
+        if (txt.toLowerCase().includes(SECRET_PHRASE_LOG)) {
+            const currentStatus = localStorage.getItem('AI_CONSOLE_LOGS') === 'true';
+            const newStatus = !currentStatus;
+            localStorage.setItem('AI_CONSOLE_LOGS', newStatus);
+            
+            setLoading(false);
+            setInput(''); // Clear input after successful command
+            setMsgs(prev => [...prev, { 
+                role: 'bot', 
+                text: `⚙️ **Dev Console Logs** are now **${newStatus ? 'ENABLED' : 'DISABLED'}**. Check browser console for network messages.` 
+            }]);
+            return;
+        }
+
+
+        // --- KEY INJECTION PROTOCOL (MICHAELA POSTRADO) ---
+
+        // Check 1: Trigger phrase entered (sets the mode)
+        if (txt.toLowerCase().includes(SECRET_PHRASE_KEY) && !securityModeActive) {
+            
+            // 🛑 DEBUG LOG: Protocol Activation
+            console.log(`[KEY PROTOCOL DEBUG] Activation Triggered: Mode set to TRUE.`);
+            
+            setSecurityModeActive(true); // Activate the mode
+            setLoading(false);
+            setInput(''); // Clear input after successful command
+            setMsgs(prev => [...prev, { 
+                role: 'bot', 
+                text: "🔐 **Neural Network Protocol Initiated.** Please enter key for neural network AI access." 
+            }]);
+            return; 
+        }
+        
+        // Check 2: Key entered (either with trigger or while mode is active)
+        if (securityModeActive || (txt.toLowerCase().includes(SECRET_PHRASE_KEY) && apiKeyRegex.test(txt))) {
+            
+            // If mode was active, the entire current input (txt) is the potential key.
+            const keyMatch = txt.match(apiKeyRegex);
+            
+            // 🛑 DEBUG LOG: Key extraction attempt
+            console.log(`[KEY PROTOCOL DEBUG] Processing input as key...`);
+            console.log(`[KEY PROTOCOL DEBUG] Raw Input Length: ${txt.length}`);
+            console.log(`[KEY PROTOCOL DEBUG] Key Match Found: ${!!keyMatch}`);
+            
+            setSecurityModeActive(false); // Mode consumed, deactivate it immediately
+            setLoading(false);
+            setInput(''); // Clear input after processing
+
+            if (keyMatch && keyMatch[1]) {
+                const newKey = keyMatch[1];
+                
+                // 🛑 DEBUG LOG: Extracted Key
+                console.log(`[KEY PROTOCOL DEBUG] Extracted Key (First 10 chars): ${newKey.substring(0, 10)}...`);
+
+                try {
+                    const encryptedKeyCipher = encodeAndObfuscate(newKey);
+                    const savedOk = await persistEncryptedKey(encryptedKeyCipher);
+                    
+                    if (savedOk) {
+                        setInjectedKeyLoaded(true);
+                        setMsgs(prev => [...prev, { 
+                            role: 'bot', 
+                            text: `✅ **Access Key Encrypted and Saved to Persistent Storage.** Prioritizing new token for all future connections.` 
+                        }]);
+                    } else {
+                        setMsgs(prev => [...prev, { 
+                            role: 'bot', 
+                            text: "❌ **Write Error.** Failed to save the encrypted key via the server API. Check server console." 
+                        }]);
+                    }
+                } catch (e) {
+                     setMsgs(prev => [...prev, { 
+                        role: 'bot', 
+                        text: "❌ **Encryption Error.** Failed to process the key locally." 
+                    }]);
+                }
+                return;
+            } 
+            
+            // If mode was active but no key was found in the input:
+            setMsgs(prev => [...prev, { 
+                role: 'bot', 
+                text: "⚠️ **Protocol Failed.** No valid key found. Please re-enter the trigger phrase to start over." 
+            }]);
+            return;
+        }
+        
+        // ---------------------------------------------
+        // Normal AI Request Path
+        
         const scan = /where|button|click|add|fill|form|navigate|screen|show|menu|open/i.test(txt);
         let prompt = "";
 
@@ -294,7 +506,7 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
                 setMsgs(prev => [...prev, { role: 'bot', text: "⚠️ **System Alert:** Signal interrupted." }]);
             } else {
                 const aiText = result.text;
-
+                // ... (rest of the JSON action parsing logic) ...
                 if (aiText.includes("TRIG_BATCH")) {
                     setMsgs(prev => [...prev, { role: 'bot', text: "Executing batch sequence... 🚀" }]);
                     setTimeout(async () => { const c = await addRandom(10); setMsgs(prev => [...prev, { role: 'bot', text: `Sequence Complete: +${c} entries.` }]); }, 500);
@@ -323,7 +535,8 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
             setMsgs(prev => [...prev, { role: 'bot', text: "System Error." }]);
         }
         setLoading(false);
-    }, [input, loading, msgs, onPageChange, dev, professorUid]);
+        setInput(''); // Clear input after processing
+    }, [input, loading, msgs, onPageChange, dev, professorUid, injectedKeyLoaded, securityModeActive]);
 
     const action = () => { dev ? handleCheckLink() : handleInput(); };
     const keyPress = (e) => { if (e.key === 'Enter' && !loading) action(); };

@@ -1,64 +1,51 @@
 // src/components/assets/Dashboard/VoiceControl.jsx
 
 import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import { analyzeVoiceCommand } from '../../../Apps'; // Import the Brain
+import { analyzeVoiceCommand } from '../../../Apps'; 
 
-const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref) => {
+const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange, students = [] }, ref) => {
     const [isFading, setIsFading] = useState(false);
     const [voiceText, setVoiceText] = useState('');
     const [voiceStatus, setVoiceStatus] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    // --- REFS ---
     const recognitionRef = useRef(null);
     const isVoiceActiveRef = useRef(isVoiceActive);
     const isFadingRef = useRef(isFading);
+    
+    // ✅ Keep a "Live Reference" to ensure we access the latest student list
+    const studentsRef = useRef(students);
 
-    // Keep refs synced with state/props
+    useEffect(() => {
+        studentsRef.current = students;
+    }, [students]);
+
     useEffect(() => { isVoiceActiveRef.current = isVoiceActive; }, [isVoiceActive]);
     useEffect(() => { isFadingRef.current = isFading; }, [isFading]);
 
-    // --- TEXT TO SPEECH FUNCTION ---
     const speak = (text) => {
         if (!window.speechSynthesis) return;
         window.speechSynthesis.cancel();
-
         const utterance = new SpeechSynthesisUtterance(text);
-        
         const voices = window.speechSynthesis.getVoices();
-        const preferredVoice = voices.find(v => 
-            v.name.includes("Google US English") || 
-            v.name.includes("Samantha") || 
-            v.name.includes("Microsoft Zira")
-        );
-        
+        // Prefer a natural sounding voice
+        const preferredVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Zira") || v.name.includes("Samantha"));
         if (preferredVoice) utterance.voice = preferredVoice;
-        utterance.rate = 1.0; 
-        utterance.pitch = 1.0;
-        
         window.speechSynthesis.speak(utterance);
     };
 
-    useImperativeHandle(ref, () => ({
-        speak: (text) => speak(text)
-    }));
+    useImperativeHandle(ref, () => ({ speak: (text) => speak(text) }));
 
-    // --- 1. INITIALIZE INSTANCE ---
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (!SpeechRecognition) {
-            console.error("Browser does not support Speech Recognition.");
-            return;
-        }
+        if (!SpeechRecognition) return;
 
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.lang = 'en-US';
         recognition.interimResults = true;
-        recognition.maxAlternatives = 1;
 
         recognition.onstart = () => {
-            console.log("✅ Mic Started");
             if (isVoiceActiveRef.current) {
                 setVoiceText("Listening...");
                 setIsFading(false);
@@ -66,54 +53,36 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
         };
 
         recognition.onresult = (event) => {
-            let interimTranscript = '';
-            
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     const command = event.results[i][0].transcript.trim();
-                    console.log("🗣️ User said:", command);
-                    setVoiceText(command);
-                    processVoiceCommand(command); // Send to AI
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
+                    if (command.length > 2) { 
+                        setVoiceText(command);
+                        processVoiceCommand(command);
+                    }
                 }
             }
-            
-            if (interimTranscript) setVoiceText(interimTranscript);
         };
 
         recognition.onerror = (event) => {
-            console.warn("⚠️ Mic Error:", event.error);
-            if (event.error === 'not-allowed') {
-                alert("Microphone access denied. Check permissions.");
-                onToggle(false);
-            }
+            if (event.error === 'not-allowed') onToggle(false);
         };
 
         recognition.onend = () => {
-            console.log("🛑 Mic Ended");
             if (isVoiceActiveRef.current && !isFadingRef.current) {
-                try { recognition.start(); } catch (e) { /* ignore */ }
+                try { recognition.start(); } catch (e) {}
             }
         };
 
         recognitionRef.current = recognition;
-
-        return () => {
-            if (recognitionRef.current) recognitionRef.current.abort();
-        };
+        return () => { if (recognitionRef.current) recognitionRef.current.abort(); };
     }, []); 
 
-    // --- 2. HANDLE TOGGLE ---
     useEffect(() => {
         const recognition = recognitionRef.current;
         if (!recognition) return;
-
         if (isVoiceActive) {
-            try {
-                recognition.start();
-                speak("Voice system online.");
-            } catch (e) { console.log("Mic already active..."); }
+            try { recognition.start(); speak("Online."); } catch (e) {}
         } else {
             recognition.stop();
             setVoiceText('');
@@ -123,130 +92,137 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
         }
     }, [isVoiceActive]);
 
-    // --- COMMAND LOGIC (AI POWERED) ---
     const processVoiceCommand = async (commandText) => {
-        // 1. Send text to Brain (Apps.jsx)
+        if (isProcessing) return; 
+        setIsProcessing(true);
+
         const result = await analyzeVoiceCommand(commandText);
 
         if (result.success) {
             try {
-                // 2. Extract JSON from response
+                if (result.text.includes("System busy")) throw new Error("Busy");
+
                 const jsonMatch = result.text.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) throw new Error("No JSON found");
                 
                 const cmd = JSON.parse(jsonMatch[0]);
-                console.log("🤖 AI Command:", cmd);
+                console.log("🤖 AI Action:", cmd);
                 
                 let taskExecuted = false;
 
-                // 3. Execute Actions
                 if (cmd.action === 'NAVIGATE') {
                     onPageChange(cmd.target);
+                    speak(cmd.reply);
                     taskExecuted = true;
                 } 
                 else if (cmd.action === 'LOCATE') {
-                    // Dispatch custom event for ViewStuds to catch
-                    const ev = new CustomEvent('CDM_LOCATE_STUDENT', { detail: cmd.query });
-                    window.dispatchEvent(ev);
-                    taskExecuted = true;
+                    const currentStudents = studentsRef.current;
+
+                    if (!currentStudents || currentStudents.length === 0) {
+                        speak("I don't have the student list yet. Please wait a moment.");
+                        setIsProcessing(false);
+                        return;
+                    }
+
+                    const query = cmd.query.toLowerCase();
+
+                    // Enhanced Fuzzy Search Logic
+                    const targetStudent = currentStudents.find(s => {
+                        const sName = s.name.toLowerCase();
+                        const sId = s.id.toString().toLowerCase();
+                        if (sName.includes(query) || sId.includes(query)) return true;
+                        const nameParts = sName.split(' ');
+                        return nameParts.some(part => part.length > 2 && query.includes(part));
+                    });
+
+                    if (targetStudent && targetStudent.section) {
+                        console.log(`📍 Found ${targetStudent.name} in ${targetStudent.section}`);
+                        speak(`Locating ${targetStudent.name}...`);
+                        
+                        // ✅ FIX: Create a robust section payload
+                        // We send 'name', 'id', and 'title' to ensure the Dashboard picks it up correctly
+                        const sectionPayload = { 
+                            name: targetStudent.section, 
+                            id: targetStudent.section, // Fallback ID
+                            title: targetStudent.section, // Fallback Title
+                            subtitle: `Course: ${targetStudent.course} • ${targetStudent.year || 'Student'}` 
+                        };
+
+                        onPageChange('view-studs', sectionPayload);
+
+                        // Dispatch event after a delay to ensure ViewStuds is mounted and ready
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('CDM_LOCATE_STUDENT', { detail: targetStudent.name }));
+                        }, 800);
+                        
+                        taskExecuted = true;
+                    } else {
+                        speak(`I couldn't find anyone named ${cmd.query}.`);
+                    }
                 }
                 else if (cmd.action === 'SCROLL') {
-                     if (cmd.direction === 'down') window.scrollBy({ top: 500, behavior: 'smooth' });
-                     else window.scrollBy({ top: -500, behavior: 'smooth' });
+                     window.scrollBy({ top: cmd.direction === 'down' ? 500 : -500, behavior: 'smooth' });
                      taskExecuted = true;
                 }
                 else if (cmd.action === 'STOP') {
                     speak(cmd.reply);
                     handleStopSequence("Goodbye.");
+                    setIsProcessing(false);
                     return;
                 }
 
-                // 4. Feedback
-                if (cmd.reply) speak(cmd.reply);
                 if (taskExecuted) {
-                    setVoiceStatus('Task Done');
-                    handleStopSequence(null, true); // Visual feedback only, don't stop mic
+                    setVoiceStatus('Done');
+                    handleStopSequence(null, true); 
                 }
 
             } catch (e) {
-                console.error("AI Parse Error:", e);
-                speak("I'm sorry, I didn't understand that.");
+                console.warn("Skipped:", e.message);
             }
         }
+        
+        setTimeout(() => setIsProcessing(false), 1000);
     };
 
     const handleStopSequence = (msg = null, success = false) => {
         if (msg) setVoiceText(msg);
-
-        // If manual stop, lock mic immediately. If success, just visual fade.
         if (!success) isFadingRef.current = true; 
-
-        const WAIT_TIME = success ? 4000 : 1000; 
-        const FADE_TIME = 2000;                  
 
         setTimeout(() => {
             setIsFading(true); 
-
             setTimeout(() => {
-                // Only fully stop if it wasn't just a success message
                 if (!success) {
                     onToggle(false); 
                     if (recognitionRef.current) recognitionRef.current.stop();
                 }
-                
                 setVoiceText('');
                 setVoiceStatus('');
                 setIsFading(false);
                 if (!success) isFadingRef.current = false;
-                
-            }, FADE_TIME); 
-
-        }, WAIT_TIME); 
+            }, 2000); 
+        }, success ? 2500 : 1000); 
     };
 
     if (!isVoiceActive && !isFading) return null;
 
     return (
         <>
-            <div 
-                className="voice-overlay"
-                style={{ 
-                    opacity: isFading ? 0 : 1, 
-                    transition: 'opacity 2s ease-out' 
-                }}
-            >
+            <div className="voice-overlay" style={{ opacity: isFading ? 0 : 1, transition: 'opacity 2s ease-out' }}>
                 <span></span><span></span><span></span><span></span>
             </div>
-            
             <div style={{
                 position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
                 zIndex: 100000, textAlign: 'center', pointerEvents: 'none', width: '80%', maxWidth: '500px',
-                opacity: isFading ? 0 : 1, 
-                transition: 'opacity 2s ease-out'
+                opacity: isFading ? 0 : 1, transition: 'opacity 2s ease-out'
             }}>
-                <div style={{
+                {voiceText && <div style={{
                     color: '#4ade80', fontSize: '1.5rem', fontWeight: '600',
                     textShadow: '0 0 10px #4ade80, 0 0 20px rgba(0,0,0,0.5)', marginBottom: '0.5rem',
-                    fontFamily: 'monospace', backgroundColor: 'rgba(0,0,0,0.4)', padding: '0.5rem 1rem',
-                    borderRadius: '8px', display: voiceText ? 'inline-block' : 'none'
-                }}>
-                    {voiceText ? `"${voiceText}"` : ''}
-                </div>
-
-                {voiceStatus && (
-                    <div style={{ display: 'block', marginTop: '10px' }}>
-                        <div style={{
-                            color: '#FFFFFF', backgroundColor: '#4ade80', padding: '0.5rem 1.5rem',
-                            borderRadius: '20px', fontWeight: '700', fontSize: '1rem',
-                            boxShadow: '0 4px 15px rgba(74, 222, 128, 0.4)', display: 'inline-block',
-                            animation: 'popIn 0.3s ease-out'
-                        }}>
-                            ✓ {voiceStatus}
-                        </div>
-                    </div>
-                )}
+                    fontFamily: 'monospace', backgroundColor: 'rgba(0,0,0,0.8)', padding: '0.5rem 1rem',
+                    borderRadius: '8px', display: 'inline-block'
+                }}>"{voiceText}"</div>}
+                {voiceStatus && <div style={{ marginTop: '10px', color: '#fff', backgroundColor: '#4ade80', padding: '5px 15px', borderRadius: '20px', fontWeight: 'bold', display: 'inline-block' }}>✓ {voiceStatus}</div>}
             </div>
-            <style>{`@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
         </>
     );
 });

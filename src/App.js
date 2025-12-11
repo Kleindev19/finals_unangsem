@@ -448,7 +448,8 @@ function App() {
                      ref={voiceRef} 
                      isVoiceActive={isVoiceActive} 
                      onToggle={setIsVoiceActive} 
-                     onPageChange={handlePageChange} 
+                     onPageChange={handlePageChange}
+                     students={students}  // ✅ FIXED: Passed the students prop!
                    />
                    
                    {renderMainContent()}

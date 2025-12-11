@@ -1,6 +1,6 @@
 // src/components/assets/Dashboard/ViewStuds.jsx
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './ViewStuds.css';
 import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 
@@ -19,8 +19,6 @@ const ChevronLeft = ({ size = 24 }) => (<svg xmlns="http://www.w3.org/2000/svg" 
 const ChevronRight = ({ size = 24 }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>);
 const CheckIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>);
 
-
-// --- MOCK HOLIDAYS ---
 const HOLIDAYS = {
     "2025-01-01": "New Year's Day",
     "2025-02-14": "Valentine's Event",
@@ -29,7 +27,6 @@ const HOLIDAYS = {
     "2025-11-01": "All Saints Day"
 };
 
-// --- ADD STUDENT MODAL ---
 const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, professorUid }) => { 
     const [formData, setFormData] = useState({
         id: '', name: '', type: 'Regular', course: '', 
@@ -52,37 +49,31 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
         try {
             if (!formData.id || !formData.name || !formData.section || !formData.course) { 
                 throw new Error('Student ID, Name, Course, and Section are required');
             }
-
             const response = await fetch('http://localhost:5000/api/students', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...formData, professorUid: professorUid })
             });
-
             const responseData = await response.json();
-
             if (!response.ok) {
                  if (response.status === 409 || (responseData.message && responseData.message.includes('exists'))) {
                      throw new Error(`Student with ID ${formData.id} already exists.`);
                  }
                 throw new Error(responseData.message || 'Failed to add student');
             }
-
             alert(`Student ${responseData.name} added successfully!`);
             onStudentAdded(responseData);
-            
             onClose();
             setFormData({
                 id: '', name: '', type: 'Regular', course: '', 
                 section: sectionName || '', cell: '', email: '', address: ''
             });
         } catch (error) {
-            alert(`Error: ${error.message}\n\nPlease check:\n- Student ID is unique\n- All required fields are filled\n- Backend server is running`);
+            alert(`Error: ${error.message}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -125,8 +116,6 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
     );
 };
 
-
-// 🛑 ATTENDANCE CALENDAR MODAL COMPONENT
 const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance }) => {
     const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
@@ -143,19 +132,16 @@ const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance 
 
     const handleDayClick = (day) => {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        
         const holidayName = HOLIDAYS[dateStr];
         if (holidayName) {
-            alert(`${holidayName} is marked as a Holiday. Attendance cannot be changed.`);
+            alert(`${holidayName} is marked as a Holiday.`);
             return;
         }
-
         const currentStatus = student.attendance?.[dateStr];
         let newStatus = 'P';
         if (currentStatus === 'P') newStatus = 'A';
         else if (currentStatus === 'A') newStatus = 'L';
         else if (currentStatus === 'L') newStatus = null; 
-
         onUpdateAttendance(student.id, dateStr, newStatus);
     };
 
@@ -171,25 +157,17 @@ const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance 
         for (let day = 1; day <= daysInMonth; day++) {
             const dateObj = new Date(year, month, day);
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
             const status = student.attendance?.[dateStr]; 
             const holidayName = HOLIDAYS[dateStr];
-            
             let cellClass = "cal-cell";
             if (holidayName) cellClass += " holiday";
             else if (status) cellClass += ` status-${status}`;
-
             const today = new Date();
             const isToday = dateObj.toDateString() === today.toDateString();
             if (isToday) cellClass += " today";
             
             cells.push(
-                <div 
-                    key={day} 
-                    className={cellClass} 
-                    onClick={() => handleDayClick(day)} 
-                    title={holidayName || (status ? `Status: ${status}` : 'Click to mark Present')}
-                >
+                <div key={day} className={cellClass} onClick={() => handleDayClick(day)} title={holidayName || (status ? `Status: ${status}` : 'Click to mark Present')}>
                     <span style={{zIndex: 2, color: isToday ? 'white' : 'inherit'}}>{day}</span>
                     {holidayName && <span className="cal-event-badge">🎉</span>}
                     {status && !holidayName && <span className="cal-status-label">{status}</span>}
@@ -203,7 +181,6 @@ const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance 
         <div className="vs-modal-overlay">
             <div className="vs-modal-card cal-modal">
                 <button className="vs-modal-close" onClick={onClose}><XIcon size={20}/></button>
-                
                 <div className="cal-header">
                     <h2>{student.name}</h2>
                     <p className="cal-subtitle">{student.id} • Attendance Record</p>
@@ -213,24 +190,19 @@ const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance 
                         <span className="cal-stat">⚠️ Late: {totalL}</span>
                     </div>
                 </div>
-
                 <div className="cal-controls">
                     <button className="cal-btn" onClick={handlePrevMonth}><ChevronLeft size={16}/></button>
                     <h3>{monthNames[month]} {year}</h3>
                     <button className="cal-btn" onClick={handleNextMonth}><ChevronRight size={16}/></button>
                 </div>
-
                 <div className="cal-grid-header">
                     <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                 </div>
-                <div className="cal-grid">
-                    {renderCalendarCells()}
-                </div>
+                <div className="cal-grid">{renderCalendarCells()}</div>
             </div>
         </div>
     );
 };
-
 
 // --- MAIN COMPONENT: ViewStuds ---
 const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefreshStudents, professorUid }) => {
@@ -240,69 +212,96 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState(''); 
     
-    // ✅ ATTENDANCE STATE
     const [selectedStudentForAttendance, setSelectedStudentForAttendance] = useState(null);
-
-    // ✅ EDITING STATE
     const [editingId, setEditingId] = useState(null);
     const [editFormData, setEditFormData] = useState({});
-
-    // ✅ VOICE SEARCH HIGHLIGHT STATE
+    
+    // ✅ HIGHLIGHT STATE
     const [highlightedId, setHighlightedId] = useState(null);
 
     const sectionName = sectionData?.name;
-
     const sectionStudents = useMemo(() => {
         return students.filter(student => student.section === sectionName);
     }, [students, sectionName]);
 
-    // --- EFFECT: Handle AI Location Requests ---
+    // ✅ REF TO TRACK STUDENTS (FOR ASYNC LISTENERS)
+    const studentsRef = useRef(sectionStudents);
+    useEffect(() => {
+        studentsRef.current = sectionStudents;
+    }, [sectionStudents]);
+
+    // ✅ FIXED: Robust Listener for AI Location with Retry Loop
+    // This allows the voice command to work even if the data takes a moment to load
     useEffect(() => {
         const handleLocate = (e) => {
             const query = e.detail.toLowerCase();
-            console.log("Locating:", query);
+            console.log("🔍 EVENT RECEIVED in ViewStuds. Query:", query);
 
-            // Find match
-            const target = sectionStudents.find(s => 
-                s.name.toLowerCase().includes(query) || 
-                s.id.toLowerCase().includes(query)
-            );
+            let attempts = 0;
+            const maxAttempts = 20; // Try for 4 seconds (20 * 200ms)
 
-            if (target) {
-                setHighlightedId(target.id);
-                // Wait for render, then scroll
-                setTimeout(() => {
-                    const row = document.getElementById(`row-${target.id}`);
-                    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
+            const findAndHighlight = () => {
+                // ACCESS DATA VIA REF TO ENSURE FRESHNESS
+                const currentData = studentsRef.current;
 
-                // Clear highlight after 3s
-                setTimeout(() => setHighlightedId(null), 3000);
-            }
+                if (!currentData || currentData.length === 0) {
+                    if (attempts < maxAttempts) {
+                        attempts++;
+                        setTimeout(findAndHighlight, 200); // Retry in 200ms
+                        return;
+                    } else {
+                        console.warn("❌ LOCATE FAILED: Section list empty after timeout.");
+                        return;
+                    }
+                }
+
+                // Enhanced Fuzzy Search
+                const target = currentData.find(s => 
+                    s.name.toLowerCase().includes(query) || 
+                    s.id.toLowerCase().includes(query) ||
+                    // Check individual name parts
+                    s.name.toLowerCase().split(' ').some(part => query.includes(part) && part.length > 2)
+                );
+
+                if (target) {
+                    console.log("✅ FOUND TARGET:", target.name);
+                    setHighlightedId(target.id);
+                    
+                    // Delay scroll slightly to allow DOM render
+                    setTimeout(() => {
+                        const row = document.getElementById(`row-${target.id}`);
+                        if (row) {
+                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            row.classList.add('vs-row-highlight'); 
+                        }
+                    }, 100);
+
+                    setTimeout(() => setHighlightedId(null), 4000);
+                } else {
+                    console.warn("❌ TARGET NOT FOUND in this section.");
+                }
+            };
+
+            findAndHighlight();
         };
 
         window.addEventListener('CDM_LOCATE_STUDENT', handleLocate);
         return () => window.removeEventListener('CDM_LOCATE_STUDENT', handleLocate);
-    }, [sectionStudents]);
+    }, []); // Empty dependency array because we use the ref!
 
-    // --- Student Added from Bot/Modal ---
+    // Student Added from Bot/Modal
     useEffect(() => {
         const handleBotAdd = (e) => {
             const newStudent = e.detail;
             if (newStudent.section === sectionName) {
-                if (onRefreshStudents) {
-                    onRefreshStudents();
-                }
+                if (onRefreshStudents) onRefreshStudents();
             }
         };
-
         window.addEventListener('CDM_STUDENT_ADDED', handleBotAdd);
         return () => window.removeEventListener('CDM_STUDENT_ADDED', handleBotAdd);
     }, [sectionName, onRefreshStudents]); 
 
-    const handleStudentAdded = () => {
-        if (onRefreshStudents) onRefreshStudents();
-    };
+    const handleStudentAdded = () => { if (onRefreshStudents) onRefreshStudents(); };
     
     const handleEditClick = (student) => {
         setEditingId(student.id);
@@ -321,31 +320,24 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(editFormData),
             });
-
             if (response.ok) {
                 alert("Student updated successfully!");
                 setEditingId(null); 
                 if (onRefreshStudents) onRefreshStudents(); 
             } else {
-                const errorData = await response.json();
-                alert(`Failed to update: ${errorData.message || 'Unknown error'}`);
+                alert(`Failed to update.`);
             }
         } catch (error) {
-            console.error("Update error:", error);
             alert("Error connecting to server.");
         }
     };
 
-    const handleCancelEdit = () => {
-        setEditingId(null);
-        setEditFormData({});
-    };
+    const handleCancelEdit = () => { setEditingId(null); setEditFormData({}); };
 
     const handleViewChange = (e) => {
         const selected = e.target.value;
         setViewOption(selected);
         setSearchTerm(''); 
-
         const gradeViews = ['Midterm', 'Finals'];
         if (gradeViews.includes(selected)) {
             onPageChange('multipage-gradesheet', { 
@@ -368,13 +360,8 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ date, status: newStatus })
             });
-
-            if (res.ok) {
-                if (onRefreshStudents) onRefreshStudents(); 
-            }
-        } catch (error) {
-            console.error("Failed to update attendance", error);
-        }
+            if (res.ok) { if (onRefreshStudents) onRefreshStudents(); }
+        } catch (error) { console.error("Failed to update attendance", error); }
     };
 
     const renderTable = () => {
@@ -415,15 +402,11 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                                     className={`${student.isNew ? "vs-row-animate-new" : ""} ${isHighlighted ? "vs-row-highlight" : ""}`}
                                 >
                                     <td className="vs-id-text">{student.id}</td>
-                                    
                                     <td>
                                         {isEditing ? (
                                             <input type="text" name="name" value={editFormData.name} onChange={handleEditChange} className="vs-table-input" />
-                                        ) : (
-                                            <span style={{fontWeight: '600'}}>{student.name}</span>
-                                        )}
+                                        ) : ( <span style={{fontWeight: '600'}}>{student.name}</span> )}
                                     </td>
-
                                     <td>
                                         {isEditing ? (
                                              <select name="type" value={editFormData.type} onChange={handleEditChange} className="vs-table-select">
@@ -432,37 +415,31 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                                              </select>
                                         ) : ( student.type )}
                                     </td>
-
                                     <td className="vs-col-course">
                                         {isEditing ? (
                                             <input type="text" name="course" value={editFormData.course} onChange={handleEditChange} className="vs-table-input" />
                                         ) : ( student.course )}
                                     </td>
-
                                     <td style={{textAlign:'center'}}>
                                         {isEditing ? (
                                             <input type="text" name="section" value={editFormData.section} onChange={handleEditChange} className="vs-table-input" style={{width: '60px', textAlign: 'center'}} />
                                         ) : ( student.section )}
                                     </td>
-
                                     <td>
                                         {isEditing ? (
                                             <input type="text" name="cell" value={editFormData.cell} onChange={handleEditChange} className="vs-table-input" style={{width: '100px'}} />
                                         ) : ( student.cell )}
                                     </td>
-
                                     <td>
                                         {isEditing ? (
                                             <input type="text" name="email" value={editFormData.email} onChange={handleEditChange} className="vs-table-input" />
                                         ) : ( student.email )}
                                     </td>
-
                                     <td>
                                         {isEditing ? (
                                             <input type="text" name="address" value={editFormData.address} onChange={handleEditChange} className="vs-table-input" />
                                         ) : ( student.address )}
                                     </td>
-
                                     <td style={{textAlign: 'center', whiteSpace: 'nowrap'}}>
                                         {isEditing ? (
                                             <>
@@ -507,9 +484,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                                     <td className="vs-id-text">{student.id}</td>
                                     <td style={{fontWeight: '600'}}>{student.name}</td>
                                     <td style={{color: '#166534', fontWeight: 'bold'}}>{presents}</td>
-                                    <td style={{color: isDropped ? 'red' : 'inherit', fontWeight: isDropped ? 'bold' : 'normal'}}>
-                                        {absents}
-                                    </td>
+                                    <td style={{color: isDropped ? 'red' : 'inherit', fontWeight: isDropped ? 'bold' : 'normal'}}>{absents}</td>
                                     <td>
                                         <span style={{
                                             backgroundColor: isDropped ? '#fee2e2' : '#dcfce7',
@@ -537,30 +512,20 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
     return (
         <div className="view-studs-layout">
             <Sidebar onLogout={onLogout} onPageChange={onPageChange} currentPage="dashboard" onWidthChange={setSidebarWidth} />
-
             <div className="view-studs-main" style={{ marginLeft: sidebarWidth }}>
-                
                 <header className="vs-header">
                     <div className="vs-search-container">
                         <SearchIcon className="vs-search-icon" size={20} />
                         <input type="text" placeholder="Search students" className="vs-search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
-                    <div className="vs-header-actions">
-                        <BellIcon className="vs-icon" size={24} />
-                        <HelpIcon className="vs-icon" size={24} />
-                    </div>
+                    <div className="vs-header-actions"><BellIcon className="vs-icon" size={24} /><HelpIcon className="vs-icon" size={24} /></div>
                 </header>
-
-                <button className="vs-back-btn" onClick={() => onPageChange('dashboard')}>
-                    <ArrowLeft size={20} /> Back to Dashboard
-                </button>
-
+                <button className="vs-back-btn" onClick={() => onPageChange('dashboard')}><ArrowLeft size={20} /> Back to Dashboard</button>
                 <div className="vs-content-card">
                     <div className="vs-card-header">
                         <h1>{sectionName || 'Section'}</h1>
                         <span className="vs-subtitle">{sectionData?.subtitle || 'Course Description'}</span>
                     </div>
-
                     <div className="vs-controls-row">
                         <div className="vs-dropdown-wrapper">
                              <select className="vs-section-dropdown" value={viewOption} onChange={handleViewChange}>
@@ -572,18 +537,11 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                              <ChevronDown size={16} style={{position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none'}}/>
                         </div>
                     </div>
-
                     {viewOption === 'Student Information' && (
                              <div className="vs-buttons-row">
-                                 <button className="vs-btn vs-btn-add" onClick={() => setIsAddModalOpen(true)}>
-                                     <PlusIcon size={16} /> Add Student
-                                 </button>
-                                 
+                                 <button className="vs-btn vs-btn-add" onClick={() => setIsAddModalOpen(true)}><PlusIcon size={16} /> Add Student</button>
                                  <div className="vs-export-dropdown-wrapper">
-                                     <button className="vs-btn vs-btn-export" onClick={toggleExportMenu}>
-                                         <DownloadIcon size={16} /> Export Full List <ChevronDown size={16} style={{marginLeft: '4px'}} />
-                                     </button>
-                                     
+                                     <button className="vs-btn vs-btn-export" onClick={toggleExportMenu}><DownloadIcon size={16} /> Export Full List <ChevronDown size={16} style={{marginLeft: '4px'}} /></button>
                                      {isExportMenuOpen && (
                                          <div className="vs-export-menu">
                                              <button onClick={exportToExcel} className="vs-export-menu-item">Export as Excel (.csv)</button>
@@ -593,13 +551,9 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                                  </div>
                              </div>
                     )}
-
-                    <div className="vs-table-container">
-                        {renderTable()}
-                    </div>
+                    <div className="vs-table-container">{renderTable()}</div>
                 </div>
             </div>
-
             <AddStudentFormModal 
                 isOpen={isAddModalOpen} 
                 onClose={() => setIsAddModalOpen(false)} 
@@ -607,7 +561,6 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                 sectionName={sectionName}
                 professorUid={professorUid}
             />
-            
             {selectedStudentForAttendance && (
                 <AttendanceCalendarModal 
                     isOpen={!!selectedStudentForAttendance}
@@ -616,7 +569,6 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                     onUpdateAttendance={handleAttendanceUpdate}
                 />
             )}
-            
             <style>{`
                 .vs-back-btn {
                     display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; margin: 0 0 10px 20px;
