@@ -10,6 +10,7 @@
 
 # Exclude auto-generated file that causes conflicts
 src/meta.js
+src/meta.json
 
 # production
 /build

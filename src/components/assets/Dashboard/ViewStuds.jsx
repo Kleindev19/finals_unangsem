@@ -5,56 +5,33 @@ import './ViewStuds.css';
 import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 
 // --- ICONS ---
-const SearchIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
-const BellIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.36 17a3 3 0 1 0 3.28 0"/></svg>);
-const HelpIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>);
-const ChevronDown = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
-const PlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>);
-const DownloadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>);
-const XIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
-const EditIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>);
-const UploadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>);
-const AlertCircle = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>);
-// --- ADDED BACK BUTTON ICON ---
-const ArrowLeft = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>);
+const SearchIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
+const BellIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.36 17a3 3 0 1 0 3.28 0"/></svg>);
+const HelpIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>);
+const ChevronDown = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>);
+const PlusIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>);
+const DownloadIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>);
+const XIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
+const EditIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>);
+const ArrowLeft = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>);
+const CalendarIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
+const ChevronLeft = ({ size = 24 }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>);
+const ChevronRight = ({ size = 24 }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>);
+const CheckIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>);
 
-const ATTENDANCE_DATES = ['Sept 15', 'Sept 16', 'Sept 18', 'Sept 19', 'Sept 22', 'Sept 23', 'Sep 24', 'Sept 25'];
 
-// --- SUB-COMPONENT: ATTENDANCE CELL ---
-const AttendanceCell = ({ status, onChange }) => {
-// ... (AttendanceCell logic remains the same)
-    let className = 'vs-status-pill';
-    let content = status;
-
-    if (status === 'P') className += ' vs-p';
-    else if (status === 'A') className += ' vs-a';
-    else if (status === 'L') className += ' vs-l';
-    else if (status === 'SUSPENDED' || status === 'HOLIDAY') className = 'vs-tag-full';
-
-    return (
-        <td className="vs-cell-relative">
-            <div className={className}>
-                {status === 'SUSPENDED' || status === 'HOLIDAY' ? status : <>{content} <ChevronDown className="vs-chevron-mini"/></>}
-            </div>
-            <select 
-                className="vs-cell-select"
-                value={status}
-                onChange={(e) => onChange(e.target.value)}
-            >
-                <option value="P">Present (P)</option>
-                <option value="A">Absent (A)</option>
-                <option value="L">Late (L)</option>
-                <option disabled>──────────</option>
-                <option value="SUSPENDED">Suspended</option>
-                <option value="HOLIDAY">Holiday</option>
-            </select>
-        </td>
-    );
+// --- MOCK HOLIDAYS (Professor can manage these later) ---
+const HOLIDAYS = {
+    "2025-01-01": "New Year's Day",
+    "2025-02-14": "Valentine's Event",
+    "2025-04-09": "Day of Valor",
+    "2025-12-25": "Christmas Day",
+    "2025-11-01": "All Saints Day"
+    // Add more dates here in YYYY-MM-DD format
 };
 
-// --- ADD STUDENT MODAL ---
+// --- ADD STUDENT MODAL (Existing - kept here for completeness) ---
 const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, professorUid }) => { 
-// ... (AddStudentFormModal logic remains the same)
     const [formData, setFormData] = useState({
         id: '', name: '', type: 'Regular', course: '', 
         section: sectionName || '', cell: '', email: '', address: ''
@@ -78,12 +55,10 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
         setIsSubmitting(true);
         
         try {
-            // Validate required fields
-            if (!formData.id || !formData.name || !formData.section) {
-                throw new Error('Student ID, Name, and Section are required');
+            if (!formData.id || !formData.name || !formData.section || !formData.course) { 
+                throw new Error('Student ID, Name, Course, and Section are required');
             }
 
-            // Save to MongoDB (NOTE: This assumed backend call is kept for functionality)
             const response = await fetch('http://localhost:5000/api/students', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -96,23 +71,21 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
             const responseData = await response.json();
 
             if (!response.ok) {
+                 if (response.status === 409 || (responseData.message && responseData.message.includes('exists'))) {
+                     throw new Error(`Student with ID ${formData.id} already exists.`);
+                 }
                 throw new Error(responseData.message || 'Failed to add student');
             }
 
-            console.log('✅ Student saved to database:', responseData.name);
             alert(`Student ${responseData.name} added successfully!`);
-            
-            // Call parent callback to refresh student list
             onStudentAdded(responseData);
             
-            // Close modal and reset form
             onClose();
             setFormData({
                 id: '', name: '', type: 'Regular', course: '', 
                 section: sectionName || '', cell: '', email: '', address: ''
             });
         } catch (error) {
-            console.error('Error adding student:', error);
             alert(`Error: ${error.message}\n\nPlease check:\n- Student ID is unique\n- All required fields are filled\n- Backend server is running`);
         } finally {
             setIsSubmitting(false);
@@ -122,7 +95,7 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
     return (
         <div className="vs-modal-overlay">
             <div className="vs-modal-card">
-                <button className="vs-modal-close" onClick={onClose}><XIcon /></button>
+                <button className="vs-modal-close" onClick={onClose}><XIcon size={24} /></button>
                 <h2 className="vs-modal-title">Add Student Information</h2>
                 <form className="vs-modal-form" onSubmit={handleSubmit}>
                     <div className="vs-form-row">
@@ -156,25 +129,150 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
     );
 };
 
-// --- MAIN COMPONENT ---
+
+// 🛑 ATTENDANCE CALENDAR MODAL COMPONENT
+const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance }) => {
+    // Start date is the 1st of the current month
+    const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+
+    if (!isOpen || !student) return null;
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const startDay = new Date(year, month, 1).getDay(); 
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+    const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+
+    const handleDayClick = (day) => {
+        // Formats date to YYYY-MM-DD
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        // Don't allow changing status on holidays
+        const holidayName = HOLIDAYS[dateStr];
+        if (holidayName) {
+            alert(`${holidayName} is marked as a Holiday. Attendance cannot be changed.`);
+            return;
+        }
+
+        // Cycle Status: Empty -> P -> A -> L -> Empty
+        const currentStatus = student.attendance?.[dateStr];
+        let newStatus = 'P';
+        if (currentStatus === 'P') newStatus = 'A';
+        else if (currentStatus === 'A') newStatus = 'L';
+        else if (currentStatus === 'L') newStatus = null; // Clear or set to P depending on desired cycle
+
+        // Send API update
+        onUpdateAttendance(student.id, dateStr, newStatus);
+    };
+
+    // Calculate Summary for Header
+    const att = student.attendance || {};
+    const totalP = Object.values(att).filter(s => s === 'P').length;
+    const totalA = Object.values(att).filter(s => s === 'A').length;
+    const totalL = Object.values(att).filter(s => s === 'L').length;
+
+    const renderCalendarCells = () => {
+        const cells = [];
+        // Empty cells for padding
+        for (let i = 0; i < startDay; i++) cells.push(<div key={`empty-${i}`} className="cal-cell empty"></div>);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateObj = new Date(year, month, day);
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            const status = student.attendance?.[dateStr]; // 'P', 'A', 'L'
+            const holidayName = HOLIDAYS[dateStr];
+            
+            let cellClass = "cal-cell";
+            if (holidayName) cellClass += " holiday";
+            else if (status) cellClass += ` status-${status}`;
+
+            // Check if it's today
+            const today = new Date();
+            const isToday = dateObj.toDateString() === today.toDateString();
+            if (isToday) cellClass += " today";
+            
+            cells.push(
+                <div 
+                    key={day} 
+                    className={cellClass} 
+                    onClick={() => handleDayClick(day)} 
+                    title={holidayName || (status ? `Status: ${status}` : 'Click to mark Present')}
+                >
+                    <span style={{zIndex: 2, color: isToday ? 'white' : 'inherit'}}>{day}</span>
+                    {holidayName && <span className="cal-event-badge">🎉</span>}
+                    {status && !holidayName && <span className="cal-status-label">{status}</span>}
+                </div>
+            );
+        }
+        return cells;
+    };
+
+    return (
+        <div className="vs-modal-overlay">
+            <div className="vs-modal-card cal-modal">
+                <button className="vs-modal-close" onClick={onClose}><XIcon size={20}/></button>
+                
+                <div className="cal-header">
+                    <h2>{student.name}</h2>
+                    <p className="cal-subtitle">{student.id} • Attendance Record</p>
+                    <div className="cal-stats-row">
+                        <span className="cal-stat">✅ Present: {totalP}</span>
+                        <span className="cal-stat">❌ Absent: {totalA}</span>
+                        <span className="cal-stat">⚠️ Late: {totalL}</span>
+                    </div>
+                </div>
+
+                <div className="cal-controls">
+                    <button className="cal-btn" onClick={handlePrevMonth}><ChevronLeft size={16}/></button>
+                    <h3>{monthNames[month]} {year}</h3>
+                    <button className="cal-btn" onClick={handleNextMonth}><ChevronRight size={16}/></button>
+                </div>
+
+                <div className="cal-grid-header">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div className="cal-grid">
+                    {renderCalendarCells()}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- MAIN COMPONENT: ViewStuds ---
 const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefreshStudents, professorUid }) => {
+    // ... existing state hooks
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_COLLAPSED_WIDTH);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [viewOption, setViewOption] = useState('Student Information');
-    const [attendanceData, setAttendanceData] = useState({}); 
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState(''); 
+    
+    // ✅ ATTENDANCE STATE
+    const [selectedStudentForAttendance, setSelectedStudentForAttendance] = useState(null);
 
-    // Filter students for THIS section only
+    // ✅ EDITING STATE
+    const [editingId, setEditingId] = useState(null);
+    const [editFormData, setEditFormData] = useState({});
+
+    const sectionName = sectionData?.name;
+
     const sectionStudents = useMemo(() => {
-        return students.filter(student => student.section === sectionData?.name);
-    }, [students, sectionData]);
+        // Filter students for THIS section only
+        return students.filter(student => student.section === sectionName);
+    }, [students, sectionName]);
 
+    // --- Student Added from Bot/Modal ---
     useEffect(() => {
         const handleBotAdd = (e) => {
             const newStudent = e.detail;
-            if (newStudent.section === sectionData?.name) {
-                // Refresh from database instead of local update
+            if (newStudent.section === sectionName) {
                 if (onRefreshStudents) {
                     onRefreshStudents();
                 }
@@ -183,120 +281,109 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
 
         window.addEventListener('CDM_STUDENT_ADDED', handleBotAdd);
         return () => window.removeEventListener('CDM_STUDENT_ADDED', handleBotAdd);
-    }, [sectionData, onRefreshStudents]); 
+    }, [sectionName, onRefreshStudents]); 
 
-    const handleViewChange = (e) => {
-        const selected = e.target.value;
-        setViewOption(selected);
-        setIsExportMenuOpen(false);
-        setSearchTerm(''); 
-
-        const gradeViews = ['Midterm', 'Finals', 'Assignment', 'Quizzes', 'Activities'];
-
-        if (gradeViews.includes(selected)) {
-            let displayTitle = selected;
-            if (selected === 'Midterm') displayTitle = 'Midterm Grade';
-            if (selected === 'Finals') displayTitle = 'Finals Grade';
-            if (selected === 'Assignment') displayTitle = 'Assignments';
-            
-            // NOTE: The previous version passed the selected view as viewType,
-            // which is correctly handled by MultiPageGS.jsx
-            onPageChange('multipage-gradesheet', { 
-                viewType: selected + ' Records', // e.g., 'Midterm Records'
-                title: displayTitle,
-                students: sectionStudents 
-            });
-        } else if (selected === 'Attendance') {
-             onPageChange('multipage-gradesheet', { 
-                viewType: 'Attendance', 
-                title: 'Attendance Record',
-                students: sectionStudents 
-            });
-        }
-    };
-
-    const handleStudentAdded = (savedStudent) => {
-        console.log('Student added, refreshing list...');
-        // Refresh the student list from database
+    const handleStudentAdded = () => {
         if (onRefreshStudents) {
             onRefreshStudents();
         }
     };
     
-    const handleStatusChange = (studentId, dayIndex, newStatus) => {
-        const currentRecords = [...(attendanceData[studentId] || [])];
-        currentRecords[dayIndex] = newStatus;
-        setAttendanceData(prev => ({ ...prev, [studentId]: currentRecords }));
+    // ✅ Handle Edit Click: Enable Edit Mode
+    const handleEditClick = (student) => {
+        setEditingId(student.id);
+        setEditFormData({ ...student }); // Populate form with student data
     };
 
-    const handleEditClick = (studentName) => {
-        alert(`Edit feature for ${studentName} coming soon!`);
+    // ✅ Handle Change in Input Fields
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const exportToExcel = () => {
-        setIsExportMenuOpen(false);
-        
-        if (sectionStudents.length === 0) {
-             alert("No student records to export.");
-             return;
-        }
+    // ✅ Handle Save Edit: Send PUT Request
+    const handleSaveEdit = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/students/${editingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editFormData),
+            });
 
-        const headers = ["Student ID", "Student Name", "Type of Student", "Course", "Section & Year", "Cellphone #", "Email", "Home Address"];
-        const rows = sectionStudents.map(s => [
-            s.id, s.name, s.type, s.course, s.section, s.cell, s.email, s.address
-        ]);
-
-        const allData = [headers, ...rows];
-        const csvContent = allData.map(e => e.join(",")).join("\n");
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `${sectionData?.name || 'Student'}_List.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } else {
-            alert("Your browser does not support automatic CSV download.");
+            if (response.ok) {
+                alert("Student updated successfully!");
+                setEditingId(null); // Exit edit mode
+                if (onRefreshStudents) onRefreshStudents(); // Refresh data
+            } else {
+                const errorData = await response.json();
+                alert(`Failed to update: ${errorData.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error("Update error:", error);
+            alert("Error connecting to server.");
         }
     };
 
-    const exportToPDF = () => {
-        setIsExportMenuOpen(false);
-        
-        if (sectionStudents.length === 0) {
-             alert("No student records to print/save as PDF.");
-             return;
-        }
-
-        window.print();
+    // ✅ Handle Cancel Edit
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setEditFormData({});
     };
 
-    const filteredStudents = sectionStudents.filter(student => {
-        if (viewOption !== 'Student Information') return true; 
-        if (searchTerm === '') return true;
+    const handleViewChange = (e) => {
+        const selected = e.target.value;
+        setViewOption(selected);
+        setSearchTerm(''); 
 
-        const lowerCaseSearch = searchTerm.toLowerCase();
-        
-        return (
-            student.name.toLowerCase().includes(lowerCaseSearch) ||
-            student.id.toLowerCase().includes(lowerCaseSearch) ||
-            student.course.toLowerCase().includes(lowerCaseSearch) ||
-            student.section.toLowerCase().includes(lowerCaseSearch)
-        );
-    });
+        // Reroute to Gradesheet components if a grade view is selected
+        const gradeViews = ['Midterm', 'Finals'];
+        if (gradeViews.includes(selected)) {
+            onPageChange('multipage-gradesheet', { 
+                viewType: selected + ' Records',
+                title: selected + ' Grade',
+                sectionData: sectionData,
+                students: sectionStudents 
+            });
+        }
+    };
+
+    const toggleExportMenu = () => {
+         setIsExportMenuOpen(prev => !prev);
+    };
+    
+    // Placeholder for actual Export functions
+    const exportToExcel = () => { alert("Exporting to Excel..."); setIsExportMenuOpen(false); };
+    const exportToPDF = () => { alert("Printing to PDF..."); setIsExportMenuOpen(false); };
+
+    // ✅ Handle Attendance Update (Passes to Calendar Modal which handles API)
+    const handleAttendanceUpdate = async (studentId, date, newStatus) => {
+        try {
+            const res = await fetch(`http://localhost:5000/api/students/${studentId}/attendance`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date, status: newStatus })
+            });
+
+            if (res.ok) {
+                if (onRefreshStudents) onRefreshStudents(); // Refresh data from API
+            }
+        } catch (error) {
+            console.error("Failed to update attendance", error);
+        }
+    };
 
     const renderTable = () => {
+        const filtered = sectionStudents.filter(student => 
+            student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            student.id.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        if (filtered.length === 0) {
+            return <div style={{textAlign: 'center', padding: '2rem', color: '#6B7280'}}>No students match your search for "{searchTerm}".</div>;
+        }
+
+        // 1. STANDARD STUDENT LIST VIEW (EDITABLE)
         if (viewOption === 'Student Information') {
-            if (sectionStudents.length === 0) return <div className="vs-status-message">No students found for this section. Click "Add Student" to begin.</div>;
-            
-            if (searchTerm !== '' && filteredStudents.length === 0) {
-                 return <div className="vs-status-message">No students match your search for "{searchTerm}".</div>;
-            }
-            
             return (
                 <table className="vs-table">
                     <thead>
@@ -313,56 +400,158 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredStudents.map((student) => (
-                            <tr key={student.id} className={student.isNew ? "vs-row-animate-new" : ""}>
-                                <td className="vs-id-text">{student.id}</td>
-                                <td style={{fontWeight: '600'}}>{student.name}</td>
-                                <td>{student.type}</td>
-                                <td className="vs-col-course">{student.course}</td>
-                                <td style={{textAlign:'center'}}>{student.section}</td>
-                                <td>{student.cell}</td>
-                                <td>{student.email}</td>
-                                <td>{student.address}</td>
-                                <td style={{textAlign: 'center'}}>
-                                    <button className="vs-edit-btn" onClick={() => handleEditClick(student.name)}>
-                                        <EditIcon size={16} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                        {filtered.map((student) => {
+                            const isEditing = editingId === student.id;
+
+                            return (
+                                <tr key={student.id} className={student.isNew ? "vs-row-animate-new" : ""}>
+                                    <td className="vs-id-text">
+                                        {student.id} {/* ID is typically not editable as it is the key */}
+                                    </td>
+                                    
+                                    {/* Name */}
+                                    <td>
+                                        {isEditing ? (
+                                            <input type="text" name="name" value={editFormData.name} onChange={handleEditChange} className="vs-table-input" />
+                                        ) : (
+                                            <span style={{fontWeight: '600'}}>{student.name}</span>
+                                        )}
+                                    </td>
+
+                                    {/* Type */}
+                                    <td>
+                                        {isEditing ? (
+                                             <select name="type" value={editFormData.type} onChange={handleEditChange} className="vs-table-select">
+                                                 <option value="Regular">Regular</option>
+                                                 <option value="Irregular">Irregular</option>
+                                             </select>
+                                        ) : (
+                                            student.type
+                                        )}
+                                    </td>
+
+                                    {/* Course */}
+                                    <td className="vs-col-course">
+                                        {isEditing ? (
+                                            <input type="text" name="course" value={editFormData.course} onChange={handleEditChange} className="vs-table-input" />
+                                        ) : (
+                                            student.course
+                                        )}
+                                    </td>
+
+                                    {/* Section */}
+                                    <td style={{textAlign:'center'}}>
+                                        {isEditing ? (
+                                            <input type="text" name="section" value={editFormData.section} onChange={handleEditChange} className="vs-table-input" style={{width: '60px', textAlign: 'center'}} />
+                                        ) : (
+                                            student.section
+                                        )}
+                                    </td>
+
+                                    {/* Cell */}
+                                    <td>
+                                        {isEditing ? (
+                                            <input type="text" name="cell" value={editFormData.cell} onChange={handleEditChange} className="vs-table-input" style={{width: '100px'}} />
+                                        ) : (
+                                            student.cell
+                                        )}
+                                    </td>
+
+                                    {/* Email */}
+                                    <td>
+                                        {isEditing ? (
+                                            <input type="text" name="email" value={editFormData.email} onChange={handleEditChange} className="vs-table-input" />
+                                        ) : (
+                                            student.email
+                                        )}
+                                    </td>
+
+                                    {/* Address */}
+                                    <td>
+                                        {isEditing ? (
+                                            <input type="text" name="address" value={editFormData.address} onChange={handleEditChange} className="vs-table-input" />
+                                        ) : (
+                                            student.address
+                                        )}
+                                    </td>
+
+                                    {/* ACTIONS */}
+                                    <td style={{textAlign: 'center', whiteSpace: 'nowrap'}}>
+                                        {isEditing ? (
+                                            <>
+                                                <button className="vs-action-btn save" onClick={handleSaveEdit} title="Save">
+                                                    <CheckIcon size={16} />
+                                                </button>
+                                                <button className="vs-action-btn cancel" onClick={handleCancelEdit} title="Cancel">
+                                                    <XIcon size={16} />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button className="vs-edit-btn" onClick={() => handleEditClick(student)}>
+                                                <EditIcon size={16} />
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             );
-        } else if (viewOption === 'Attendance') {
-             if (sectionStudents.length === 0) return <div className="vs-status-message">No students found for attendance tracking.</div>;
-             
+        } 
+        
+        // ✅ ATTENDANCE VIEW
+        else if (viewOption === 'Attendance') {
              return (
                  <table className="vs-table">
                     <thead>
                         <tr>
-                            <th className="fixed-col">Student ID</th>
-                            <th className="fixed-col">Student Name</th>
-                            <th className="fixed-col">Type of Student</th>
-                            {ATTENDANCE_DATES.map((date, idx) => (
-                                <th key={idx} style={{textAlign: 'center'}}>{date}</th>
-                            ))}
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Total Present</th>
+                            <th>Total Absent</th>
+                            <th>Status</th>
+                            <th style={{textAlign: 'center'}}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {sectionStudents.map((student) => { 
-                            const records = attendanceData[student.id] || []; 
+                        {filtered.map((student) => { 
+                            const att = student.attendance || {};
+                            const absents = Object.values(att).filter(v => v === 'A').length;
+                            const presents = Object.values(att).filter(v => v === 'P').length;
+                            const isDropped = absents >= 3; 
+
                             return (
-                                <tr key={student.id} className={student.isNew ? "vs-row-animate-new" : ""}>
-                                    <td className="fixed-col vs-id-text">{student.id}</td>
-                                    <td className="fixed-col" style={{fontWeight: '600'}}>{student.name}</td>
-                                    <td className="fixed-col">{student.type}</td>
-                                    {ATTENDANCE_DATES.map((_, idx) => (
-                                        <AttendanceCell 
-                                            key={idx}
-                                            status={records[idx] || 'A'} 
-                                            onChange={(newStatus) => handleStatusChange(student.id, idx, newStatus)}
-                                        />
-                                    ))}
+                                <tr key={student.id}>
+                                    <td className="vs-id-text">{student.id}</td>
+                                    <td style={{fontWeight: '600'}}>{student.name}</td>
+                                    
+                                    {/* Stats Columns */}
+                                    <td style={{color: '#166534', fontWeight: 'bold'}}>{presents}</td>
+                                    <td style={{color: isDropped ? 'red' : 'inherit', fontWeight: isDropped ? 'bold' : 'normal'}}>
+                                        {absents}
+                                    </td>
+                                    
+                                    {/* Status Badge */}
+                                    <td>
+                                        <span style={{
+                                            backgroundColor: isDropped ? '#fee2e2' : '#dcfce7',
+                                            color: isDropped ? '#991b1b' : '#166534',
+                                            padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700'
+                                        }}>
+                                            {isDropped ? 'DROPPED' : 'ACTIVE'}
+                                        </span>
+                                    </td>
+
+                                    {/* ACTION: Open Calendar */}
+                                    <td style={{textAlign: 'center'}}>
+                                        <button 
+                                            className="vs-btn-manage" 
+                                            onClick={() => setSelectedStudentForAttendance(student)}
+                                        >
+                                            <CalendarIcon size={16}/> Manage
+                                        </button>
+                                    </td>
                                 </tr>
                             );
                         })}
@@ -370,7 +559,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                  </table>
              );
         }
-        return <div style={{padding: '2rem', textAlign: 'center'}}>Feature coming soon for {viewOption}</div>;
+        return <div style={{padding: '2rem', textAlign: 'center'}}>Loading...</div>;
     };
 
     return (
@@ -378,69 +567,38 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
             <Sidebar onLogout={onLogout} onPageChange={onPageChange} currentPage="dashboard" onWidthChange={setSidebarWidth} />
 
             <div className="view-studs-main" style={{ marginLeft: sidebarWidth }}>
+                
                 <header className="vs-header">
                     <div className="vs-search-container">
-                        <SearchIcon className="vs-search-icon" />
-                        <input 
-                            type="text" 
-                            placeholder="Search students" 
-                            className="vs-search-input"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        <SearchIcon className="vs-search-icon" size={20} />
+                        <input type="text" placeholder="Search students" className="vs-search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
-                    
-                    {viewOption === 'Attendance' && (
-                        <div className="vs-top-toolbar">
-                            <button className="vs-btn vs-btn-white-outline"><PlusIcon size={14}/> Add Column</button>
-                            <button className="vs-btn vs-btn-white-outline"><UploadIcon size={14}/> Export Excel</button>
-                        </div>
-                    )}
-
                     <div className="vs-header-actions">
-                        <BellIcon className="vs-icon" />
-                        <HelpIcon className="vs-icon" />
+                        <BellIcon className="vs-icon" size={24} />
+                        <HelpIcon className="vs-icon" size={24} />
                     </div>
                 </header>
 
-                {/* --- BACK BUTTON (Updated to use the new pill design) --- */}
-                <button 
-                    className="vs-back-btn" 
-                    onClick={() => onPageChange('dashboard')} // Assumes 'dashboard' is the main section listing page
-                    title="Back to Dashboard"
-                >
+                <button className="vs-back-btn" onClick={() => onPageChange('dashboard')}>
                     <ArrowLeft size={20} /> Back to Dashboard
                 </button>
-                {/* --- END BACK BUTTON --- */}
 
                 <div className="vs-content-card">
-                    {viewOption === 'Student Information' && (
-                        <div className="vs-card-header">
-                            <h1>{sectionData?.name || 'Section'}</h1>
-                            <span className="vs-subtitle">{sectionData?.subtitle || 'Course Description'}</span>
-                        </div>
-                    )}
+                    <div className="vs-card-header">
+                        <h1>{sectionName || 'Section'}</h1>
+                        <span className="vs-subtitle">{sectionData?.subtitle || 'Course Description'}</span>
+                    </div>
 
                     <div className="vs-controls-row">
                         <div className="vs-dropdown-wrapper">
-                             <select 
-                                 className="vs-section-dropdown"
-                                 value={viewOption}
-                                 onChange={handleViewChange} 
-                             >
+                             <select className="vs-section-dropdown" value={viewOption} onChange={handleViewChange}>
                                  <option>Student Information</option>
                                  <option>Attendance</option>
                                  <option>Midterm</option>
                                  <option>Finals</option>
                              </select>
-                             <ChevronDown className="vs-dropdown-arrow" size={18} />
+                             <ChevronDown size={16} style={{position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none'}}/>
                         </div>
-
-                        {viewOption === 'Attendance' && (
-                            <button className="vs-btn vs-btn-export">
-                                <DownloadIcon size={16} /> Attendance Sheet
-                            </button>
-                        )}
                     </div>
 
                     {viewOption === 'Student Information' && (
@@ -450,21 +608,14 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                                  </button>
                                  
                                  <div className="vs-export-dropdown-wrapper">
-                                     <button 
-                                         className="vs-btn vs-btn-export" 
-                                         onClick={() => setIsExportMenuOpen(prev => !prev)}
-                                     >
+                                     <button className="vs-btn vs-btn-export" onClick={toggleExportMenu}>
                                          <DownloadIcon size={16} /> Export Full List <ChevronDown size={16} style={{marginLeft: '4px'}} />
                                      </button>
                                      
                                      {isExportMenuOpen && (
                                          <div className="vs-export-menu">
-                                             <button onClick={exportToExcel} className="vs-export-menu-item">
-                                                 Export as Excel (.csv)
-                                             </button>
-                                             <button onClick={exportToPDF} className="vs-export-menu-item">
-                                                 Print/Export as PDF
-                                             </button>
+                                             <button onClick={exportToExcel} className="vs-export-menu-item">Export as Excel (.csv)</button>
+                                             <button onClick={exportToPDF} className="vs-export-menu-item">Print/Export as PDF</button>
                                          </div>
                                      )}
                                  </div>
@@ -474,14 +625,6 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                     <div className="vs-table-container">
                         {renderTable()}
                     </div>
-
-                    {viewOption === 'Attendance' && (
-                        <div className="vs-legend">
-                            <div className="vs-legend-item"><span className="vs-p-pill">P</span> Present</div>
-                            <div className="vs-legend-item"><span className="vs-a-pill">A</span> Absent</div>
-                            <div className="vs-legend-item"><span className="vs-l-pill">L</span> Absent (Late)</div>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -489,104 +632,88 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                 isOpen={isAddModalOpen} 
                 onClose={() => setIsAddModalOpen(false)} 
                 onStudentAdded={handleStudentAdded}
-                sectionName={sectionData?.name}
+                sectionName={sectionName}
                 professorUid={professorUid}
             />
             
+            {/* RENDER CALENDAR MODAL */}
+            {selectedStudentForAttendance && (
+                <AttendanceCalendarModal 
+                    isOpen={!!selectedStudentForAttendance}
+                    student={selectedStudentForAttendance}
+                    onClose={() => setSelectedStudentForAttendance(null)}
+                    onUpdateAttendance={handleAttendanceUpdate}
+                />
+            )}
+            
+            {/* INLINE STYLES FOR EDIT INPUTS */}
             <style>{`
                 /* --- UPDATED BACK BUTTON DESIGN --- */
                 .vs-back-btn {
-                    /* New Button Look: Pill-shaped, light blue style */
                     display: inline-flex;
                     align-items: center;
                     gap: 6px;
                     padding: 8px 15px;
-                    margin: 0 0 10px 20px; /* Aligns with card content and provides separation */
-                    border-radius: 20px; /* Pill shape */
+                    margin: 0 0 10px 20px;
+                    border-radius: 20px;
                     font-size: 0.9rem;
                     font-weight: 600;
                     cursor: pointer;
                     transition: all 0.2s ease;
-                    
-                    /* Design */
-                    background-color: #E0E7FF; /* Light blue/lavender */
-                    color: #3B82F6; /* Blue-500 text */
-                    border: 1px solid #C7D2FE; /* Lighter border */
+                    background-color: #E0E7FF;
+                    color: #3B82F6;
+                    border: 1px solid #C7D2FE;
                     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 }
+                .vs-back-btn:hover { background-color: #C7D2FE; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                .vs-back-btn:active { background-color: #A5B4FC; }
+                .vs-back-btn svg { stroke-width: 2.5; width: 18px; height: 18px; }
 
-                .vs-back-btn:hover {
-                    background-color: #C7D2FE; /* Darker hover background */
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                /* --- EDIT INPUT STYLES --- */
+                .vs-table-input, .vs-table-select {
+                    width: 100%;
+                    padding: 4px 6px;
+                    border: 1px solid #3B82F6;
+                    border-radius: 4px;
+                    font-size: 0.85rem;
+                    font-family: inherit;
+                    outline: none;
+                    background-color: #EFF6FF;
                 }
+                .vs-action-btn {
+                    border: none;
+                    background: none;
+                    cursor: pointer;
+                    padding: 4px;
+                    margin: 0 2px;
+                    border-radius: 4px;
+                    transition: background-color 0.2s;
+                }
+                .vs-action-btn.save { color: #166534; }
+                .vs-action-btn.save:hover { background-color: #dcfce7; }
+                .vs-action-btn.cancel { color: #991b1b; }
+                .vs-action-btn.cancel:hover { background-color: #fee2e2; }
 
-                .vs-back-btn:active {
-                    background-color: #A5B4FC;
-                }
-
-                .vs-back-btn svg {
-                    stroke-width: 2.5;
-                    width: 18px; /* Slightly smaller icon */
-                    height: 18px;
-                }
-                
                 /* EXISTING CSS BELOW */
-                .vs-export-dropdown-wrapper {
-                    position: relative;
-                    display: inline-block;
-                }
+                .vs-export-dropdown-wrapper { position: relative; display: inline-block; }
                 .vs-export-menu {
-                    position: absolute;
-                    top: 100%;
-                    right: 0;
-                    z-index: 10;
-                    background: white;
-                    border: 1px solid #E5E7EB;
-                    border-radius: 6px;
+                    position: absolute; top: 100%; right: 0; z-index: 10;
+                    background: white; border: 1px solid #E5E7EB; border-radius: 6px;
                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-                    min-width: 180px;
-                    margin-top: 5px;
-                    overflow: hidden;
-                    display: flex;
-                    flex-direction: column;
+                    min-width: 180px; margin-top: 5px; overflow: hidden; display: flex; flex-direction: column;
                 }
                 .vs-export-menu-item {
-                    display: block;
-                    width: 100%;
-                    padding: 10px 15px;
-                    text-align: left;
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                    color: #4B5563;
+                    display: block; width: 100%; padding: 10px 15px; text-align: left;
+                    background: none; border: none; cursor: pointer; font-size: 0.9rem; color: #4B5563;
                 }
-                .vs-export-menu-item:hover {
-                    background-color: #F3F4F6;
-                    color: #1F2937;
-                }
+                .vs-export-menu-item:hover { background-color: #F3F4F6; color: #1F2937; }
                 
                 @media print {
-                    .vs-header,
-                    .vs-floating-filter-bar,
-                    .vs-controls-row,
-                    .vs-share-banner,
-                    .vs-buttons-row,
-                    .view-studs-layout > .sidebar,
-                    .vs-legend,
-                    .vs-edit-btn,
-                    .vs-back-btn { /* Ensure it hides on print */
-                        display: none !important;
-                    }
-                    .view-studs-main {
-                        margin-left: 0 !important; 
-                        width: 100%;
-                    }
-                    .vs-content-card {
-                        box-shadow: none !important;
-                        border: none !important;
-                    }
-                }
+                    .vs-header, .vs-floating-filter-bar, .vs-controls-row, .vs-share-banner,
+                    .vs-buttons-row, .view-studs-layout > .sidebar, .vs-legend, .vs-edit-btn, .vs-back-btn { display: none !important; }
+                    .view-studs-main { margin-left: 0 !important; width: 100%; }
+                    .vs-content-card { box-shadow: none !important; border: none !important; }
+                } 
             `}</style>
         </div>
     );

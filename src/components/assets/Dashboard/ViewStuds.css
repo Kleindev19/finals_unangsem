@@ -200,7 +200,7 @@
     text-align: left; padding: 1rem; background-color: #F9FAFB;
     color: #6B7280; font-weight: 700; border-bottom: 1px solid #E5E7EB; white-space: nowrap;
 }
-/* Fixed col for Attendance view */
+/* Fixed col for Attendance view (No longer used) */
 .vs-table th.fixed-col, .vs-table td.fixed-col {
     background-color: #F9FAFB; position: sticky; left: 0; z-index: 10;
     border-right: 2px solid #E5E7EB;
@@ -216,7 +216,7 @@
 }
 .vs-edit-btn:hover { background-color: #F3F4F6; color: #2563EB; }
 
-/* --- ATTENDANCE CELLS --- */
+/* --- ATTENDANCE CELLS (Legacy - No longer used by new logic) --- */
 .vs-cell-relative { position: relative; min-width: 80px; text-align: center; }
 .vs-cell-select {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -240,7 +240,7 @@
     padding: 4px 8px; border-radius: 4px; text-align: center; display: inline-block; width: 80px;
 }
 
-/* --- LEGEND --- */
+/* --- LEGEND (Legacy - No longer used by new logic) --- */
 .vs-legend {
     display: flex; gap: 1.5rem; margin-top: 2rem;
     padding-top: 1rem; border-top: 1px solid #E5E7EB;
@@ -250,7 +250,7 @@
 .vs-a-pill { background-color: #fecaca; color: #991b1b; padding: 2px 8px; border-radius: 4px; }
 .vs-l-pill { background-color: #fed7aa; color: #9a3412; padding: 2px 8px; border-radius: 4px; }
 
-/* --- MODAL --- */
+/* --- MODAL (Add Student) --- */
 .vs-modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background-color: rgba(0, 0, 0, 0.4);
@@ -275,24 +275,143 @@
 }
 .vs-modal-submit-btn:hover { background-color: #2e6215; transform: translateY(-1px); }
 
-/* --- NEW: AUTOMATION ANIMATION --- */
+/* --- NEW: AUTOMATION ANIMATION (Keep existing) --- */
 @keyframes slideInHighlight {
-    0% {
-        opacity: 0;
-        transform: translateY(-20px);
-        background-color: #dcfce7; /* Light Green */
-    }
-    30% {
-        opacity: 1;
-        transform: translateY(0);
-        background-color: #86efac; /* Bright Green */
-    }
-    100% {
-        background-color: transparent;
-    }
+    0% { opacity: 0; transform: translateY(-20px); background-color: #dcfce7; }
+    30% { opacity: 1; transform: translateY(0); background-color: #86efac; }
+    100% { background-color: transparent; }
 }
 
 .vs-row-animate-new {
     animation: slideInHighlight 1.5s ease-out forwards;
-    border-left: 3px solid #38761d; /* Green accent on the left */
+    border-left: 3px solid #38761d;
 }
+
+/* --- CALENDAR MODAL UPGRADE STYLES --- */
+.cal-modal {
+    width: 500px;
+    max-width: 95vw;
+    padding: 0;
+    overflow: hidden;
+    background: #fff;
+}
+
+.cal-header {
+    background-color: #38761d; /* Your Primary Green */
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.cal-header h2 { margin: 0; font-size: 1.5rem; color: white; }
+.cal-subtitle { margin: 5px 0 15px; font-size: 0.9rem; opacity: 0.9; color: #e2e8f0; }
+
+.cal-stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.cal-stat {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background-color: rgba(255,255,255,0.2);
+    backdrop-filter: blur(4px);
+}
+
+.cal-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.cal-controls h3 { margin: 0; color: #374151; font-weight: 800; font-size: 1.1rem; }
+.cal-btn {
+    background: none; border: 1px solid #ddd; border-radius: 8px;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #555; transition: all 0.2s;
+}
+.cal-btn:hover { background-color: #f3f4f6; border-color: #bbb; }
+
+/* Calendar Grid */
+.cal-grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    padding: 10px 1.5rem 5px;
+}
+
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    padding: 0 1.5rem 1.5rem;
+}
+
+.cal-cell {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+    background-color: #f9fafb;
+}
+
+.cal-cell:hover:not(.empty):not(.holiday) {
+    background-color: #f3f4f6;
+    border-color: #cbd5e1;
+    transform: scale(1.05);
+}
+
+.cal-cell.empty { background: transparent; cursor: default; }
+
+/* Status Colors */
+.cal-cell.status-P { background-color: #dcfce7; color: #166534; border: 1px solid #86efac; } 
+.cal-cell.status-A { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; } 
+.cal-cell.status-L { background-color: #ffedd5; color: #9a3412; border: 1px solid #fdba74; } 
+
+.cal-cell.holiday { 
+    background-color: #e0f2fe; 
+    color: #0369a1; 
+    border: 1px solid #7dd3fc; 
+    cursor: help; 
+    font-weight: 500;
+}
+.cal-cell.today {
+    background-color: #38761d;
+    color: white;
+    border: 3px solid #10b981;
+    box-shadow: 0 0 5px rgba(56, 118, 29, 0.5);
+    z-index: 1;
+}
+
+
+.cal-event-badge { font-size: 0.7rem; position: absolute; top: 2px; right: 2px; }
+.cal-status-label { font-size: 0.6rem; font-weight: 700; margin-top: 2px; }
+
+/* Manage Button in Table */
+.vs-btn-manage {
+    display: inline-flex; align-items: center; gap: 6px;
+    background-color: white; border: 1px solid #d1d5db;
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; color: #374151;
+    cursor: pointer; transition: all 0.2s;
+}
+.vs-btn-manage:hover { background-color: #f3f4f6; border-color: #9ca3af; }

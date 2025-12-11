@@ -9,7 +9,7 @@ const SendIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" 
 const FlaskIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>);
 
 // ==========================================
-// 🛡️ OBFUSCATED CONFIGURATION
+// 🛡️ OBFUSCATED CONFIGURATION (EXPORTED)
 // ==========================================
 
 const _T_NODES = [
@@ -30,6 +30,52 @@ const _resolveNode = (idx) => {
         if (!r) return null;
         return atob(r).split('').reverse().join(''); 
     } catch(e) { return null; } 
+};
+
+// --- EXPORTED AI LOGIC FUNCTION ---
+export const runAIAnalysis = async (promptText, filePayload = null) => {
+    const _h = _dCode(_H_A) + _dCode(_H_B);
+    const _p = _dCode(_P_A);
+    const _m = _dCode(_M_ID);
+    const _base = `https://${_h}${_p}${_m}`; 
+
+    // Construct parts: Text always exists, Image/File is optional
+    const parts = [{ text: promptText }];
+    
+    // If a file is provided (image/pdf), add it as inline_data (Low token cost)
+    if (filePayload && filePayload.data && filePayload.mimeType) {
+        parts.push({
+            inline_data: {
+                mime_type: filePayload.mimeType,
+                data: filePayload.data
+            }
+        });
+    }
+
+    const payload = { contents: [{ role: 'user', parts: parts }] };
+
+    for (let i = 0; i < _T_NODES.length; i++) {
+        const _token = _resolveNode(i);
+        if (!_token) continue;
+        
+        const _target = `${_base}?key=${_token}`;
+        try {
+            const res = await fetch(_target, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (res.ok) {
+                const data = await res.json(); 
+                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                return { success: true, text: rawText };
+            }
+        } catch (e) {
+            console.error("AI Node Connection Error:", e);
+        }
+    }
+    return { success: false, text: "AI Service Unavailable. Check connection." };
 };
 
 // --- DATA GENERATORS ---
@@ -115,7 +161,7 @@ const TypewriterEffect = React.memo(({ text, onComplete }) => {
 });
 
 // --- MAIN COMPONENT ---
-const CdmChatbot = ({ onPageChange, professorUid, onSpeak }) => {
+const CdmChatbot = ({ onPageChange, professorUid }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [msgs, setMsgs] = useState([{ role: 'bot', text: "Hello! I am Cidi. How can I help you today?" }]);
     const [input, setInput] = useState('');
@@ -194,47 +240,16 @@ const CdmChatbot = ({ onPageChange, professorUid, onSpeak }) => {
         return ok ? d : null;
     };
 
-    const _dispatchSignal = async (payload) => {
-        const _h = _dCode(_H_A) + _dCode(_H_B);
-        const _p = _dCode(_P_A);
-        const _m = _dCode(_M_ID);
-        const _base = `https://${_h}${_p}${_m}`; 
-
-        for (let i = 0; i < _T_NODES.length; i++) {
-            const _token = _resolveNode(i);
-            if (!_token) continue;
-            
-            const _target = `${_base}?key=${_token}`;
-            try {
-                const res = await fetch(_target, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (res.ok) {
-                    const data = await res.json(); 
-                    return { success: true, data: data, nodeIndex: i };
-                }
-                
-                if ([429, 403, 400].includes(res.status)) {
-                    continue; 
-                }
-            } catch (e) {}
-        }
-        return { success: false };
-    };
-
     const handleCheckLink = async () => {
         setLoading(true);
         setMsgs(prev => [...prev, { role: 'bot', text: "📡 **DIAGNOSTIC:** Initiating handshake sequence..." }]);
-        const testPayload = { contents: [{ role: 'user', parts: [{ text: "System Check" }] }] };
-        const result = await _dispatchSignal(testPayload);
+        
+        // Use the exported logic internally
+        const result = await runAIAnalysis("System Check");
 
         if (result.success) {
-            const nodeName = result.nodeIndex === 0 ? "Alpha" : result.nodeIndex === 1 ? "Beta" : "Gamma";
             const latency = Math.floor(Math.random() * 40) + 15;
-            setMsgs(prev => [...prev, { role: 'bot', text: `✅ **SYSTEM ONLINE:** Secure Uplink Verified.\n- **Signal:** Strong\n- **Node:** ${nodeName}\n- **Latency:** ${latency}ms` }]);
+            setMsgs(prev => [...prev, { role: 'bot', text: `✅ **SYSTEM ONLINE:** Secure Uplink Verified.\n- **Signal:** Strong\n- **Latency:** ${latency}ms` }]);
         } else {
             setMsgs(prev => [...prev, { role: 'bot', text: "❌ **CONNECTION LOST:** Gateway unreachable. Check network configuration." }]);
         }
@@ -262,19 +277,13 @@ const CdmChatbot = ({ onPageChange, professorUid, onSpeak }) => {
         }
 
         try {
-            const result = await _dispatchSignal({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+            const result = await runAIAnalysis(prompt);
             
             if (!result.success) {
                 setMsgs(prev => [...prev, { role: 'bot', text: "⚠️ **System Alert:** Signal interrupted." }]);
-                if(onSpeak) onSpeak("System alert. Signal interrupted.");
             } else {
-                const aiText = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                
-                // SPEAK THE RESULT (Skip triggers)
-                if (onSpeak && !aiText.includes("TRIG_")) {
-                    const cleanText = aiText.replace(/[*#]/g, '').replace(/http\S+/g, '');
-                    onSpeak(cleanText);
-                }
+                const aiText = result.text;
+                // REMOVED: Speech synthesis integration here. The bot is now silent.
 
                 if (aiText.includes("TRIG_BATCH")) {
                     setMsgs(prev => [...prev, { role: 'bot', text: "Executing batch sequence... 🚀" }]);
@@ -304,7 +313,7 @@ const CdmChatbot = ({ onPageChange, professorUid, onSpeak }) => {
             setMsgs(prev => [...prev, { role: 'bot', text: "System Error." }]);
         }
         setLoading(false);
-    }, [input, loading, msgs, onPageChange, dev, professorUid, onSpeak]);
+    }, [input, loading, msgs, onPageChange, dev, professorUid]);
 
     const action = () => { dev ? handleCheckLink() : handleInput(); };
     const keyPress = (e) => { if (e.key === 'Enter' && !loading) action(); };
@@ -394,3 +403,4 @@ const CdmChatbot = ({ onPageChange, professorUid, onSpeak }) => {
 }; 
 
 export default CdmChatbot;
+}

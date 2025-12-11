@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './MultiPageGS.css';
 import { Sidebar, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 import { ActivityModal } from './ModalComponents';
+// IMPORT THE AI FUNCTION from the root Apps.jsx
+import { runAIAnalysis } from '../../../Apps'; 
 
 // --- ICONS ---
 const ArrowLeft = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>);
@@ -17,6 +19,8 @@ const Trash = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" wid
 const RotateCcw = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>);
 // NEW ICON: Calendar
 const Calendar = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
+// NEW ICON: Loader/Spinner
+const Loader = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>);
 
 
 // --- INITIAL DATA STRUCTURES (Used for initial load only) ---
@@ -37,6 +41,7 @@ const REC_COLS = [{ id: 'r1', label: 'R1' }];
 const EXAM_COLS = [{ id: 'exam', label: 'Major Exam' }]; 
 
 // --- MOCK DATES FOR ATTENDANCE ---
+// IMPORTANT: These must match the formats expected by the AI
 const MIDTERM_DATES = ['Sept 4', 'Sept 11', 'Sept 18', 'Sept 25', 'Oct 2', 'Oct 9'];
 const FINALS_DATES = ['Nov 6', 'Nov 13', 'Nov 20', 'Nov 27', 'Dec 4', 'Dec 11'];
 
@@ -186,6 +191,16 @@ const calculateTermGrade = (scores, isMidterm, currentQuizCols, currentActCols, 
     return Math.min(100, Math.max(0, termGrade)); // Cap at 100%
 };
 
+// --- HELPER: Convert File to Base64 for AI ---
+const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result.split(',')[1]); // Remove the data:image/png;base64, prefix
+        reader.onerror = (error) => reject(error);
+    });
+};
+
 
 const AttendanceCell = ({ status, onChange }) => {
     let className = 'mp-status-pill';
@@ -228,9 +243,10 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
     const [currentView, setCurrentView] = useState(viewType);
     const [attendanceTerm, setAttendanceTerm] = useState('Midterm Attendance');
-    
-    // NEW STATE: Search term for student filtering
     const [searchTerm, setSearchTerm] = useState('');
+    // NEW STATE: Loading state for AI upload processing
+    const [isUploading, setIsUploading] = useState(false);
+
 
     // STATES FOR DYNAMIC COLUMNS
     const [quizCols, setQuizCols] = useState(() => initializeCols(QUIZ_COLS_KEY, INITIAL_QUIZ_COLS));
@@ -508,6 +524,128 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
         setIsAddMenuOpen(false);
         setNewAssessmentData({ type: 'Quiz', maxScore: '', date: '' });
     };
+
+    // --- NEW: AI-POWERED ATTENDANCE UPLOAD HANDLER (STRICT MODE) ---
+    const handleAttendanceUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true); // Start loading state
+
+        try {
+            // 1. Convert image/file to base64 text
+            const base64Data = await fileToBase64(file);
+
+            // 2. CREATE ROSTER CONTEXT
+            // We include the name prominently so the AI can fuzzy-match "Ghact Fram Cloud" to "Ghost From Cloud"
+            const rosterList = students.map(s => `"${s.name}" (ID: ${s.id})`).join(', ');
+            
+            // 3. Construct the prompt for the AI
+            // UPDATED: Stricter instructions on Name Matching and Date Alignment
+            const systemPrompt = `
+            You are a strict data entry clerk digitizing a handwritten attendance sheet.
+
+            **TASK:**
+            Extract attendance statuses ('P', 'A', 'L') for the students listed below.
+
+            **1. ROSTER MATCHING (CRITICAL):**
+            - The image contains rows for these specific students: [ ${rosterList} ].
+            - **TRUST THE NAMES OVER THE IDs.** The handwritten IDs in the image might be typos (e.g., "88-30888" is actually "99-99999" "Ghost From Cloud").
+            - Find the row in the image that visually resembles the Student Name in the roster, then use the Roster's ID for the JSON output.
+
+            **2. DATE ALIGNMENT (CRITICAL):**
+            - The Valid System Dates are: ${[...MIDTERM_DATES, ...FINALS_DATES].map(d => `"${d}"`).join(', ')}.
+            - **READ THE COLUMN HEADERS IN THE IMAGE.**
+            - ONLY extract data if the image header matches a Valid System Date. 
+            - If the image contains a date NOT in the list (e.g., "Oct 25"), IGNORE IT.
+            - If the image is MISSING a date from the list (e.g., missing "Sept 25"), DO NOT hallucinate data. Just omit that date from the JSON.
+
+            **3. CELL INTERPRETATION:**
+            - Look for circled letters: Ⓟ = 'P', Ⓐ = 'A', Ⓛ = 'L'.
+            - If a cell says "Dropped", mark as 'A' (Absent) or ignore.
+            
+            **REQUIRED JSON OUTPUT:**
+            Return a pure JSON array. No markdown formatting.
+            Example: [{"id": "99-99999", "date": "Sept 4", "status": "P"}, ...]
+            `;
+
+            // 4. Call the AI service
+            console.log("Sending to AI with strict roster context...");
+            
+            const result = await runAIAnalysis(systemPrompt, {
+                mimeType: file.type || 'image/jpeg', 
+                data: base64Data
+            });
+
+            if (!result.success) {
+                throw new Error("AI Service unavailable or timed out.");
+            }
+
+            const aiResponseText = result.text.trim();
+            console.log("AI Response:", aiResponseText);
+
+            if (aiResponseText.includes("ERROR_UNREADABLE")) {
+                    alert("The AI could not read attendance data. Please ensure the image is clear.");
+                    setIsUploading(false);
+                    return;
+            }
+
+            // 5. Parse the JSON response
+            const jsonMatch = aiResponseText.match(/\[.*\]/s);
+            const jsonString = jsonMatch ? jsonMatch[0] : aiResponseText;
+
+            let parsedData;
+            try {
+                parsedData = JSON.parse(jsonString);
+            } catch (e) {
+                    console.error("AI JSON Parse Error:", e);
+                    alert("The AI processed the image but returned an invalid format.");
+                    setIsUploading(false);
+                    return;
+            }
+
+            // 6. Validate and Update State
+            let updatedCount = 0;
+            const newAttendanceData = { ...localAttendanceData };
+            const validDates = [...MIDTERM_DATES, ...FINALS_DATES];
+
+            parsedData.forEach(entry => {
+                // STRICT CHECK: Only accept data if ID exists in our roster
+                const studentExists = students.some(s => s.id === entry.id);
+                // STRICT CHECK: Only accept data if Date is valid
+                const dateExists = validDates.includes(entry.date);
+                
+                // Allow P, A, L. Map any weird AI outputs to safe defaults if needed.
+                let status = entry.status.toUpperCase();
+                if (status === 'PRESENT') status = 'P';
+                if (status === 'ABSENT') status = 'A';
+                if (status === 'LATE') status = 'L';
+                
+                const validStatus = ['P','A','L'].includes(status);
+
+                if (studentExists && dateExists && validStatus) {
+                    const key = `${entry.id}-${entry.date}`;
+                    newAttendanceData[key] = status;
+                    updatedCount++;
+                }
+            });
+
+            if (updatedCount > 0) {
+                setLocalAttendanceData(newAttendanceData);
+                alert(`Success! Updated ${updatedCount} records based on the uploaded image.`);
+            } else {
+                alert("AI analysis complete, but no matching records were found.\n\nMake sure the Date Headers in the image match your System Dates exactly (e.g. 'Sept 4').");
+            }
+
+        } catch (error) {
+            console.error("Upload processing error:", error);
+            alert(`An error occurred: ${error.message}`);
+        } finally {
+            setIsUploading(false); 
+            event.target.value = null; 
+        }
+    };
+
 
     // ... (handleExport function remains unchanged as it relies on the state being correct)
     const handleExport = () => {
@@ -1014,13 +1152,13 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                     <div className="mp-header-left">
                         <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}> {/* NEW FLEX WRAPPER */}
                             {/* BACK BUTTON (ICON ONLY) */}
-                            <button 
-                                className="mp-back-btn" 
-                                onClick={() => onPageChange('view-studs')}
-                                title="Go back to Student Records"
-                            >
-                                <ArrowLeft size={20} /> {/* ICON ONLY */}
-                            </button>
+                           <button 
+    className="mp-back-btn" 
+    onClick={() => onPageChange('view-studs', { sectionData: sectionData })}
+    title="Go back to Student Records"
+>
+    <ArrowLeft size={20} />
+</button>
                             
                             {/* TITLE WRAPPER */}
                             <div style={{display: 'flex', flexDirection: 'column'}}>
@@ -1262,20 +1400,51 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                             </>
                         )}
                         
-                        {/* 2. Show Attendance Dropdown ONLY when Attendance is Selected */}
+                        {/* 2. Show Attendance Controls ONLY when Attendance is Selected (UPDATED) */}
                         {currentView === 'Attendance' && (
-                            <div className="mp-att-selector-wrapper">
-                                <span className="mp-label-small">Select Term:</span>
-                                <div className="relative">
-                                    <select 
-                                        className="mp-att-selector"
-                                        value={attendanceTerm}
-                                        onChange={(e) => setAttendanceTerm(e.target.value)}
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
+                                <div className="mp-att-selector-wrapper">
+                                    <span className="mp-label-small">Select Term:</span>
+                                    <div className="relative">
+                                        <select 
+                                            className="mp-att-selector"
+                                            value={attendanceTerm}
+                                            onChange={(e) => setAttendanceTerm(e.target.value)}
+                                        >
+                                            <option value="Midterm Attendance">Midterm Attendance</option>
+                                            <option value="Finals Attendance">Finals Attendance</option>
+                                        </select>
+                                        <ChevronDown className="mp-selector-chevron" style={{right: '10px'}}/>
+                                    </div>
+                                </div>
+
+                                {/* --- NEW: Upload Attendance Button with AI Integration --- */}
+                                <div>
+                                    <input 
+                                        type="file" 
+                                        id="att-upload-input" 
+                                        // Accept images and PDFs for AI analysis
+                                        accept="image/png, image/jpeg, image/jpg, .pdf" 
+                                        style={{ display: 'none' }} 
+                                        onChange={handleAttendanceUpload}
+                                        disabled={isUploading} // Disable input while uploading
+                                    />
+                                    <label 
+                                        htmlFor="att-upload-input" 
+                                        className={`btn-utility ${isUploading ? 'disabled-btn' : ''}`}
+                                        style={{ height: '38px', cursor: isUploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                        title="Upload Attendance Photo/File for AI Analysis"
                                     >
-                                        <option value="Midterm Attendance">Midterm Attendance</option>
-                                        <option value="Finals Attendance">Finals Attendance</option>
-                                    </select>
-                                    <ChevronDown className="mp-selector-chevron" style={{right: '10px'}}/>
+                                        {isUploading ? (
+                                            <>
+                                                <Loader size={16} /> Processing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload size={16} /> Upload Photo/File
+                                            </>
+                                        )}
+                                    </label>
                                 </div>
                             </div>
                         )}
@@ -1410,10 +1579,27 @@ const MultiPageGS = ({ onLogout, onPageChange, viewType = 'Midterm Records', tit
                 .btn-add-column-submit:hover {
                     background-color: #374151;
                 }
+
+                /* --- NEW: Disabled Button State & Spinner --- */
+                .disabled-btn {
+                    opacity: 0.6;
+                    pointer-events: none;
+                    background-color: #f3f4f6 !important;
+                    color: #9ca3af !important;
+                    box-shadow: none;
+                }
+
+                .animate-spin {
+                    animation: spin 1s linear infinite;
+                }
+
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
             `}</style>
         </div>
     );
 };
 
 export default MultiPageGS;
-

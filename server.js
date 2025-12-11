@@ -2,7 +2,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { decrypt } = require('./security'); // IMPORT SECURITY MODULE
+const { decrypt } = require('./security'); // SECURITY MODULE
+const nodemailer = require('nodemailer'); 
 require('dotenv').config(); 
 
 const app = express();
@@ -33,69 +34,115 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// --- STUDENT SCHEMA (UPDATED) ---
+// --- STUDENT SCHEMA (UPDATED WITH AI ANALYTICS) ---
 const studentSchema = new mongoose.Schema({
-    id: { type: String, required: true }, // Student ID (e.g. 23-01360)
+    id: { type: String, required: true }, 
     name: { type: String, required: true },
-    type: String,   // Regular / Irregular
-    course: String, // BSIT, etc.
-    section: String,// 3D, etc.
+    type: String,   
+    course: String, 
+    section: String,
     cell: String,
     email: String,
     address: String,
     professorUid: { type: String, required: true }, 
     createdAt: { type: Date, default: Date.now },
     
-    // --- NEW: SEPARATE SCORE OBJECTS FOR MIDTERM AND FINAL ---
-    midtermScores: { 
-        type: Object, 
-        default: {} // Stores scores for midterm assessments (e.g., {'q1_mid': 15})
-    },
-    finalScores: { 
-        type: Object, 
-        default: {} // Stores scores for final assessments (e.g., {'q1_fin': 18})
+    // --- SCORES ---
+    midtermScores: { type: Object, default: {} },
+    finalScores: { type: Object, default: {} },
+
+    // --- AI ANALYTICS FIELD ---
+    aiAnalytics: {
+        lastAnalyzed: { type: Date },
+        riskLevel: { type: String, default: 'Pending' }, 
+        summary: { type: String, default: 'No analysis generated yet.' },
+        recommendation: { type: String, default: 'Click "Re-analyze" to generate insights.' }, 
+        prediction: { type: String, default: 'N/A' }, 
+        history: [{ 
+            date: { type: Date, default: Date.now },
+            riskLevel: String,
+            note: String
+        }]
     }
 });
 
 const Student = mongoose.model('Student', studentSchema);
 
 // ==========================================
-// 2. SMART & SECURE DATABASE CONNECTION
+// 2. SECURE CONFIGURATION & CONNECTION
 // ==========================================
-const connectDB = async () => {
+
+// A. DECRYPT EMAIL CREDENTIALS (SECURE MODE)
+let mailTransporter = null;
+
+const setupMailer = () => {
+    console.log("------------------------------------------------");
+    console.log("📧 [SYSTEM] Configuring Email Service...");
     try {
-        console.log("🔐 Decrypting Cloud Credentials...");
-        
-        // 1. Decrypt the password from .env
-        const onlineURI = decrypt(process.env.MONGO_URI_CLOUD);
-        
-        if (!onlineURI) {
-            throw new Error("Failed to decrypt Cloud URI. Check MASTER_KEY.");
+        const encUser = process.env.MAIL_USER_ENC;
+        const encPass = process.env.MAIL_PASS_ENC;
+
+        if (!encUser || !encPass) {
+            console.warn("⚠️  [SYSTEM] Missing Encrypted Credentials in .env");
+            return;
         }
 
-        console.log("☁️  Attempting to connect to MongoDB Atlas (Online)...");
+        console.log("🔐 [SYSTEM] Decrypting Credentials...");
+        const realUser = decrypt(encUser);
+        const realPass = decrypt(encPass);
+
+        if (realUser && realPass) {
+            mailTransporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: realUser,
+                    pass: realPass
+                }
+            });
+            console.log("✅ [SYSTEM] Email System: READY (Secure Mode)");
+        } else {
+            console.error("❌ [SYSTEM] Decryption result was invalid. Check MASTER_KEY.");
+        }
+    } catch (e) {
+        console.error("❌ [SYSTEM] Critical Mailer Error:", e.message);
+    }
+    console.log("------------------------------------------------");
+};
+
+// Initialize Mailer
+setupMailer();
+
+// B. CONNECT TO DATABASE
+const connectDB = async () => {
+    try {
+        console.log("🔐 [DB] Decrypting Cloud Credentials...");
         
-        // 2. Connect using the decrypted string
-        await mongoose.connect(onlineURI, {
-            serverSelectionTimeoutMS: 5000 
-        });
-        console.log("✅ CONNECTED TO: MongoDB Atlas (Online Mode)");
+        // Decrypt the Mongo URI if it exists
+        const onlineURI = process.env.MONGO_URI_CLOUD ? decrypt(process.env.MONGO_URI_CLOUD) : null;
+        
+        if (onlineURI) {
+            console.log("☁️  [DB] Connecting to MongoDB Atlas...");
+            await mongoose.connect(onlineURI, {
+                serverSelectionTimeoutMS: 5000 
+            });
+            console.log("✅ [DB] Connected: MongoDB Atlas (Online Mode)");
+        } else {
+            console.warn("⚠️  [DB] No Cloud URI found or decryption failed.");
+            throw new Error("Cloud URI missing");
+        }
         
     } catch (err) {
-        console.warn("⚠️  Internet connection failed or Atlas is unreachable.");
-        console.warn("🔄 Switching to Local Database...");
+        console.warn("⚠️  [DB] Connection issue. Switching to Local Database...");
         try {
-            // Fallback to Local Connection (No encryption needed for localhost)
-            await mongoose.connect(process.env.MONGO_URI_LOCAL);
-            console.log("✅ CONNECTED TO: Localhost (Offline Mode)");
+            await mongoose.connect(process.env.MONGO_URI_LOCAL || 'mongodb://localhost:27017/student_tracker_db');
+            console.log("✅ [DB] Connected: Localhost (Offline Mode)");
         } catch (localErr) {
-            console.error("❌ CRITICAL ERROR: Could not connect to ANY database (Online or Local).");
+            console.error("❌ [DB] CRITICAL ERROR: Could not connect to ANY database.");
             console.error(localErr);
         }
     }
 };
 
-// Initialize DB Connection
 connectDB();
 
 
@@ -103,15 +150,87 @@ connectDB();
 // 3. API ROUTES
 // ==========================================
 
-// --- AUTO-SYNC ENDPOINT (UPDATED to include new score fields) ---
+// --- EMAIL ENDPOINT (SECURE) ---
+app.post('/api/send-email', async (req, res) => {
+    const { to, subject, html, studentName } = req.body;
+    
+    console.log(`\n📨 [EMAIL] Request for Student: ${studentName || "Unknown"}`);
+
+    // 1. CHECK MAILER CONFIG
+    if (!mailTransporter) {
+        console.error("❌ [EMAIL ERROR] Server Mailer is NOT initialized.");
+        return res.status(500).json({ error: "Server email system not configured properly." });
+    }
+
+    // 2. CHECK RECIPIENT
+    if (!to || to.trim() === "" || to === "undefined") {
+        console.error("❌ [EMAIL ERROR] No valid email address provided.");
+        return res.status(400).json({ error: "Student missing email address." });
+    }
+
+    try {
+        // 3. SEND EMAIL
+        const info = await mailTransporter.sendMail({
+            from: '"Progress Tracker" <ferrerajoshlander@gmail.com>', 
+            to: to,
+            subject: subject,
+            html: html
+        });
+
+        console.log(`✅ [EMAIL SUCCESS] Sent to ${to}`);
+        res.json({ success: true, message: "Email sent successfully" });
+
+    } catch (error) {
+        console.error("❌ [SMTP ERROR]:", error.message);
+        
+        let userMessage = "Failed to send email.";
+        if (error.code === 'EAUTH') userMessage = "Server Authentication Failed.";
+        
+        res.status(500).json({ error: userMessage, details: error.message });
+    }
+});
+
+
+// --- ANALYTICS SAVE ENDPOINT ---
+app.post('/api/students/:id/analyze', async (req, res) => {
+    const { id } = req.params;
+    const { riskLevel, summary, recommendation, prediction } = req.body;
+
+    console.log(`🧠 Saving AI Analysis for Student: ${id}`);
+
+    try {
+        const student = await Student.findOne({ id });
+        if (!student) return res.status(404).json({ message: "Student not found" });
+
+        student.aiAnalytics.lastAnalyzed = new Date();
+        student.aiAnalytics.riskLevel = riskLevel;
+        student.aiAnalytics.summary = summary;
+        student.aiAnalytics.recommendation = recommendation;
+        student.aiAnalytics.prediction = prediction;
+        
+        student.aiAnalytics.history.push({
+            date: new Date(),
+            riskLevel: riskLevel,
+            note: summary
+        });
+
+        await student.save();
+        res.json({ success: true, aiAnalytics: student.aiAnalytics });
+
+    } catch (error) {
+        console.error("❌ Analysis Save Error:", error);
+        res.status(500).json({ message: "Failed to save analysis" });
+    }
+});
+
+// --- AUTO-SYNC ENDPOINT ---
 app.post('/api/sync-now', async (req, res) => {
-    console.log("🔄 Auto-Sync Triggered by Frontend...");
+    console.log("🔄 Auto-Sync Triggered...");
+    const onlineURI = process.env.MONGO_URI_CLOUD ? decrypt(process.env.MONGO_URI_CLOUD) : null;
     
-    // 1. Decrypt the Cloud URI again for this specific connection
-    const onlineURI = decrypt(process.env.MONGO_URI_CLOUD);
-    
-    // 2. Open temporary connections
-    const localConn = mongoose.createConnection(process.env.MONGO_URI_LOCAL);
+    if(!onlineURI) return res.status(500).json({ error: "No cloud URI configured" });
+
+    const localConn = mongoose.createConnection(process.env.MONGO_URI_LOCAL || 'mongodb://localhost:27017/student_tracker_db');
     const cloudConn = mongoose.createConnection(onlineURI);
 
     const LocalModel = localConn.model('Student', studentSchema);
@@ -120,8 +239,6 @@ app.post('/api/sync-now', async (req, res) => {
     try {
         const localData = await LocalModel.find({});
         let count = 0;
-
-        // 3. Push Local -> Cloud (doc.toObject() now includes midtermScores and finalScores)
         for (const doc of localData) {
             await CloudModel.findOneAndUpdate(
                 { id: doc.id, professorUid: doc.professorUid },
@@ -130,27 +247,20 @@ app.post('/api/sync-now', async (req, res) => {
             );
             count++;
         }
-
-        console.log(`✅ Auto-Sync Finished: ${count} records synced to Cloud.`);
-        res.json({ success: true, count, message: "Sync Complete" });
-
+        console.log(`✅ Sync Finished: ${count} records.`);
+        res.json({ success: true, count });
     } catch (error) {
         console.error("❌ Sync Failed:", error);
         res.status(500).json({ error: "Sync failed" });
     } finally {
-        // 4. Clean up connections
         await localConn.close();
         await cloudConn.close();
     }
 });
 
-
-// --- A. USER ROUTES (Unchanged) ---
-
+// --- USER ROUTES ---
 app.post('/api/user-sync', async (req, res) => {
     const { uid, email, displayName, photoURL } = req.body;
-    console.log(`🔄 Syncing user: ${email}`);
-
     try {
         const user = await User.findOneAndUpdate(
             { uid: uid },
@@ -162,175 +272,84 @@ app.post('/api/user-sync', async (req, res) => {
         );
         res.json(user);
     } catch (error) {
-        console.error("❌ User Sync Error:", error);
         res.status(500).json({ message: "Server Error syncing user" });
     }
 });
 
 app.put('/api/user-update/:uid', async (req, res) => {
     const { uid } = req.params;
-    const { displayName, email } = req.body;
     try {
-        const updatedUser = await User.findOneAndUpdate({ uid }, { $set: { displayName, email } }, { new: true });
+        const updatedUser = await User.findOneAndUpdate({ uid }, { $set: req.body }, { new: true });
         res.json(updatedUser);
     } catch (error) {
         res.status(500).json({ message: "Failed to update profile" });
     }
 });
 
-// --- B. STUDENT ROUTES ---
-
-// 1. Add a new Student (Unchanged)
+// --- STUDENT ROUTES ---
 app.post('/api/students', async (req, res) => {
-    console.log("📥 Receiving student data:", req.body);
-    
     try {
-        // Validate required fields
         if (!req.body.id || !req.body.name || !req.body.professorUid) {
-            return res.status(400).json({ 
-                message: "Missing required fields: id, name, or professorUid" 
-            });
+            return res.status(400).json({ message: "Missing required fields" });
         }
-
-        // Check if student ID already exists for this professor
-        const existingStudent = await Student.findOne({ 
-            id: req.body.id, 
-            professorUid: req.body.professorUid 
-        });
+        const existingStudent = await Student.findOne({ id: req.body.id, professorUid: req.body.professorUid });
+        if (existingStudent) return res.status(400).json({ message: `Student ID ${req.body.id} already exists` });
         
-        if (existingStudent) {
-            return res.status(400).json({ 
-                message: `Student ID ${req.body.id} already exists in your records` 
-            });
-        }
-
         const newStudent = new Student(req.body);
-        // The student will be initialized with empty {} for midtermScores and finalScores
         const savedStudent = await newStudent.save();
-        
-        console.log(`✅ Student Added: ${savedStudent.name} (ID: ${savedStudent.id})`);
         res.status(201).json(savedStudent);
     } catch (error) {
-        console.error("❌ Add Student Error:", error);
-        
-        if (error.code === 11000) {
-            return res.status(400).json({ message: "Student ID already exists in the database" });
-        }
-        
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ message: `Validation Error: ${error.message}` });
-        }
-        
-        res.status(500).json({ message: "Error saving student", error: error.message });
+        res.status(500).json({ message: "Error saving student" });
     }
 });
 
-// 2. Get Students by Professor and Section (Unchanged)
 app.get('/api/students/:professorUid/:section', async (req, res) => {
     const { professorUid, section } = req.params;
-    console.log(`🔎 Fetching students for Prof: ${professorUid}, Section: ${section}`);
-    
     const query = { professorUid };
+    if (section !== 'All Sections') query.section = { $regex: new RegExp(`^${section}$`, 'i') };
     
-    // If section is "All Sections", don't filter by section
-    if (section !== 'All Sections') {
-        query.section = { $regex: new RegExp(`^${section}$`, 'i') };
-    }
-
     try {
-        // This will now return students with both midtermScores and finalScores fields
         const students = await Student.find(query).sort({ name: 1 });
-        console.log(`✅ Found ${students.length} students`);
         res.json(students);
     } catch (error) {
-        console.error("❌ Fetch Students Error:", error);
         res.status(500).json({ message: "Error fetching students" });
     }
 });
 
-// 3. Update Student SCORES for a specific term (NEW DEDICATED ENDPOINT)
 app.put('/api/students/:id/scores', async (req, res) => {
     const { id } = req.params;
-    // Expects: { term: 'midterm' | 'final', scores: { q1_mid: 10, ... } }
     const { term, scores } = req.body; 
-    console.log(`📝 Updating ${term} scores for student: ${id}`);
-    
     try {
         let updateField = {};
-        if (term === 'midterm') {
-            // Use dot notation to update the entire midtermScores object
-            updateField.midtermScores = scores; 
-        } else if (term === 'final') {
-            // Use dot notation to update the entire finalScores object
-            updateField.finalScores = scores; 
-        } else {
-            return res.status(400).json({ message: 'Invalid term specified. Must be "midterm" or "final".' });
-        }
-
-        const updatedStudent = await Student.findOneAndUpdate(
-            { id },
-            { $set: updateField }, // Use $set to update only the specific score object
-            { new: true }
-        );
+        if (term === 'midterm') updateField.midtermScores = scores; 
+        else if (term === 'final') updateField.finalScores = scores; 
         
-        if (!updatedStudent) {
-            return res.status(404).json({ message: 'Student not found' });
-        }
-        
-        console.log(`✅ ${term} Scores Updated: ${updatedStudent.name}`);
+        const updatedStudent = await Student.findOneAndUpdate({ id }, { $set: updateField }, { new: true });
+        if (!updatedStudent) return res.status(404).json({ message: 'Student not found' });
         res.json(updatedStudent);
     } catch (error) {
-        console.error("❌ Update Scores Error:", error);
-        res.status(500).json({ message: "Error updating student scores" });
+        res.status(500).json({ message: "Error updating scores" });
     }
 });
 
-// 4. Update a Student (Metadata only: name, section, etc.) (REFRESHED)
 app.put('/api/students/:id', async (req, res) => {
     const { id } = req.params;
-    console.log(`📝 Updating student metadata: ${id}`);
-    
     try {
-        // Ensure no score fields are inadvertently updated by this generic endpoint
-        const updateBody = { ...req.body };
-        delete updateBody.midtermScores;
-        delete updateBody.finalScores;
-        
-        const updatedStudent = await Student.findOneAndUpdate(
-            { id },
-            updateBody,
-            { new: true }
-        );
-        
-        if (!updatedStudent) {
-            return res.status(404).json({ message: 'Student not found' });
-        }
-        
-        console.log(`✅ Student Metadata Updated: ${updatedStudent.name}`);
+        const updatedStudent = await Student.findOneAndUpdate({ id }, req.body, { new: true });
+        if (!updatedStudent) return res.status(404).json({ message: 'Student not found' });
         res.json(updatedStudent);
     } catch (error) {
-        console.error("❌ Update Student Metadata Error:", error);
-        res.status(500).json({ message: "Error updating student metadata" });
+        res.status(500).json({ message: "Error updating student" });
     }
 });
 
-
-// 5. Delete a Student (Unchanged)
 app.delete('/api/students/:id', async (req, res) => {
     const { id } = req.params;
-    console.log(`🗑️ Deleting student: ${id}`);
-    
     try {
         const deletedStudent = await Student.findOneAndDelete({ id });
-        
-        if (!deletedStudent) {
-            return res.status(404).json({ message: 'Student not found' });
-        }
-        
-        console.log(`✅ Student Deleted: ${deletedStudent.name}`);
-        res.json({ message: 'Student deleted successfully', student: deletedStudent });
+        if (!deletedStudent) return res.status(404).json({ message: 'Student not found' });
+        res.json({ message: 'Student deleted successfully' });
     } catch (error) {
-        console.error("❌ Delete Student Error:", error);
         res.status(500).json({ message: "Error deleting student" });
     }
 });

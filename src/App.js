@@ -24,6 +24,47 @@ import CdmChatbot from './Apps.jsx';
 import meta from './meta.json'; 
 const { APP_VERSION, BUILD_HASH, BUILD_DATE } = meta; 
 
+// 🚨 NEW COMPONENT: Dropped Student Modal 🚨
+const DroppedStudentModal = ({ student, onClose }) => {
+    if (!student) return null;
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            zIndex: 10000 
+        }}>
+            <div style={{
+                backgroundColor: 'white', padding: '30px', borderRadius: '10px',
+                width: '90%', maxWidth: '400px', textAlign: 'center',
+                boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+                border: '2px solid #EF4444' 
+            }}>
+                <h2 style={{ color: '#EF4444', marginBottom: '10px' }}>⚠️ ALERT: STUDENT DROPPED</h2>
+                <p style={{ fontSize: '1.1rem', marginBottom: '20px' }}>
+                    Si <strong>{student.name}</strong> ay umabot sa <strong>3 absences</strong> at <strong>Automatically Dropped</strong> na sa klase.
+                </p>
+                <div style={{ backgroundColor: '#FEE2E2', padding: '10px', borderRadius: '5px', marginBottom: '20px' }}>
+                    <p><strong>Student Name:</strong> {student.name}</p>
+                    <p><strong>Student ID:</strong> {student.id}</p>
+                </div>
+                
+                <button 
+                    onClick={onClose} 
+                    style={{
+                        backgroundColor: '#EF4444', color: 'white', padding: '10px 20px', 
+                        border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold'
+                    }}
+                >
+                    OK
+                </button>
+            </div>
+        </div>
+    );
+};
+// 🚨 END NEW COMPONENT
+
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     
@@ -78,6 +119,9 @@ function App() {
     const [atRiskStudents, setAtRiskStudents] = useState({});
     const [currentSectionContext, setCurrentSectionContext] = useState('');
     const [selectedSection, setSelectedSection] = useState('CS 101 - A');
+    
+    // 🚨 NEW STATE: Dropped Student Alert 🚨
+    const [droppedStudentAlert, setDroppedStudentAlert] = useState(null); 
 
     // Track at-risk students whenever attendance changes
     useEffect(() => {
@@ -114,7 +158,11 @@ function App() {
     const handleAttendanceUpdate = (updatedData) => {
         setAttendanceData(updatedData);
     };
-    // ========== END ATTENDANCE TRACKING ==========
+
+    // 🚨 NEW HANDLER: For student dropped alert 🚨
+    const handleStudentDropped = (studentDetails) => {
+        setDroppedStudentAlert(studentDetails);
+    };
 
     // --- AUTO-SYNC LISTENER ---
     useEffect(() => {
@@ -167,6 +215,50 @@ function App() {
             console.error('Error saving sections to localStorage:', error);
         }
     }, [sections]);
+
+    // ✅ NEW: Load attendance from localStorage and transform it for Reports
+    useEffect(() => {
+        const loadAttendanceFromStorage = () => {
+            try {
+                const ATTENDANCE_STORAGE_KEY = 'progressTracker_attendanceData_v1';
+                const savedAttendance = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
+                if (savedAttendance) {
+                    const parsed = JSON.parse(savedAttendance);
+                    
+                    // Transform from MultiPageGS format {studentId-date: status} 
+                    // to App.js format {studentId: [status, status, ...]}
+                    const transformed = {};
+                    const MIDTERM_DATES = ['Sept 4', 'Sept 11', 'Sept 18', 'Sept 25', 'Oct 2', 'Oct 9'];
+                    const FINALS_DATES = ['Nov 6', 'Nov 13', 'Nov 20', 'Nov 27', 'Dec 4', 'Dec 11'];
+                    const allDates = [...MIDTERM_DATES, ...FINALS_DATES];
+                    
+                    students.forEach(student => {
+                        const studentRecord = [];
+                        allDates.forEach(date => {
+                            const key = `${student.id}-${date}`;
+                            const status = parsed[key] || 'P';
+                            studentRecord.push(status);
+                        });
+                        transformed[student.id] = studentRecord;
+                    });
+                    
+                    setAttendanceData(transformed);
+                    console.log('✅ Attendance data loaded and transformed');
+                }
+            } catch (error) {
+                console.error('Error loading attendance from localStorage:', error);
+            }
+        };
+
+        if (students.length > 0) {
+            loadAttendanceFromStorage();
+        }
+    }, [students]); // Run when students are loaded
+
+
+    // -------------------------------------------------------------------------
+    // 3. AUTHENTICATION & INITIALIZATION
+    // -------------------------------------------------------------------------
 
     useEffect(() => {
         console.log(`%c Progress Tracker v${APP_VERSION} `, 'background: #38761d; color: white; padding: 4px; border-radius: 4px;');
@@ -296,8 +388,9 @@ function App() {
                     onLogout={handleLogout} 
                     onPageChange={handlePageChange} 
                     onAttendanceUpdate={handleAttendanceUpdate}
-                    students={students}
-                    {...pageParams} 
+                    students={students} 
+                    onStudentDropped={handleStudentDropped} // 🚨 ADDED PROP
+                    {...pageParams} // Passes title, viewType, etc.
                 />;
             
             case 'view-studs': 
@@ -323,7 +416,12 @@ function App() {
                 />;
             
             case 'view-rd': 
-                return <ViewRD onLogout={handleLogout} onPageChange={handlePageChange} studentData={pageParams.student} />;
+                // FIXED: Ipinapasa ang targetStudentId na galing sa ViewStuds.jsx
+                return <ViewRD 
+                    onLogout={handleLogout} 
+                    onPageChange={handlePageChange}
+                    targetStudentId={pageParams.targetStudentId} 
+                />;
             
             case 'profile': 
                 return <ProfileLayout {...profileProps} />; 
@@ -341,7 +439,7 @@ function App() {
         return (
              <div className="dashboard-container">
                  <div className={`status-bar ${!isOnline ? 'offline' : ''} ${isSyncing ? 'syncing' : ''}`}>
-                     {!isOnline && "📡 Offline Mode - Saving Locally"}
+                     {!isOnline && "🔡 Offline Mode - Saving Locally"}
                      {isSyncing && "☁️ Internet Restored - Syncing to Cloud..."}
                    </div>
                     
@@ -361,6 +459,12 @@ function App() {
                      professorUid={profileData?.id || profileData?.uid} 
                      onSpeak={handleGlobalSpeak}
                    /> 
+                   
+                 {/* 🚨 NEW MODAL RENDER 🚨 */}
+                 <DroppedStudentModal 
+                     student={droppedStudentAlert} 
+                     onClose={() => setDroppedStudentAlert(null)} 
+                 />
                </div>
         );
     } else {
