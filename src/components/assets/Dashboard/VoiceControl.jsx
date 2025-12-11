@@ -1,6 +1,7 @@
 // src/components/assets/Dashboard/VoiceControl.jsx
 
 import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { analyzeVoiceCommand } from '../../../Apps'; // Import the Brain
 
 const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref) => {
     const [isFading, setIsFading] = useState(false);
@@ -16,16 +17,13 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
     useEffect(() => { isVoiceActiveRef.current = isVoiceActive; }, [isVoiceActive]);
     useEffect(() => { isFadingRef.current = isFading; }, [isFading]);
 
-    // --- NEW: TEXT TO SPEECH FUNCTION ---
+    // --- TEXT TO SPEECH FUNCTION ---
     const speak = (text) => {
         if (!window.speechSynthesis) return;
-        
-        // Cancel previous speech to prevent overlap
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Try to pick a decent English voice
         const voices = window.speechSynthesis.getVoices();
         const preferredVoice = voices.find(v => 
             v.name.includes("Google US English") || 
@@ -40,12 +38,11 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
         window.speechSynthesis.speak(utterance);
     };
 
-    // Expose the 'speak' function to the parent (App.js)
     useImperativeHandle(ref, () => ({
         speak: (text) => speak(text)
     }));
 
-    // --- 1. INITIALIZE INSTANCE (Run Once) ---
+    // --- 1. INITIALIZE INSTANCE ---
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
@@ -60,8 +57,6 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
 
-        // --- EVENT HANDLERS ---
-        
         recognition.onstart = () => {
             console.log("✅ Mic Started");
             if (isVoiceActiveRef.current) {
@@ -75,10 +70,10 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
             
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
-                    const command = event.results[i][0].transcript.trim().toLowerCase();
-                    console.log("🗣️ Command:", command);
+                    const command = event.results[i][0].transcript.trim();
+                    console.log("🗣️ User said:", command);
                     setVoiceText(command);
-                    processVoiceCommand(command);
+                    processVoiceCommand(command); // Send to AI
                 } else {
                     interimTranscript += event.results[i][0].transcript;
                 }
@@ -97,12 +92,8 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
 
         recognition.onend = () => {
             console.log("🛑 Mic Ended");
-            // Only auto-restart if we want it active AND we are not currently fading out
             if (isVoiceActiveRef.current && !isFadingRef.current) {
-                console.log("🔄 Auto-restarting Mic...");
-                try {
-                    recognition.start();
-                } catch (e) { /* ignore */ }
+                try { recognition.start(); } catch (e) { /* ignore */ }
             }
         };
 
@@ -122,85 +113,92 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
             try {
                 recognition.start();
                 speak("Voice system online.");
-            } catch (e) {
-                console.log("Mic already active...");
-            }
+            } catch (e) { console.log("Mic already active..."); }
         } else {
             recognition.stop();
             setVoiceText('');
             setVoiceStatus('');
             setIsFading(false);
-            window.speechSynthesis.cancel(); // Stop talking if turned off
+            window.speechSynthesis.cancel(); 
         }
     }, [isVoiceActive]);
 
-    // --- COMMAND LOGIC ---
-    const processVoiceCommand = (command) => {
-        let taskExecuted = false;
-        let response = "";
+    // --- COMMAND LOGIC (AI POWERED) ---
+    const processVoiceCommand = async (commandText) => {
+        // 1. Send text to Brain (Apps.jsx)
+        const result = await analyzeVoiceCommand(commandText);
 
-        // --- COMMANDS ---
-        if (command.includes('dashboard') || command.includes('home')) {
-            onPageChange('dashboard');
-            taskExecuted = true;
-            response = "Opening Dashboard.";
-        } else if (command.includes('report') || command.includes('grades')) {
-            onPageChange('reports');
-            taskExecuted = true;
-            response = "Opening Reports.";
-        } else if (command.includes('profile') || command.includes('settings')) {
-            onPageChange('profile');
-            taskExecuted = true;
-            response = "Opening Profile.";
-        } else if (command.includes('student') || command.includes('list')) {
-            onPageChange('view-studs');
-            taskExecuted = true;
-            response = "Viewing Students.";
-        } else if (command.includes('scroll down')) {
-            window.scrollBy({ top: 500, behavior: 'smooth' });
-            taskExecuted = true;
-        } else if (command.includes('scroll up')) {
-            window.scrollBy({ top: -500, behavior: 'smooth' });
-            taskExecuted = true;
-        } else if (command.includes('stop') || command.includes('exit')) {
-            handleStopSequence("Deactivating...");
-            speak("Goodbye.");
-            return;
-        }
+        if (result.success) {
+            try {
+                // 2. Extract JSON from response
+                const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("No JSON found");
+                
+                const cmd = JSON.parse(jsonMatch[0]);
+                console.log("🤖 AI Command:", cmd);
+                
+                let taskExecuted = false;
 
-        if (taskExecuted) {
-            setVoiceStatus('Task Done');
-            if(response) speak(response);
-            // Trigger the long wait sequence
-            handleStopSequence(null, true);
+                // 3. Execute Actions
+                if (cmd.action === 'NAVIGATE') {
+                    onPageChange(cmd.target);
+                    taskExecuted = true;
+                } 
+                else if (cmd.action === 'LOCATE') {
+                    // Dispatch custom event for ViewStuds to catch
+                    const ev = new CustomEvent('CDM_LOCATE_STUDENT', { detail: cmd.query });
+                    window.dispatchEvent(ev);
+                    taskExecuted = true;
+                }
+                else if (cmd.action === 'SCROLL') {
+                     if (cmd.direction === 'down') window.scrollBy({ top: 500, behavior: 'smooth' });
+                     else window.scrollBy({ top: -500, behavior: 'smooth' });
+                     taskExecuted = true;
+                }
+                else if (cmd.action === 'STOP') {
+                    speak(cmd.reply);
+                    handleStopSequence("Goodbye.");
+                    return;
+                }
+
+                // 4. Feedback
+                if (cmd.reply) speak(cmd.reply);
+                if (taskExecuted) {
+                    setVoiceStatus('Task Done');
+                    handleStopSequence(null, true); // Visual feedback only, don't stop mic
+                }
+
+            } catch (e) {
+                console.error("AI Parse Error:", e);
+                speak("I'm sorry, I didn't understand that.");
+            }
         }
     };
 
     const handleStopSequence = (msg = null, success = false) => {
         if (msg) setVoiceText(msg);
 
-        // 1. Lock: Mark as fading immediately so the mic doesn't auto-restart
-        isFadingRef.current = true; 
+        // If manual stop, lock mic immediately. If success, just visual fade.
+        if (!success) isFadingRef.current = true; 
 
-        // --- CONFIGURABLE TIMERS ---
-        const WAIT_TIME = success ? 4000 : 1000; // Wait 4 seconds if success, 1s if manual stop
-        const FADE_TIME = 2000;                  // 2 seconds for the slow fade animation
+        const WAIT_TIME = success ? 4000 : 1000; 
+        const FADE_TIME = 2000;                  
 
-        // 2. Wait Phase (Keep overlay visible)
         setTimeout(() => {
-            setIsFading(true); // Trigger CSS fade
+            setIsFading(true); 
 
-            // 3. Cleanup Phase (After fade is done)
             setTimeout(() => {
-                onToggle(false); // Turn off in App.js
+                // Only fully stop if it wasn't just a success message
+                if (!success) {
+                    onToggle(false); 
+                    if (recognitionRef.current) recognitionRef.current.stop();
+                }
                 
                 setVoiceText('');
                 setVoiceStatus('');
                 setIsFading(false);
-                isFadingRef.current = false;
+                if (!success) isFadingRef.current = false;
                 
-                if (recognitionRef.current) recognitionRef.current.stop();
-
             }, FADE_TIME); 
 
         }, WAIT_TIME); 
@@ -210,23 +208,21 @@ const VoiceControl = forwardRef(({ isVoiceActive, onToggle, onPageChange }, ref)
 
     return (
         <>
-            {/* Overlay - Fade Duration set to 2s */}
             <div 
                 className="voice-overlay"
                 style={{ 
                     opacity: isFading ? 0 : 1, 
-                    transition: 'opacity 2s ease-out' // SLOWER FADE
+                    transition: 'opacity 2s ease-out' 
                 }}
             >
                 <span></span><span></span><span></span><span></span>
             </div>
             
-            {/* Status Box - Fade Duration set to 2s */}
             <div style={{
                 position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
                 zIndex: 100000, textAlign: 'center', pointerEvents: 'none', width: '80%', maxWidth: '500px',
                 opacity: isFading ? 0 : 1, 
-                transition: 'opacity 2s ease-out' // SLOWER FADE
+                transition: 'opacity 2s ease-out'
             }}>
                 <div style={{
                     color: '#4ade80', fontSize: '1.5rem', fontWeight: '600',

@@ -32,6 +32,29 @@ const _resolveNode = (idx) => {
     } catch(e) { return null; } 
 };
 
+// --- CORE DIRECTIVE (BRAIN) ---
+const CORE_DIRECTIVE = `
+You are 'Cidi', the AI assistant.
+Be casual, use Taglish, and be helpful.
+
+**CAPABILITIES:**
+1. **Chat:** If normal text, reply conversationally.
+2. **Automation:** If asked to add students, output JSON.
+3. **Voice Command:** If input starts with "[VOICE]", interpret the user's messy speech (fix typos like 'ports' -> 'reports') and output STRICT JSON ONLY.
+
+**VOICE JSON FORMATS:**
+- Navigation: { "action": "NAVIGATE", "target": "dashboard|reports|profile|view-studs", "reply": "Opening [Page]..." }
+- Locate Student: { "action": "LOCATE", "query": "Student Name or ID", "reply": "Looking for [Name]..." }
+- Stop/Exit: { "action": "STOP", "reply": "Goodbye." }
+- Scrolling: { "action": "SCROLL", "direction": "up|down", "reply": "Scrolling..." }
+- Unknown: { "action": "UNKNOWN", "reply": "I didn't quite catch that." }
+
+**DATA GENERATION JSON:**
+- Specific: { "action": "create_single", "data": { "name": "...", "id": "...", "course": "..." } }
+- Random 1: "TRIG_RND"
+- Random 10: "TRIG_BATCH"
+`;
+
 // --- EXPORTED AI LOGIC FUNCTION ---
 export const runAIAnalysis = async (promptText, filePayload = null) => {
     const _h = _dCode(_H_A) + _dCode(_H_B);
@@ -39,10 +62,8 @@ export const runAIAnalysis = async (promptText, filePayload = null) => {
     const _m = _dCode(_M_ID);
     const _base = `https://${_h}${_p}${_m}`; 
 
-    // Construct parts: Text always exists, Image/File is optional
     const parts = [{ text: promptText }];
     
-    // If a file is provided (image/pdf), add it as inline_data (Low token cost)
     if (filePayload && filePayload.data && filePayload.mimeType) {
         parts.push({
             inline_data: {
@@ -76,6 +97,12 @@ export const runAIAnalysis = async (promptText, filePayload = null) => {
         }
     }
     return { success: false, text: "AI Service Unavailable. Check connection." };
+};
+
+// --- NEW: SPECIALIZED VOICE PROCESSOR ---
+export const analyzeVoiceCommand = async (speechText) => {
+    const prompt = `${CORE_DIRECTIVE}\n\n[VOICE] Input: "${speechText}"\nOutput JSON:`;
+    return await runAIAnalysis(prompt);
 };
 
 // --- DATA GENERATORS ---
@@ -113,21 +140,6 @@ const scanUI = () => {
     });
     return map;
 };
-
-// --- SYSTEM PROMPT ---
-const CORE_DIRECTIVE = `
-You are 'Cidi', the AI assistant.
-Be casual, use Taglish, and be helpful.
-
-**CAPABILITIES:**
-1. **Automation:** If asked to add students, output JSON.
-2. **Navigation:** I will provide "VISIBLE ELEMENTS". Guide the user.
-
-**JSON FORMAT:**
-- Specific: { "action": "create_single", "data": { "name": "...", "id": "...", "course": "..." } }
-- Random 1: "TRIG_RND"
-- Random 10: "TRIG_BATCH"
-`;
 
 // --- UI COMPONENTS ---
 const TypewriterEffect = React.memo(({ text, onComplete }) => {
@@ -244,7 +256,6 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
         setLoading(true);
         setMsgs(prev => [...prev, { role: 'bot', text: "📡 **DIAGNOSTIC:** Initiating handshake sequence..." }]);
         
-        // Use the exported logic internally
         const result = await runAIAnalysis("System Check");
 
         if (result.success) {
@@ -283,7 +294,6 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
                 setMsgs(prev => [...prev, { role: 'bot', text: "⚠️ **System Alert:** Signal interrupted." }]);
             } else {
                 const aiText = result.text;
-                // REMOVED: Speech synthesis integration here. The bot is now silent.
 
                 if (aiText.includes("TRIG_BATCH")) {
                     setMsgs(prev => [...prev, { role: 'bot', text: "Executing batch sequence... 🚀" }]);
@@ -403,4 +413,3 @@ const CdmChatbot = ({ onPageChange, professorUid }) => {
 }; 
 
 export default CdmChatbot;
-}

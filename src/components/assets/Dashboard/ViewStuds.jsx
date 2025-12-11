@@ -20,17 +20,16 @@ const ChevronRight = ({ size = 24 }) => (<svg xmlns="http://www.w3.org/2000/svg"
 const CheckIcon = ({ size = 24, ...props }) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>);
 
 
-// --- MOCK HOLIDAYS (Professor can manage these later) ---
+// --- MOCK HOLIDAYS ---
 const HOLIDAYS = {
     "2025-01-01": "New Year's Day",
     "2025-02-14": "Valentine's Event",
     "2025-04-09": "Day of Valor",
     "2025-12-25": "Christmas Day",
     "2025-11-01": "All Saints Day"
-    // Add more dates here in YYYY-MM-DD format
 };
 
-// --- ADD STUDENT MODAL (Existing - kept here for completeness) ---
+// --- ADD STUDENT MODAL ---
 const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, professorUid }) => { 
     const [formData, setFormData] = useState({
         id: '', name: '', type: 'Regular', course: '', 
@@ -62,10 +61,7 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
             const response = await fetch('http://localhost:5000/api/students', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...formData,
-                    professorUid: professorUid
-                })
+                body: JSON.stringify({ ...formData, professorUid: professorUid })
             });
 
             const responseData = await response.json();
@@ -132,7 +128,6 @@ const AddStudentFormModal = ({ isOpen, onClose, onStudentAdded, sectionName, pro
 
 // 🛑 ATTENDANCE CALENDAR MODAL COMPONENT
 const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance }) => {
-    // Start date is the 1st of the current month
     const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
     if (!isOpen || !student) return null;
@@ -140,7 +135,6 @@ const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
     const startDay = new Date(year, month, 1).getDay(); 
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -148,28 +142,23 @@ const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance 
     const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
     const handleDayClick = (day) => {
-        // Formats date to YYYY-MM-DD
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         
-        // Don't allow changing status on holidays
         const holidayName = HOLIDAYS[dateStr];
         if (holidayName) {
             alert(`${holidayName} is marked as a Holiday. Attendance cannot be changed.`);
             return;
         }
 
-        // Cycle Status: Empty -> P -> A -> L -> Empty
         const currentStatus = student.attendance?.[dateStr];
         let newStatus = 'P';
         if (currentStatus === 'P') newStatus = 'A';
         else if (currentStatus === 'A') newStatus = 'L';
-        else if (currentStatus === 'L') newStatus = null; // Clear or set to P depending on desired cycle
+        else if (currentStatus === 'L') newStatus = null; 
 
-        // Send API update
         onUpdateAttendance(student.id, dateStr, newStatus);
     };
 
-    // Calculate Summary for Header
     const att = student.attendance || {};
     const totalP = Object.values(att).filter(s => s === 'P').length;
     const totalA = Object.values(att).filter(s => s === 'A').length;
@@ -177,21 +166,19 @@ const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance 
 
     const renderCalendarCells = () => {
         const cells = [];
-        // Empty cells for padding
         for (let i = 0; i < startDay; i++) cells.push(<div key={`empty-${i}`} className="cal-cell empty"></div>);
 
         for (let day = 1; day <= daysInMonth; day++) {
             const dateObj = new Date(year, month, day);
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             
-            const status = student.attendance?.[dateStr]; // 'P', 'A', 'L'
+            const status = student.attendance?.[dateStr]; 
             const holidayName = HOLIDAYS[dateStr];
             
             let cellClass = "cal-cell";
             if (holidayName) cellClass += " holiday";
             else if (status) cellClass += ` status-${status}`;
 
-            // Check if it's today
             const today = new Date();
             const isToday = dateObj.toDateString() === today.toDateString();
             if (isToday) cellClass += " today";
@@ -247,7 +234,6 @@ const AttendanceCalendarModal = ({ isOpen, onClose, student, onUpdateAttendance 
 
 // --- MAIN COMPONENT: ViewStuds ---
 const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefreshStudents, professorUid }) => {
-    // ... existing state hooks
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_COLLAPSED_WIDTH);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [viewOption, setViewOption] = useState('Student Information');
@@ -261,12 +247,43 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
     const [editingId, setEditingId] = useState(null);
     const [editFormData, setEditFormData] = useState({});
 
+    // ✅ VOICE SEARCH HIGHLIGHT STATE
+    const [highlightedId, setHighlightedId] = useState(null);
+
     const sectionName = sectionData?.name;
 
     const sectionStudents = useMemo(() => {
-        // Filter students for THIS section only
         return students.filter(student => student.section === sectionName);
     }, [students, sectionName]);
+
+    // --- EFFECT: Handle AI Location Requests ---
+    useEffect(() => {
+        const handleLocate = (e) => {
+            const query = e.detail.toLowerCase();
+            console.log("Locating:", query);
+
+            // Find match
+            const target = sectionStudents.find(s => 
+                s.name.toLowerCase().includes(query) || 
+                s.id.toLowerCase().includes(query)
+            );
+
+            if (target) {
+                setHighlightedId(target.id);
+                // Wait for render, then scroll
+                setTimeout(() => {
+                    const row = document.getElementById(`row-${target.id}`);
+                    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+
+                // Clear highlight after 3s
+                setTimeout(() => setHighlightedId(null), 3000);
+            }
+        };
+
+        window.addEventListener('CDM_LOCATE_STUDENT', handleLocate);
+        return () => window.removeEventListener('CDM_LOCATE_STUDENT', handleLocate);
+    }, [sectionStudents]);
 
     // --- Student Added from Bot/Modal ---
     useEffect(() => {
@@ -284,24 +301,19 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
     }, [sectionName, onRefreshStudents]); 
 
     const handleStudentAdded = () => {
-        if (onRefreshStudents) {
-            onRefreshStudents();
-        }
+        if (onRefreshStudents) onRefreshStudents();
     };
     
-    // ✅ Handle Edit Click: Enable Edit Mode
     const handleEditClick = (student) => {
         setEditingId(student.id);
-        setEditFormData({ ...student }); // Populate form with student data
+        setEditFormData({ ...student }); 
     };
 
-    // ✅ Handle Change in Input Fields
     const handleEditChange = (e) => {
         const { name, value } = e.target;
         setEditFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // ✅ Handle Save Edit: Send PUT Request
     const handleSaveEdit = async () => {
         try {
             const response = await fetch(`http://localhost:5000/api/students/${editingId}`, {
@@ -312,8 +324,8 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
 
             if (response.ok) {
                 alert("Student updated successfully!");
-                setEditingId(null); // Exit edit mode
-                if (onRefreshStudents) onRefreshStudents(); // Refresh data
+                setEditingId(null); 
+                if (onRefreshStudents) onRefreshStudents(); 
             } else {
                 const errorData = await response.json();
                 alert(`Failed to update: ${errorData.message || 'Unknown error'}`);
@@ -324,7 +336,6 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
         }
     };
 
-    // ✅ Handle Cancel Edit
     const handleCancelEdit = () => {
         setEditingId(null);
         setEditFormData({});
@@ -335,7 +346,6 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
         setViewOption(selected);
         setSearchTerm(''); 
 
-        // Reroute to Gradesheet components if a grade view is selected
         const gradeViews = ['Midterm', 'Finals'];
         if (gradeViews.includes(selected)) {
             onPageChange('multipage-gradesheet', { 
@@ -347,15 +357,10 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
         }
     };
 
-    const toggleExportMenu = () => {
-         setIsExportMenuOpen(prev => !prev);
-    };
-    
-    // Placeholder for actual Export functions
+    const toggleExportMenu = () => { setIsExportMenuOpen(prev => !prev); };
     const exportToExcel = () => { alert("Exporting to Excel..."); setIsExportMenuOpen(false); };
     const exportToPDF = () => { alert("Printing to PDF..."); setIsExportMenuOpen(false); };
 
-    // ✅ Handle Attendance Update (Passes to Calendar Modal which handles API)
     const handleAttendanceUpdate = async (studentId, date, newStatus) => {
         try {
             const res = await fetch(`http://localhost:5000/api/students/${studentId}/attendance`, {
@@ -365,7 +370,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
             });
 
             if (res.ok) {
-                if (onRefreshStudents) onRefreshStudents(); // Refresh data from API
+                if (onRefreshStudents) onRefreshStudents(); 
             }
         } catch (error) {
             console.error("Failed to update attendance", error);
@@ -382,7 +387,6 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
             return <div style={{textAlign: 'center', padding: '2rem', color: '#6B7280'}}>No students match your search for "{searchTerm}".</div>;
         }
 
-        // 1. STANDARD STUDENT LIST VIEW (EDITABLE)
         if (viewOption === 'Student Information') {
             return (
                 <table className="vs-table">
@@ -402,14 +406,16 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                     <tbody>
                         {filtered.map((student) => {
                             const isEditing = editingId === student.id;
+                            const isHighlighted = highlightedId === student.id;
 
                             return (
-                                <tr key={student.id} className={student.isNew ? "vs-row-animate-new" : ""}>
-                                    <td className="vs-id-text">
-                                        {student.id} {/* ID is typically not editable as it is the key */}
-                                    </td>
+                                <tr 
+                                    key={student.id} 
+                                    id={`row-${student.id}`} 
+                                    className={`${student.isNew ? "vs-row-animate-new" : ""} ${isHighlighted ? "vs-row-highlight" : ""}`}
+                                >
+                                    <td className="vs-id-text">{student.id}</td>
                                     
-                                    {/* Name */}
                                     <td>
                                         {isEditing ? (
                                             <input type="text" name="name" value={editFormData.name} onChange={handleEditChange} className="vs-table-input" />
@@ -418,78 +424,53 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                                         )}
                                     </td>
 
-                                    {/* Type */}
                                     <td>
                                         {isEditing ? (
                                              <select name="type" value={editFormData.type} onChange={handleEditChange} className="vs-table-select">
                                                  <option value="Regular">Regular</option>
                                                  <option value="Irregular">Irregular</option>
                                              </select>
-                                        ) : (
-                                            student.type
-                                        )}
+                                        ) : ( student.type )}
                                     </td>
 
-                                    {/* Course */}
                                     <td className="vs-col-course">
                                         {isEditing ? (
                                             <input type="text" name="course" value={editFormData.course} onChange={handleEditChange} className="vs-table-input" />
-                                        ) : (
-                                            student.course
-                                        )}
+                                        ) : ( student.course )}
                                     </td>
 
-                                    {/* Section */}
                                     <td style={{textAlign:'center'}}>
                                         {isEditing ? (
                                             <input type="text" name="section" value={editFormData.section} onChange={handleEditChange} className="vs-table-input" style={{width: '60px', textAlign: 'center'}} />
-                                        ) : (
-                                            student.section
-                                        )}
+                                        ) : ( student.section )}
                                     </td>
 
-                                    {/* Cell */}
                                     <td>
                                         {isEditing ? (
                                             <input type="text" name="cell" value={editFormData.cell} onChange={handleEditChange} className="vs-table-input" style={{width: '100px'}} />
-                                        ) : (
-                                            student.cell
-                                        )}
+                                        ) : ( student.cell )}
                                     </td>
 
-                                    {/* Email */}
                                     <td>
                                         {isEditing ? (
                                             <input type="text" name="email" value={editFormData.email} onChange={handleEditChange} className="vs-table-input" />
-                                        ) : (
-                                            student.email
-                                        )}
+                                        ) : ( student.email )}
                                     </td>
 
-                                    {/* Address */}
                                     <td>
                                         {isEditing ? (
                                             <input type="text" name="address" value={editFormData.address} onChange={handleEditChange} className="vs-table-input" />
-                                        ) : (
-                                            student.address
-                                        )}
+                                        ) : ( student.address )}
                                     </td>
 
-                                    {/* ACTIONS */}
                                     <td style={{textAlign: 'center', whiteSpace: 'nowrap'}}>
                                         {isEditing ? (
                                             <>
-                                                <button className="vs-action-btn save" onClick={handleSaveEdit} title="Save">
-                                                    <CheckIcon size={16} />
-                                                </button>
-                                                <button className="vs-action-btn cancel" onClick={handleCancelEdit} title="Cancel">
-                                                    <XIcon size={16} />
-                                                </button>
+                                                <button className="vs-action-btn save" onClick={handleSaveEdit} title="Save"><CheckIcon size={16} /></button>
+                                                <button className="vs-action-btn cancel" onClick={handleCancelEdit} title="Cancel"><XIcon size={16} /></button>
                                             </>
                                         ) : (
-                                            <button className="vs-edit-btn" onClick={() => handleEditClick(student)}>
-                                                <EditIcon size={16} />
-                                            </button>
+                                            <button className="vs-edit-btn" onClick={() => handleEditClick(student)}><EditIcon size={16} /></button>
                                         )}
                                     </td>
                                 </tr>
@@ -500,7 +481,6 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
             );
         } 
         
-        // ✅ ATTENDANCE VIEW
         else if (viewOption === 'Attendance') {
              return (
                  <table className="vs-table">
@@ -520,19 +500,16 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                             const absents = Object.values(att).filter(v => v === 'A').length;
                             const presents = Object.values(att).filter(v => v === 'P').length;
                             const isDropped = absents >= 3; 
+                            const isHighlighted = highlightedId === student.id;
 
                             return (
-                                <tr key={student.id}>
+                                <tr key={student.id} id={`row-${student.id}`} className={isHighlighted ? "vs-row-highlight" : ""}>
                                     <td className="vs-id-text">{student.id}</td>
                                     <td style={{fontWeight: '600'}}>{student.name}</td>
-                                    
-                                    {/* Stats Columns */}
                                     <td style={{color: '#166534', fontWeight: 'bold'}}>{presents}</td>
                                     <td style={{color: isDropped ? 'red' : 'inherit', fontWeight: isDropped ? 'bold' : 'normal'}}>
                                         {absents}
                                     </td>
-                                    
-                                    {/* Status Badge */}
                                     <td>
                                         <span style={{
                                             backgroundColor: isDropped ? '#fee2e2' : '#dcfce7',
@@ -542,13 +519,8 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                                             {isDropped ? 'DROPPED' : 'ACTIVE'}
                                         </span>
                                     </td>
-
-                                    {/* ACTION: Open Calendar */}
                                     <td style={{textAlign: 'center'}}>
-                                        <button 
-                                            className="vs-btn-manage" 
-                                            onClick={() => setSelectedStudentForAttendance(student)}
-                                        >
+                                        <button className="vs-btn-manage" onClick={() => setSelectedStudentForAttendance(student)}>
                                             <CalendarIcon size={16}/> Manage
                                         </button>
                                     </td>
@@ -636,7 +608,6 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                 professorUid={professorUid}
             />
             
-            {/* RENDER CALENDAR MODAL */}
             {selectedStudentForAttendance && (
                 <AttendanceCalendarModal 
                     isOpen={!!selectedStudentForAttendance}
@@ -646,55 +617,25 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                 />
             )}
             
-            {/* INLINE STYLES FOR EDIT INPUTS */}
             <style>{`
-                /* --- UPDATED BACK BUTTON DESIGN --- */
                 .vs-back-btn {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 8px 15px;
-                    margin: 0 0 10px 20px;
-                    border-radius: 20px;
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    background-color: #E0E7FF;
-                    color: #3B82F6;
-                    border: 1px solid #C7D2FE;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                    display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; margin: 0 0 10px 20px;
+                    border-radius: 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+                    background-color: #E0E7FF; color: #3B82F6; border: 1px solid #C7D2FE; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 }
                 .vs-back-btn:hover { background-color: #C7D2FE; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
                 .vs-back-btn:active { background-color: #A5B4FC; }
                 .vs-back-btn svg { stroke-width: 2.5; width: 18px; height: 18px; }
 
-                /* --- EDIT INPUT STYLES --- */
                 .vs-table-input, .vs-table-select {
-                    width: 100%;
-                    padding: 4px 6px;
-                    border: 1px solid #3B82F6;
-                    border-radius: 4px;
-                    font-size: 0.85rem;
-                    font-family: inherit;
-                    outline: none;
-                    background-color: #EFF6FF;
+                    width: 100%; padding: 4px 6px; border: 1px solid #3B82F6; border-radius: 4px; font-size: 0.85rem; font-family: inherit; outline: none; background-color: #EFF6FF;
                 }
-                .vs-action-btn {
-                    border: none;
-                    background: none;
-                    cursor: pointer;
-                    padding: 4px;
-                    margin: 0 2px;
-                    border-radius: 4px;
-                    transition: background-color 0.2s;
-                }
+                .vs-action-btn { border: none; background: none; cursor: pointer; padding: 4px; margin: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
                 .vs-action-btn.save { color: #166534; }
                 .vs-action-btn.save:hover { background-color: #dcfce7; }
                 .vs-action-btn.cancel { color: #991b1b; }
                 .vs-action-btn.cancel:hover { background-color: #fee2e2; }
 
-                /* EXISTING CSS BELOW */
                 .vs-export-dropdown-wrapper { position: relative; display: inline-block; }
                 .vs-export-menu {
                     position: absolute; top: 100%; right: 0; z-index: 10;
@@ -702,10 +643,7 @@ const ViewStuds = ({ onLogout, onPageChange, sectionData, students = [], onRefre
                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
                     min-width: 180px; margin-top: 5px; overflow: hidden; display: flex; flex-direction: column;
                 }
-                .vs-export-menu-item {
-                    display: block; width: 100%; padding: 10px 15px; text-align: left;
-                    background: none; border: none; cursor: pointer; font-size: 0.9rem; color: #4B5563;
-                }
+                .vs-export-menu-item { display: block; width: 100%; padding: 10px 15px; text-align: left; background: none; border: none; cursor: pointer; font-size: 0.9rem; color: #4B5563; }
                 .vs-export-menu-item:hover { background-color: #F3F4F6; color: #1F2937; }
                 
                 @media print {
